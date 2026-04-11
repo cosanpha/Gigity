@@ -5,448 +5,339 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gigity — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* shadcn/ui light design tokens */
-  :root {
-    --background: #ffffff;
-    --foreground: #09090b;
-    --card: #ffffff;
-    --card-foreground: #09090b;
-    --popover: #ffffff;
-    --primary: #18181b;
-    --primary-foreground: #fafafa;
-    --secondary: #f4f4f5;
-    --secondary-foreground: #18181b;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    --accent: #f4f4f5;
-    --accent-foreground: #18181b;
-    --destructive: #ef4444;
-    --destructive-foreground: #fafafa;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --ring: #18181b;
-    --success: #16a34a;
-    --success-bg: #f0fdf4;
-    --success-border: #bbf7d0;
-    --warning: #b45309;
-    --warning-bg: #fffbeb;
-    --warning-border: #fde68a;
-    --radius: 0.5rem;
-    --radius-md: 0.375rem;
-    --radius-sm: 0.25rem;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #ffffff;
+    --surface:   #ffffff;
+    --surface-2: #f4f4f5;
+    --border:    #e4e4e7;
+    --border-2:  #d4d4d8;
+    --text:      #09090b;
+    --text-2:    #71717a;
+    --text-3:    #a1a1aa;
+    --accent:    #6366f1;
+    --accent-h:  #4f46e5;
+    --success:   #16a34a;
+    --warning:   #d97706;
+    --r:         6px;
+  }
   body {
-    font-family: var(--font);
-    background: var(--background);
-    color: var(--foreground);
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
+    font-size: 14px;
     line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
   }
 
-  /* Header */
-  .header {
-    position: sticky; top: 0; z-index: 40;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  /* NAV */
+  nav {
+    height: 52px;
     border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    position: sticky; top: 0;
+    background: var(--bg); z-index: 10;
   }
-  .header-inner {
-    max-width: 860px; margin: 0 auto; padding: 0 24px;
-    height: 56px; display: flex; align-items: center; gap: 10px;
+  .nav-left { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+    display: flex; align-items: center; gap: 8px;
   }
-  .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-  .logo-icon {
-    width: 26px; height: 26px;
-    background: var(--primary);
+  .logo-mark {
+    width: 26px; height: 26px; background: var(--accent);
     border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    font-size: 13px; font-weight: 700; color: #fff;
   }
-  .logo-name { font-size: 15px; font-weight: 700; color: var(--foreground); letter-spacing: -0.02em; }
-  .header-spacer { flex: 1; }
-  .brand-pill {
-    font-size: 12px; font-weight: 500; color: var(--muted-foreground);
-    background: var(--secondary); border: 1px solid var(--border);
-    border-radius: 9999px; padding: 2px 10px;
+  .brand-name {
+    font-size: 13px; color: var(--text-2);
+    padding: 3px 10px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 20px;
   }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .btn-edit {
+    font-size: 13px; color: var(--text-2); cursor: pointer;
+    padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--r);
+    background: transparent; font-family: inherit; transition: all 0.15s;
+  }
+  .btn-edit:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
 
-  /* Buttons — shadcn variants */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--font); font-size: 14px; font-weight: 500;
-    padding: 8px 14px; border-radius: var(--radius-md);
-    cursor: pointer; border: 1px solid transparent;
-    transition: background .15s, box-shadow .15s, border-color .15s;
-    white-space: nowrap; line-height: 1; text-decoration: none;
+  /* PAGE */
+  .page { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+  .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 32px; gap: 16px;
   }
-  .btn-default { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
-  .btn-default:hover { background: #27272a; }
-  .btn-outline {
-    background: var(--background); color: var(--foreground);
-    border-color: var(--border);
-  }
-  .btn-outline:hover { background: var(--accent); }
-  .btn-ghost { background: none; color: var(--foreground); border-color: transparent; }
-  .btn-ghost:hover { background: var(--accent); }
-  .btn-sm { font-size: 13px; padding: 6px 11px; }
+  .page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .page-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 
-  /* Main */
-  .main { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; }
-  .page-header { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-  .page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.025em; }
-  .project-count {
-    font-size: 12px; font-weight: 500; color: var(--muted-foreground);
-    background: var(--secondary); padding: 2px 8px; border-radius: 9999px;
+  .btn-new {
+    display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0;
+    padding: 9px 18px; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
   }
+  .btn-new:hover { background: var(--accent-h); }
 
-  /* Demo toggle */
-  .demo-toggle {
-    display: inline-flex; background: var(--muted); border-radius: var(--radius-md);
-    padding: 2px; margin-bottom: 20px; border: 1px solid var(--border);
-  }
-  .demo-tab {
-    font-size: 12px; font-weight: 500; padding: 5px 12px;
-    border-radius: calc(var(--radius-md) - 2px); cursor: pointer;
-    color: var(--muted-foreground); border: none; background: none;
-    font-family: var(--font); transition: background .1s, color .1s;
-  }
-  .demo-tab.active {
-    background: var(--background); color: var(--foreground);
-    box-shadow: 0 1px 2px rgba(0,0,0,.08);
-  }
-
-  /* Project list — shadcn Table / Card style */
-  .project-list {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--card);
-  }
-  .project-card {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px 16px;
-    background: var(--card); border-bottom: 1px solid var(--border);
+  /* VIDEO LIST */
+  .video-list { display: flex; flex-direction: column; gap: 6px; }
+  .video-card {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); cursor: pointer; transition: border-color 0.15s, background 0.15s;
     text-decoration: none; color: inherit;
-    transition: background .1s;
   }
-  .project-card:last-child { border-bottom: none; }
-  .project-card:hover { background: var(--accent); }
-
-  .step-progress { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; width: 36px; }
-  .step-fraction { font-size: 11px; font-weight: 600; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
-  .step-bar-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .step-bar-fill { height: 100%; border-radius: 2px; background: var(--primary); }
-  .step-bar-fill.done { background: var(--success); }
-
-  .project-info { flex: 1; min-width: 0; }
-  .project-title {
-    font-size: 14px; font-weight: 500; color: var(--foreground);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
+  .video-card:hover { border-color: var(--border-2); background: var(--surface-2); }
+  .video-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .video-title {
+    font-size: 14px; font-weight: 500; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
-  .project-meta { font-size: 12px; color: var(--muted-foreground); margin-top: 2px; }
+  .video-meta { font-size: 12px; color: var(--text-2); }
+  .video-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-  .project-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-
-  /* shadcn Badge */
+  /* status badges */
   .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; font-weight: 600; padding: 2px 8px;
-    border-radius: 9999px; border: 1px solid; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
   }
-  .badge-default { background: var(--secondary); color: var(--secondary-foreground); border-color: var(--border); }
-  .badge-success { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
-  .badge-outline { background: transparent; color: var(--muted-foreground); border-color: var(--border); }
+  .badge-progress {
+    background: rgba(217,119,6,0.08); color: var(--warning);
+    border: 1px solid rgba(217,119,6,0.2);
+  }
+  .badge-done {
+    background: rgba(22,163,74,0.08); color: var(--success);
+    border: 1px solid rgba(22,163,74,0.2);
+  }
+  .badge-dot {
+    width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  }
 
-  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-  .chevron { color: var(--muted-foreground); }
+  /* step progress bar */
+  .step-bar {
+    display: flex; gap: 2px; align-items: center;
+  }
+  .step-pip {
+    width: 14px; height: 4px; border-radius: 2px;
+    background: var(--border);
+  }
+  .step-pip.done { background: var(--success); }
+  .step-pip.active { background: var(--warning); }
 
-  /* Empty state */
-  .empty-state {
+  /* EMPTY STATE */
+  .empty {
     text-align: center; padding: 64px 24px;
-    border: 1px dashed var(--border); border-radius: var(--radius);
-    background: var(--card);
+    border: 1px dashed var(--border); border-radius: var(--r);
   }
   .empty-icon {
-    width: 48px; height: 48px; background: var(--secondary);
-    border-radius: var(--radius); margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 16px; opacity: 0.5;
   }
-  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.015em; }
-  .empty-sub { font-size: 14px; color: var(--muted-foreground); margin-bottom: 24px; max-width: 340px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+  .empty-title { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+  .empty-sub { font-size: 13px; color: var(--text-2); margin-bottom: 24px; max-width: 340px; margin-left: auto; margin-right: auto; }
 
-  /* Modal — shadcn Dialog */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px;
+  /* MODAL OVERLAY */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 0 0 0 0; z-index: 100;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
-  .modal-overlay.open { display: flex; }
+  .overlay.open { opacity: 1; pointer-events: all; }
   .modal {
-    background: var(--background); border: 1px solid var(--border);
-    border-radius: var(--radius); width: 100%; max-width: 440px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.15);
-    animation: modal-in .15s ease-out;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    width: 100%; max-width: 480px;
+    padding: 24px 24px 32px;
+    transform: translateY(20px); transition: transform 0.2s;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
   }
-  @keyframes modal-in { from { opacity:0; transform:scale(.97) translateY(4px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  .modal-header { padding: 20px 20px 0; }
-  .modal-title { font-size: 16px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 4px; }
-  .modal-description { font-size: 13px; color: var(--muted-foreground); }
-  .modal-close {
-    position: absolute; top: 12px; right: 12px;
-    background: none; border: none; cursor: pointer;
-    color: var(--muted-foreground); padding: 4px;
-    border-radius: var(--radius-sm); transition: background .1s;
+  .overlay.open .modal { transform: translateY(0); }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
   }
-  .modal-close:hover { background: var(--accent); }
-  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .modal-footer { padding: 0 20px 20px; display: flex; gap: 8px; justify-content: flex-end; }
-
-  /* shadcn form field */
-  .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--foreground); margin-bottom: 6px; }
-  .field-input {
-    width: 100%; background: var(--background);
-    border: 1px solid var(--input); border-radius: var(--radius-md);
-    color: var(--foreground); font-family: var(--font);
-    font-size: 14px; padding: 8px 12px; outline: none;
-    transition: border-color .15s, box-shadow .15s;
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .btn-close {
+    width: 28px; height: 28px; border-radius: 6px; background: var(--surface-2);
+    border: 1px solid var(--border); color: var(--text-2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all 0.15s;
   }
-  .field-input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px rgba(24,24,27,.12); }
-  .field-input::placeholder { color: var(--muted-foreground); }
-  .field-input.error { border-color: var(--destructive); }
-
-  /* Character radio options */
-  .char-option {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border: 1px solid var(--border);
-    border-radius: var(--radius-md); cursor: pointer;
-    transition: border-color .12s, background .12s; margin-bottom: 6px;
+  .btn-close:hover { color: var(--text); border-color: var(--border-2); }
+  .modal .field { margin-bottom: 16px; }
+  .modal label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .modal input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--r); color: var(--text); font-family: inherit;
+    font-size: 14px; padding: 9px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .char-option:last-child { margin-bottom: 0; }
-  .char-option:hover { background: var(--accent); }
-  .char-option.selected { border-color: var(--ring); background: var(--accent); }
-  .char-option input[type=radio] { accent-color: var(--primary); width: 14px; height: 14px; flex-shrink: 0; }
-  .char-name { font-size: 13px; font-weight: 500; color: var(--foreground); }
-  .char-desc { font-size: 12px; color: var(--muted-foreground); margin-top: 1px; }
-  .char-skip { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 2px; }
-  .char-skip input[type=radio] { accent-color: var(--primary); }
-  .char-skip span { font-size: 12px; color: var(--muted-foreground); }
-
-  /* Separator */
-  hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
-
-  @media (max-width: 600px) {
-    .header-inner { padding: 0 16px; }
-    .main { padding: 20px 16px 60px; }
-    .brand-pill { display: none; }
-    .step-progress { display: none; }
+  .modal input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .modal input::placeholder { color: var(--text-3); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal .btn-primary {
+    flex: 1; padding: 10px; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
+  }
+  .modal .btn-primary:hover { background: var(--accent-h); }
+  .modal .btn-ghost {
+    padding: 10px 16px; background: transparent; color: var(--text-2);
+    font-family: inherit; font-size: 14px; border: 1px solid var(--border);
+    border-radius: var(--r); cursor: pointer; transition: all 0.15s;
+  }
+  .modal .btn-ghost:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
+  .modal-note {
+    font-size: 12px; color: var(--text-3); margin-top: 10px; line-height: 1.5;
+  }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-inner">
-    <a href="#" class="logo">
-      <div class="logo-icon">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-          <path d="M2 7L6 3L10 7L6 11Z" fill="white" opacity="0.9"/>
-          <path d="M6 7L10 3L14 7L10 11Z" fill="white" opacity="0.55"/>
-        </svg>
+<nav>
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-mark">G</div>
+      Gigity
+    </div>
+    <span class="brand-name">Deewas</span>
+  </div>
+  <div class="nav-right">
+    <button class="btn-edit" onclick="window.location='brand-setup.html'">Edit brand</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Videos</h1>
+      <p class="page-sub">3 projects · last created 2 days ago</p>
+    </div>
+    <button class="btn-new" id="openModal">+ New video</button>
+  </div>
+
+  <!-- Video list (populated state) -->
+  <div class="video-list" id="videoList">
+
+    <a class="video-card" href="workflow-view.html">
+      <div class="video-left">
+        <div class="video-title">Deewas — April payday campaign</div>
+        <div class="video-meta">Started Apr 11 · Step 3 of 11</div>
       </div>
-      <span class="logo-name">Gigity</span>
+      <div class="video-right">
+        <div class="step-bar">
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip active"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+          <div class="step-pip"></div>
+        </div>
+        <span class="badge badge-progress"><span class="badge-dot"></span> In progress</span>
+      </div>
     </a>
-    <div class="header-spacer"></div>
-    <span class="brand-pill">Deewas</span>
-    <a href="/brand/edit" class="btn btn-outline btn-sm">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5L10.5 3.5L4 10H2V8L8.5 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-      Edit Brand
+
+    <a class="video-card" href="#">
+      <div class="video-left">
+        <div class="video-title">Deewas — "First salary" story</div>
+        <div class="video-meta">Started Apr 9 · All 11 steps done</div>
+      </div>
+      <div class="video-right">
+        <div class="step-bar">
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+        </div>
+        <span class="badge badge-done"><span class="badge-dot"></span> Completed</span>
+      </div>
     </a>
-    <button class="btn btn-default btn-sm" onclick="openModal()">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      New Video
-    </button>
-  </div>
-</header>
 
-<main class="main">
-
-  <div class="demo-toggle">
-    <button class="demo-tab active" onclick="showState('projects', this)">With projects</button>
-    <button class="demo-tab" onclick="showState('empty', this)">Empty state</button>
-  </div>
-
-  <!-- State: Projects -->
-  <div id="state-projects">
-    <div class="page-header">
-      <h1 class="page-title">Your Videos</h1>
-      <span class="project-count">4 projects</span>
-    </div>
-    <div class="project-list">
-
-      <a href="/projects/4" class="project-card">
-        <div class="step-progress">
-          <span class="step-fraction">3/10</span>
-          <div class="step-bar-track"><div class="step-bar-fill" style="width:30%"></div></div>
-        </div>
-        <div class="project-info">
-          <div class="project-title">Deewas — April salary season campaign</div>
-          <div class="project-meta">Started Apr 10, 2026 · Minh</div>
-        </div>
-        <div class="project-right">
-          <span class="badge badge-outline"><span class="status-dot" style="color:#f59e0b"></span>In Progress</span>
-          <svg class="chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </a>
-
-      <a href="/projects/3" class="project-card">
-        <div class="step-progress">
-          <span class="step-fraction">7/10</span>
-          <div class="step-bar-track"><div class="step-bar-fill" style="width:70%"></div></div>
-        </div>
-        <div class="project-info">
-          <div class="project-title">Deewas — New Year savings challenge</div>
-          <div class="project-meta">Started Mar 29, 2026 · No character</div>
-        </div>
-        <div class="project-right">
-          <span class="badge badge-outline"><span class="status-dot" style="color:#f59e0b"></span>In Progress</span>
-          <svg class="chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </a>
-
-      <a href="/projects/2" class="project-card">
-        <div class="step-progress">
-          <span class="step-fraction">10/10</span>
-          <div class="step-bar-track"><div class="step-bar-fill done" style="width:100%"></div></div>
-        </div>
-        <div class="project-info">
-          <div class="project-title">Deewas — Tet holiday spending story</div>
-          <div class="project-meta">Completed Feb 7, 2026 · Linh</div>
-        </div>
-        <div class="project-right">
-          <span class="badge badge-success">Completed</span>
-          <svg class="chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </a>
-
-      <a href="/projects/1" class="project-card">
-        <div class="step-progress">
-          <span class="step-fraction">10/10</span>
-          <div class="step-bar-track"><div class="step-bar-fill done" style="width:100%"></div></div>
-        </div>
-        <div class="project-info">
-          <div class="project-title">Deewas — First paycheck moment</div>
-          <div class="project-meta">Completed Jan 15, 2026 · Minh</div>
-        </div>
-        <div class="project-right">
-          <span class="badge badge-success">Completed</span>
-          <svg class="chevron" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-      </a>
-
-    </div>
-  </div>
-
-  <!-- State: Empty -->
-  <div id="state-empty" style="display:none">
-    <div class="page-header">
-      <h1 class="page-title">Your Videos</h1>
-    </div>
-    <div class="empty-state">
-      <div class="empty-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="18" height="18" rx="4" stroke="#71717a" stroke-width="1.5"/><path d="M8 11H14M11 8V14" stroke="#71717a" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <a class="video-card" href="#">
+      <div class="video-left">
+        <div class="video-title">Deewas — Savings goal launch</div>
+        <div class="video-meta">Started Mar 28 · All 11 steps done</div>
       </div>
-      <div class="empty-title">No videos yet</div>
-      <div class="empty-sub">Create your first video project. Gigity pre-fills all 10 prompts from your Deewas brand context.</div>
-      <button class="btn btn-default" style="font-size:14px;padding:9px 18px" onclick="openModal()">
-        <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Create your first video
-      </button>
-    </div>
+      <div class="video-right">
+        <div class="step-bar">
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+          <div class="step-pip done"></div>
+        </div>
+        <span class="badge badge-done"><span class="badge-dot"></span> Completed</span>
+      </div>
+    </a>
+
   </div>
 
-</main>
+  <!-- Empty state (hidden by default, shown when no videos) -->
+  <!--
+  <div class="empty">
+    <div class="empty-icon">🎬</div>
+    <div class="empty-title">No videos yet</div>
+    <p class="empty-sub">Create your first video and Gigity will guide you through all 11 steps — from campaign brief to KlingAI prompts.</p>
+    <button class="btn-new" onclick="document.getElementById('overlay').classList.add('open')">+ Create your first video</button>
+  </div>
+  -->
+</div>
 
-<!-- New Video Modal -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
-  <div class="modal" role="dialog" aria-modal="true" style="position:relative">
-    <div class="modal-header">
-      <div class="modal-title">New Video</div>
-      <div class="modal-description">Give your video a title and pick a character.</div>
+<!-- NEW VIDEO MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">New video</span>
+      <button class="btn-close" id="closeModal">×</button>
     </div>
-    <button class="modal-close" onclick="closeModal()" aria-label="Close">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </button>
-    <div class="modal-body">
-      <div>
-        <label class="field-label" for="video-title">Video title</label>
-        <input class="field-input" type="text" id="video-title" placeholder="e.g. Deewas — April campaign" autocomplete="off">
-      </div>
-      <div>
-        <label class="field-label">Character</label>
-        <label class="char-option selected" id="char-minh">
-          <input type="radio" name="char" value="minh" checked onchange="selectChar(this)">
-          <div>
-            <div class="char-name">Minh</div>
-            <div class="char-desc">25-year-old office worker, friendly</div>
-          </div>
-        </label>
-        <label class="char-option" id="char-linh">
-          <input type="radio" name="char" value="linh" onchange="selectChar(this)">
-          <div>
-            <div class="char-name">Linh</div>
-            <div class="char-desc">22-year-old student, budget-conscious</div>
-          </div>
-        </label>
-        <hr>
-        <label class="char-skip">
-          <input type="radio" name="char" value="none" onchange="selectChar(this)">
-          <span>No character for this video</span>
-        </label>
-      </div>
+
+    <div class="field">
+      <label for="vid-title">Title</label>
+      <input type="text" id="vid-title" placeholder="e.g. Deewas — April payday campaign" autofocus>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-default btn-sm" onclick="createVideo()">Start Workflow &rarr;</button>
+
+    <p class="modal-note">Gigity will start generating your campaign brief (Step 1) as soon as you create the project. Your brand context is pre-loaded automatically.</p>
+
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="window.location='workflow-view.html'">Create &amp; start →</button>
+      <button class="btn-ghost" id="closeModal2">Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-function openModal() {
-  document.getElementById('modal-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('video-title').focus(), 120);
-}
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('video-title').value = '';
-  document.getElementById('video-title').classList.remove('error');
-}
-function handleOverlayClick(e) { if (e.target.id === 'modal-overlay') closeModal(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-function selectChar(radio) {
-  document.querySelectorAll('.char-option').forEach(el => el.classList.remove('selected'));
-  if (radio.value !== 'none') radio.closest('.char-option').classList.add('selected');
-}
-function createVideo() {
-  const titleEl = document.getElementById('video-title');
-  const title = titleEl.value.trim();
-  if (!title) { titleEl.classList.add('error'); titleEl.focus(); setTimeout(() => titleEl.classList.remove('error'), 1600); return; }
-  const char = document.querySelector('input[name="char"]:checked').value;
-  alert('POST /api/v1/projects → redirect to /projects/[id]\n' + JSON.stringify({ title, activeCharacter: char === 'none' ? null : char }, null, 2));
-  closeModal();
-}
-function showState(state, btn) {
-  document.getElementById('state-projects').style.display = state === 'projects' ? '' : 'none';
-  document.getElementById('state-empty').style.display = state === 'empty' ? '' : 'none';
-  document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-}
+  document.getElementById('openModal').onclick = () =>
+    document.getElementById('overlay').classList.add('open')
+  document.getElementById('closeModal').onclick =
+  document.getElementById('closeModal2').onclick = () =>
+    document.getElementById('overlay').classList.remove('open')
+  document.getElementById('overlay').onclick = e => {
+    if (e.target === e.currentTarget)
+      e.currentTarget.classList.remove('open')
+  }
 </script>
 </body>
 </html>

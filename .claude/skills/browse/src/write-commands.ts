@@ -1074,7 +1074,7 @@ export async function handleWriteCommand(
         // Try as CSS selector first, then as text content
         const scrolled = await page.evaluate((target: string) => {
           // Try CSS selector
-          let el = document.querySelector(target)
+          const el = document.querySelector(target)
           if (el) {
             el.scrollIntoView({ behavior: 'instant', block: 'center' })
             return true

@@ -217,7 +217,7 @@ function describeToolCall(tool: string, input: any): string {
 
     // Non-browse bash commands
     if (cmd.includes('git ')) return `Running: ${shorten(cmd)}`
-    let short = shorten(cmd)
+    const short = shorten(cmd)
     return short.length > 100 ? short.slice(0, 100) + '…' : short
   }
 
@@ -327,7 +327,7 @@ async function askClaude(queueEntry: any): Promise<void> {
     // Fall back to defaults only if queue entry has no args (backward compat).
     // Write doesn't expand attack surface beyond what Bash already provides.
     // The security boundary is the localhost-only message path, not the tool allowlist.
-    let claudeArgs = args || [
+    const claudeArgs = args || [
       '-p',
       prompt,
       '--output-format',

@@ -164,7 +164,7 @@ function describeToolCall(tool: string, input: any): string {
       }
     }
     if (cmd.includes('git ')) return `Running: ${shorten(cmd)}`
-    let short = shorten(cmd)
+    const short = shorten(cmd)
     return short.length > 100 ? short.slice(0, 100) + '…' : short
   }
 

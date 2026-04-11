@@ -1,0 +1,315 @@
+export type StepType = 'llm' | 'external_instruction'
+
+export interface StepDefinition {
+  stepNumber: number
+  title: string
+  tool: string
+  type: StepType
+  promptTemplate?: string // LLM steps only
+  instruction?: string // external steps only
+  externalLink?: string // external steps only
+  expiryWarning?: string // external steps: shown if asset URLs expire
+}
+
+export const WORKFLOW_STEPS: StepDefinition[] = [
+  {
+    stepNumber: 1,
+    title: 'Campaign Brief',
+    tool: 'Gigity',
+    type: 'llm',
+    promptTemplate: `You are a creative strategist for {{brand_name}}.
+
+Product: {{brand_description}}
+Target audience: {{target_audience}}
+Brand tone: {{tone}}
+Publishing platforms: {{platform}}
+Reference videos (style examples): {{example_videos}}
+
+Write a campaign brief for a short-form video ad. Include:
+1. Campaign concept (1-2 sentences — the core idea)
+2. Hook (the first 3 seconds — what stops the scroll)
+3. Emotional arc (what the viewer feels: start → middle → end)
+4. Call to action
+5. Key message (one sentence the viewer should remember)
+
+Be specific to {{brand_name}}. Do not write a generic brief.`,
+  },
+  {
+    stepNumber: 2,
+    title: 'Story Script',
+    tool: 'Gigity',
+    type: 'llm',
+    promptTemplate: `Write a plain story narrative for a 30–60 second short-form video ad.
+
+Campaign brief:
+{{step_1_output}}
+
+Brand: {{brand_name}}
+Tone: {{tone}}
+Target audience: {{target_audience}}
+
+Write 3–6 flowing paragraphs that describe what happens in the video — as if telling the story to a director. Cover the emotional journey from problem to solution to CTA. Be specific about:
+- Who we see and what they're doing
+- The setting and visual atmosphere in each beat
+- How the emotion shifts throughout
+
+Rules:
+- No structured formatting, no lyric lines, no mood labels — just natural prose
+- Characters should feel like real people, not stock photo types
+- The opening beat is the hook (stops the scroll in 2 seconds)
+- The closing beat is the CTA or emotional payoff
+- Keep it concise — 30–60 seconds total running time`,
+  },
+  {
+    stepNumber: 3,
+    title: 'Song Lyrics',
+    tool: 'SunoAI',
+    type: 'llm',
+    promptTemplate: `Write song lyrics for a 30–60 second {{brand_name}} ad.
+
+Story:
+{{step_2_output}}
+
+Brand tone: {{tone}}
+Target audience: {{target_audience}}
+
+Write lyrics that follow the emotional arc of the story — from the opening problem beat through the discovery, to the confident payoff and CTA. Structure them for SunoAI:
+
+[Verse 1]
+(opening beats — problem / tension)
+
+[Chorus]
+(emotional peak — the key brand moment)
+
+[Verse 2]
+(solution / benefit beats)
+
+[Chorus]
+(repeat — drives the message home)
+
+[Outro] (optional)
+(CTA / final feeling)
+
+Rules:
+- Lyrics should mirror the story beats in order
+- The chorus is the emotional peak — most memorable moment
+- Rhyme scheme that feels natural, not forced
+- Avoid {{brand_name}} overuse — mention once or twice max
+- Vocabulary and cultural references for: {{target_audience}}
+- Total length: 30–60 seconds when sung at moderate tempo`,
+  },
+  {
+    stepNumber: 4,
+    title: 'Music Prompt',
+    tool: 'SunoAI',
+    type: 'llm',
+    promptTemplate: `Create the SunoAI music generation package for this {{brand_name}} ad.
+
+Brand tone: {{tone}}
+Target audience: {{target_audience}}
+Story script: {{step_2_output}}
+Lyrics:
+{{step_3_output}}
+
+Return exactly two sections:
+
+**Lyrics**
+(paste the lyrics from Step 3 here verbatim — clean formatting for SunoAI input)
+
+**Style Prompt**
+(a comma-separated list of musical descriptors SunoAI understands)
+Examples: "upbeat pop, 120 BPM, warm acoustic guitar, female vocals, hopeful, building energy"
+         "lo-fi hip hop, 85 BPM, mellow, introspective, soft piano, light drums"
+
+The style prompt should match:
+- Brand tone: {{tone}}
+- Audience: {{target_audience}}
+- The emotional arc of the story (starts [opening mood], peaks at chorus, ends [closing mood])
+
+Write a 1-sentence note after the style prompt explaining the musical direction.`,
+  },
+  {
+    stepNumber: 5,
+    title: 'Character Images',
+    tool: 'DALL-E / Midjourney',
+    type: 'llm',
+    promptTemplate: `Based on this story script, identify all on-screen characters and write
+Midjourney image prompts for each one.
+
+Story script:
+{{step_2_output}}
+
+For each character:
+1. Name and role in the story (1 sentence)
+2. Visual description (age, ethnicity, style, expression, body language)
+3. Midjourney prompt
+
+Format:
+**Character — [Name] ([role])**
+Description: ...
+Midjourney prompt: Portrait of [description], soft studio lighting, clean background, cinematic --ar 9:16 --style raw
+
+Be specific: "Vietnamese woman, 26, office casual, warm smile" beats "young professional woman".`,
+  },
+  {
+    stepNumber: 6,
+    title: 'Generate Character Images',
+    tool: 'Midjourney',
+    type: 'external_instruction',
+    instruction: `Take the character prompts from Step 5 and generate images in Midjourney or DALL-E.
+
+1. Open Midjourney (or DALL-E)
+2. Paste each character prompt and generate
+3. Copy the permanent image URLs (download and re-host if needed — see warning below)
+4. Paste all URLs below, one per character`,
+    externalLink: 'https://midjourney.com',
+    expiryWarning:
+      'Midjourney and DALL-E image URLs expire in 24–72 hours. Upload to Cloudinary, Imgur, or any permanent host before saving here.',
+  },
+  {
+    stepNumber: 7,
+    title: 'Scene Images',
+    tool: 'DALL-E / Midjourney',
+    type: 'llm',
+    promptTemplate: `Write Midjourney image generation prompts for a 30–60 second video.
+
+Story:
+{{step_2_output}}
+
+Song lyrics (use to align scene beats with lyric lines):
+{{step_3_output}}
+
+Character image references (for visual consistency):
+{{step_6_output}}
+
+Break the story into 10–20 distinct visual beats. For each beat write one image prompt.
+
+Format:
+
+**Scene [N] — [short title]**
+Lyric: "[matching lyric line from Step 3]"
+Prompt: [character ref URL if applicable], [scene description], [setting], [lighting], [camera angle], [mood], cinematic --ar 9:16
+
+Rules:
+- Use --ar 9:16 (portrait) for all scenes — TikTok / Reels format
+- Reference character URLs from Step 6 for visual consistency across scenes
+- Lighting and color grade should stay consistent across all scenes
+- Be specific: "golden hour backlighting" beats "good lighting"
+- One prompt per scene — every scene gets an image`,
+  },
+  {
+    stepNumber: 8,
+    title: 'KlingAI Animation Prompts',
+    tool: 'KlingAI',
+    type: 'llm',
+    promptTemplate: `Write KlingAI video animation prompts for each scene.
+
+Story:
+{{step_2_output}}
+
+Song lyrics:
+{{step_3_output}}
+
+Scene image prompts (one per scene):
+{{step_7_output}}
+
+Character images (Cloudinary URLs):
+{{step_6_output}}
+
+For each scene from Step 7, write a KlingAI prompt that animates the scene image into a short clip.
+Each clip should:
+- Start from the scene image (reference by scene number)
+- Describe the camera motion (pan, zoom, static, pull back, etc.)
+- Describe character movement or expression change
+- Match the energy and mood of the lyric line
+- Run 2-5 seconds
+
+Format:
+
+**Scene [N] — [short title]**
+Lyric: "[matching lyric line from step 3]"
+Image: Scene [N] image (from Step 7)
+KlingAI prompt: [subject action], [camera motion], [mood/lighting], [duration in seconds]s
+
+Example:
+**Scene 3 — The Decision**
+Lyric: "She looked up and saw the light"
+Image: Scene 3 image (from Step 7)
+KlingAI prompt: Woman slowly lifts her gaze, camera pulls back to reveal open doorway,
+warm golden light blooms in background, hopeful atmosphere, 3s
+
+Rules:
+- Keep prompts short and concrete — KlingAI works best with clear simple motions
+- Avoid complex multi-character interactions — KlingAI handles single-subject better
+- Camera motion should emphasize the lyric's emotional peak
+- Match clip energy to BPM: slow lyrics → slower motion, energetic chorus → faster cuts
+- Total sequence length: 30-60 seconds when all clips are assembled`,
+  },
+  {
+    stepNumber: 9,
+    title: 'Generate Video Clips',
+    tool: 'KlingAI',
+    type: 'external_instruction',
+    instruction: `Generate a KlingAI video clip for each scene using the prompts from Step 8.
+
+For each scene:
+1. Open KlingAI image-to-video
+2. Upload the scene image (from Step 7 — or use the Cloudinary URL directly)
+3. Paste the KlingAI prompt for that scene
+4. Set duration to the seconds specified in the prompt (2-5s)
+5. Generate and download
+
+Once you have all clips:
+- Paste a download folder link below (Google Drive, Dropbox, etc.)
+- Or paste individual clip URLs one per line
+
+Tip: Generate in batches — start the first 5 clips while reviewing the next 5 prompts.`,
+    externalLink: 'https://kling.kuaishou.com',
+    expiryWarning:
+      'KlingAI video URLs expire — download clips immediately and store in cloud storage (Google Drive, Dropbox, etc.) before pasting URLs here.',
+  },
+  {
+    stepNumber: 10,
+    title: 'Assemble in CapCut',
+    tool: 'CapCut',
+    type: 'external_instruction',
+    instruction: `Assemble your video in CapCut.
+
+All project assets are shown above. Download them before opening CapCut.
+
+Assembly order:
+1. Import all video clips (from Step 9) — arrange in scene order
+2. Import the music track (from Step 4)
+3. Sync music to scene cuts — chorus should hit the emotional peak
+4. Add logo, captions, on-screen text (from your story script, Step 2)
+5. Color grade — all scenes should feel consistent
+6. Export:
+   - 9:16 (1080×1920) for TikTok / Instagram Reels
+   - 16:9 (1920×1080) for YouTube (optional)
+
+When done, click "Mark as done" below.`,
+    externalLink: 'https://www.capcut.com',
+  },
+  {
+    stepNumber: 11,
+    title: 'Publish',
+    tool: 'Manual',
+    type: 'external_instruction',
+    instruction: `Publish your video to your platforms.
+
+Target platforms: {{platform}}
+
+1. Upload to each platform
+2. Write captions optimized per platform (TikTok captions differ from YouTube)
+3. Add relevant hashtags
+4. Schedule or publish immediately
+
+When published, click "Mark as published" below to complete this project.`,
+  },
+]
+
+export function getStepDefinition(
+  stepNumber: number
+): StepDefinition | undefined {
+  return WORKFLOW_STEPS.find(s => s.stepNumber === stepNumber)
+}

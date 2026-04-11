@@ -9,6 +9,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ## P1 — Must do
 
 ### T-001: Add `type` field to each workflow-template step definition
+
 **What:** Each step in `workflow-templates.ts` needs a `type` field: `'text_prompt' | 'image_prompt' | 'external_instruction'`.
 **Why:** The workflow view (M3) can't render steps correctly without knowing the step type. Steps 3-7 show a copy button. Steps 8-9 (KlingAI, CapCut) show an instruction card + external link, no copy button. Steps 1-2 show a context summary.
 **Pros:** Enables correct M3 UI rendering. Steps feel purpose-built per tool, not generic.
@@ -21,6 +22,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ---
 
 ### T-002: Add expiring URL warning for steps 5, 6, 7, 8
+
 **What:** Show a static warning note on steps 5 (SunoAI audio), 6-7 (image generation), 8 (KlingAI video) that AI tool output URLs expire.
 **Why:** SunoAI and KlingAI generate signed URLs that expire in 24-72 hours. A user who pastes the URL and comes back 3 days later will find broken assets. They need to know to download and re-host (Google Drive, Dropbox, direct URL) before saving.
 **Pros:** Prevents data loss. One sentence of warning text in workflow-templates.ts is all that's needed.
@@ -33,6 +35,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ---
 
 ### T-003: Define M4 exit criteria
+
 **What:** Update the design doc to specify what "M4 complete" means.
 **Why:** "Use for real" is not a deliverable — it's a validation activity with no definition of done. Without exit criteria, M4 never closes.
 **Pros:** Clear milestone. Makes it possible to declare V1 validated.
@@ -47,6 +50,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ## P2 — Should do
 
 ### T-004: Add nullable `userId` field to BrandProfile and VideoProject schemas
+
 **What:** Add `userId: mongoose.Types.ObjectId | null` (optional, default null) to both Mongoose schemas.
 **Why:** V2 adds multi-user auth. Without userId on existing documents, V2 requires a data migration of every BrandProfile and VideoProject. Adding it now (unused in V1) makes V2 safe.
 **Pros:** V2 auth migration becomes trivial — just populate userId on registration. No document rewrite needed.
@@ -59,6 +63,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ---
 
 ### T-005: Write unit tests for `interpolate(template, vars)` function
+
 **What:** Write `src/lib/interpolate.test.ts` covering: all 9 variables present (happy path), undefined var → empty string, null var → empty string, unknown `{{variable}}` passes through unchanged, character vars with no activeCharacter → empty strings.
 **Why:** `interpolate()` is the core engine of Gigity. A bug here produces bad prompts across all steps for all videos. It's a pure function — easy to test with no mocking needed.
 **Pros:** High confidence in the one function that matters most. Catches edge cases before real use.
@@ -73,6 +78,7 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 ## P3 — Nice to have
 
 ### T-006: V1 cleanup — dead env vars + health route convention
+
 **What:** (a) Remove `BCRYPT_SALT_ROUND` and `CRON_SECRET` from `.env.example`. (b) Fix `src/app/api/(system)/health/route.ts` — change `POST` to `GET` and add `return` before `NextResponse.json()`.
 **Why:** Auth and cron are V2 features. Their env vars in V1 confuse future contributors. The health route currently returns nothing (missing `return`), which makes it a broken endpoint.
 **Pros:** Cleaner dev environment. Health endpoint actually works.
@@ -81,3 +87,4 @@ Items are ordered P1 → P3. Effort: S/M/L/XL (human) → with CC+gstack: S→S,
 **Effort:** XS (10 minutes)
 **Priority:** P3 (the health route bug is trivial; the env cleanup is cosmetic)
 **Depends on:** none
+

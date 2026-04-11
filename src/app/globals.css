@@ -48,7 +48,22 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Design tokens (from docs/designs/*.html) */
 :root {
+  --ds-bg: #ffffff;
+  --ds-surface: #ffffff;
+  --ds-surface-2: #f4f4f5; /* zinc-100 */
+  --ds-border: #e4e4e7; /* zinc-200 */
+  --ds-border-2: #d4d4d8; /* zinc-300 */
+  --ds-text: #09090b; /* zinc-950 */
+  --ds-text-2: #71717a; /* zinc-500 */
+  --ds-text-3: #a1a1aa; /* zinc-400 */
+  --ds-accent: #6366f1; /* indigo-500 */
+  --ds-accent-h: #4f46e5; /* indigo-600 */
+  --ds-success: #16a34a; /* green-600 */
+  --ds-warning: #d97706; /* amber-600 */
+  --ds-radius: 6px;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -83,40 +98,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
 @layer base {
   * {
     margin: 0;
@@ -126,7 +107,9 @@
     font-family: var(--font-sans);
   }
   body {
-    @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.5;
+    @apply bg-white text-zinc-950;
   }
 }
 
@@ -136,17 +119,5 @@
 
 .font-body {
   font-family: var(--font-body);
-}
-
-.trans-200 {
-  @apply transition-all duration-200 ease-in-out;
-}
-
-.trans-300 {
-  @apply transition-all duration-300 ease-in-out;
-}
-
-.trans-500 {
-  @apply transition-all duration-500 ease-in-out;
 }
 

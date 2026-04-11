@@ -1632,3 +1632,4 @@ The design doc at `~/.gstack/projects/` is automatically discoverable by downstr
   - DONE — design doc APPROVED
   - DONE_WITH_CONCERNS — design doc approved but with open questions listed
   - NEEDS_CONTEXT — user left questions unanswered, design incomplete
+

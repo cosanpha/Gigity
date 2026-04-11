@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export async function POST() {
-  console.info('- Health -')
-  NextResponse.json({ message: '✅ Good' }, { status: 200 })
+export async function GET() {
+  return NextResponse.json({ message: '✅ Good' }, { status: 200 })
 }

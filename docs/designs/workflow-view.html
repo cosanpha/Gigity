@@ -5,561 +5,731 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gigity — Workflow View</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --background: #ffffff;
-    --foreground: #09090b;
-    --card: #ffffff;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    --secondary: #f4f4f5;
-    --secondary-foreground: #18181b;
-    --accent: #f4f4f5;
-    --accent-foreground: #18181b;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --primary: #18181b;
-    --primary-foreground: #fafafa;
-    --destructive: #ef4444;
-    --success: #16a34a;
-    --success-bg: #f0fdf4;
-    --success-border: #bbf7d0;
-    --success-text: #15803d;
-    --warning-bg: #fffbeb;
-    --warning-text: #b45309;
-    --warning-border: #fde68a;
-    --ring: #18181b;
-    --sidebar-bg: #fafafa;
-    --sidebar-w: 220px;
-    --header-h: 52px;
-    --radius: 0.5rem;
-    --radius-md: 0.375rem;
-    --radius-sm: 0.25rem;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --mono: 'JetBrains Mono', 'Fira Code', monospace;
-  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  :root {
+    --bg:        #ffffff;
+    --surface:   #ffffff;
+    --surface-2: #f4f4f5;
+    --border:    #e4e4e7;
+    --border-2:  #d4d4d8;
+    --text:      #09090b;
+    --text-2:    #71717a;
+    --text-3:    #a1a1aa;
+    --accent:    #6366f1;
+    --accent-h:  #4f46e5;
+    --success:   #16a34a;
+    --success-bg:rgba(22,163,74,0.07);
+    --warning:   #d97706;
+    --warn-bg:   rgba(217,119,6,0.07);
+    --external:  #0284c7;
+    --ext-bg:    rgba(2,132,199,0.06);
+    --r:         6px;
+  }
   body {
-    font-family: var(--font);
-    background: var(--background);
-    color: var(--foreground);
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
     line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    display: flex; flex-direction: column; min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Header */
-  .header {
-    position: sticky; top: 0; z-index: 40; flex-shrink: 0;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  /* ── NAV ── */
+  nav {
+    height: 52px; flex-shrink: 0;
     border-bottom: 1px solid var(--border);
-    height: var(--header-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    background: var(--bg); z-index: 20;
   }
-  .header-inner {
-    padding: 0 20px; height: 100%;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .back-link {
-    display: flex; align-items: center; gap: 5px;
-    text-decoration: none; color: var(--muted-foreground);
-    font-size: 13px; font-weight: 500; transition: color .12s; white-space: nowrap;
-  }
-  .back-link:hover { color: var(--foreground); }
-  .sep { color: var(--border); }
-  .project-name {
-    font-size: 13px; font-weight: 600; color: var(--foreground);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;
-  }
-  .header-spacer { flex: 1; }
-  .progress-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .progress-label { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
-  .progress-track { width: 72px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 2px; background: var(--primary); transition: width .35s ease; }
-  .badge-completed {
-    font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 9999px;
-    background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); display: none;
-  }
-
-  /* Demo tabs */
-  .demo-toggle {
-    display: inline-flex; background: var(--muted); border-radius: var(--radius-md);
-    padding: 2px; border: 1px solid var(--border); margin-left: 8px; flex-shrink: 0;
-  }
-  .demo-tab {
-    font-size: 11px; font-weight: 500; padding: 4px 10px;
-    border-radius: calc(var(--radius-md) - 2px); cursor: pointer;
-    color: var(--muted-foreground); border: none; background: none;
-    font-family: var(--font); transition: background .1s, color .1s; white-space: nowrap;
-  }
-  .demo-tab.active { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-
-  /* Workspace */
-  .workspace { display: flex; flex: 1; overflow: hidden; height: calc(100vh - var(--header-h)); }
-
-  /* Sidebar */
-  .sidebar {
-    width: var(--sidebar-w); border-right: 1px solid var(--border);
-    background: var(--sidebar-bg); overflow-y: auto; flex-shrink: 0;
-    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-  }
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .sidebar-header {
-    padding: 14px 12px 8px;
-    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--muted-foreground);
-    border-bottom: 1px solid var(--border);
-  }
-
-  /* Step items */
-  .step-item {
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
     display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; cursor: pointer; user-select: none;
-    border-left: 2px solid transparent;
-    transition: background .1s, border-color .1s;
   }
-  .step-item:hover:not(.locked) { background: var(--accent); }
-  .step-item.active { background: var(--accent); border-left-color: var(--primary); }
-  .step-item.locked { cursor: default; opacity: 0.45; }
-
-  .step-icon {
-    width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 10px; font-weight: 700;
-    border: 1.5px solid var(--border); color: var(--muted-foreground);
-    background: var(--background); transition: border-color .1s, background .1s;
+  .logo-mark {
+    width: 26px; height: 26px; background: var(--accent);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff;
   }
-  .step-item.done .step-icon { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-  .step-item.active .step-icon { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
-
-  .step-label { flex: 1; min-width: 0; }
-  .step-num { font-size: 10px; font-weight: 600; color: var(--muted-foreground); letter-spacing: 0.02em; }
-  .step-name { font-size: 12px; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-  .step-item.active .step-name { color: var(--foreground); font-weight: 600; }
-  .step-item.done .step-name { color: var(--muted-foreground); }
-
-  /* Main panel */
-  .panel {
-    flex: 1; overflow-y: auto; padding: 28px 32px 60px;
-    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  .sep { width: 1px; height: 18px; background: var(--border); }
+  .nav-project { font-size: 13px; color: var(--text-2); }
+  .nav-right { display: flex; align-items: center; gap: 6px; }
+  .badge-done-sm {
+    font-size: 11.5px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
+    background: var(--success-bg); color: var(--success);
+    border: 1px solid rgba(22,163,74,0.2);
   }
-  .panel::-webkit-scrollbar { width: 5px; }
-  .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  .step-card { max-width: 660px; }
-
-  /* Step header */
-  .step-card-meta {
-    font-size: 12px; color: var(--muted-foreground); font-weight: 500;
-    margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+  .btn-back {
+    font-size: 13px; color: var(--text-2); padding: 5px 10px;
+    border: 1px solid var(--border); border-radius: var(--r);
+    background: none; font-family: inherit; cursor: pointer; transition: all 0.15s;
   }
-  .tool-badge {
-    font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
-    padding: 2px 7px; border-radius: var(--radius-sm);
-    background: var(--secondary); border: 1px solid var(--border);
-    color: var(--muted-foreground);
-  }
-  .step-card-title { font-size: 22px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 4px; }
-  .step-card-sub { font-size: 13px; color: var(--muted-foreground); margin-bottom: 24px; }
+  .btn-back:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
 
-  /* Done banner — shadcn Alert style */
-  .done-banner {
+  /* ── LAYOUT ── */
+  .layout {
+    display: flex; flex: 1; overflow: hidden; height: calc(100vh - 52px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 16px 0;
+    background: var(--surface-2);
+  }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-3);
+    padding: 0 16px; margin-bottom: 10px;
+  }
+  .step-item {
     display: flex; align-items: center; gap: 10px;
-    background: var(--success-bg); border: 1px solid var(--success-border);
-    border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 20px;
-    font-size: 13px; color: var(--success-text); font-weight: 500;
+    padding: 9px 16px; cursor: pointer;
+    transition: background 0.12s; position: relative;
+  }
+  .step-item:hover { background: var(--border); }
+  .step-item.active { background: rgba(99,102,241,0.07); }
+  .step-item.active::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 2px; background: var(--accent); border-radius: 0 2px 2px 0;
   }
 
-  /* Prompt box */
-  .prompt-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
-    text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 8px;
+  /* step icon */
+  .step-icon {
+    width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
   }
-  .prompt-box {
-    background: var(--muted); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 14px 16px;
-    font-family: var(--mono); font-size: 12px; line-height: 1.75;
-    color: var(--foreground); white-space: pre-wrap; word-break: break-word;
+  .si-pending {
+    background: var(--surface); border: 1px solid var(--border-2);
+    color: var(--text-3);
   }
-  .prompt-box .var { color: #7c3aed; font-weight: 500; }
-  .copy-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; margin-bottom: 24px; }
-  .copy-hint { font-size: 12px; color: var(--muted-foreground); }
+  .si-done {
+    background: var(--success-bg); border: 1px solid rgba(22,163,74,0.25);
+    color: var(--success); font-size: 13px;
+  }
+  .si-active {
+    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.35);
+    color: var(--accent);
+  }
+  .si-generating {
+    background: var(--warn-bg); border: 1px solid rgba(217,119,6,0.3);
+    color: var(--warning);
+  }
+  .si-external {
+    background: var(--ext-bg); border: 1px solid rgba(2,132,199,0.25);
+    color: var(--external); font-size: 10px;
+  }
 
-  /* Instruction card */
-  .instruction-card {
-    background: var(--muted); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 16px 18px; margin-bottom: 24px;
+  .step-info { min-width: 0; flex: 1; }
+  .step-name {
+    font-size: 12.5px; font-weight: 500; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
   }
-  .instruction-card p { font-size: 14px; color: var(--foreground); line-height: 1.7; white-space: pre-line; }
+  .step-item.active .step-name { color: var(--accent); }
+  .step-item.done .step-name { color: var(--text-2); }
+  .step-item.locked .step-name { color: var(--text-3); }
+  .step-tool {
+    font-size: 10.5px; color: var(--text-3); margin-top: 1px;
+  }
+  .step-tool.llm-tag { color: rgba(99,102,241,0.7); }
+  .step-tool.ext-tag { color: rgba(2,132,199,0.6); }
+
+  /* spin animation */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* ── MAIN ── */
+  main {
+    flex: 1; overflow-y: auto; padding: 32px;
+  }
+
+  .step-header { margin-bottom: 24px; }
+  .step-num { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-3); margin-bottom: 6px; }
+  .step-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .step-desc { font-size: 13px; color: var(--text-2); line-height: 1.65; max-width: 560px; }
+
+  /* ═══════════════════════════════════════════════
+     LLM STEP — HAS RESULT STATE (current active)
+  ═══════════════════════════════════════════════ */
+  .result-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); margin-bottom: 16px;
+  }
+  .result-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface-2); border-radius: var(--r) var(--r) 0 0;
+  }
+  .result-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.7px; color: var(--text-3);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ai-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  }
+  .result-body {
+    padding: 16px; font-size: 13.5px; line-height: 1.75;
+    color: var(--text); white-space: pre-wrap;
+  }
+  .result-body strong { font-weight: 600; color: var(--text); }
+
+  /* follow-up area */
+  .followup-area { margin-bottom: 16px; }
+  .followup-label {
+    font-size: 12px; color: var(--text-3); margin-bottom: 8px;
+  }
+  .followup-input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .followup-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); color: var(--text); font-family: inherit;
+    font-size: 13.5px; padding: 9px 12px; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s; resize: none; min-height: 40px;
+  }
+  .followup-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  }
+  .followup-input::placeholder { color: var(--text-3); }
+  .btn-send {
+    padding: 9px 16px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--r);
+    color: var(--text-2); font-family: inherit; font-size: 13px;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-send:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* action row */
+  .action-row { display: flex; align-items: center; gap: 10px; }
+  .btn-retry {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: transparent; color: var(--text-2);
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: var(--r);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-retry:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
+  .btn-approve {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 18px; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
+    margin-left: auto;
+  }
+  .btn-approve:hover { background: var(--accent-h); }
+
+  /* ═══════════════════════════════════════════════
+     LLM STEP — GENERATING STATE
+  ═══════════════════════════════════════════════ */
+  .generating-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 32px 24px;
+    display: flex; align-items: center; gap: 14px;
+    color: var(--text-2); font-size: 13.5px;
+  }
+  .gen-spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border-2);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite; flex-shrink: 0;
+  }
+
+  /* ═══════════════════════════════════════════════
+     LLM STEP — DONE (approved)
+  ═══════════════════════════════════════════════ */
+  .done-card {
+    background: var(--success-bg); border: 1px solid rgba(22,163,74,0.2);
+    border-radius: var(--r); padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--success); margin-bottom: 8px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     EXTERNAL STEP
+  ═══════════════════════════════════════════════ */
+  .context-card {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r); margin-bottom: 16px;
+  }
+  .context-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  .context-tag {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-3);
+  }
+  .context-toggle {
+    margin-left: auto; font-size: 12px; color: var(--text-3); cursor: pointer;
+  }
+  .context-body {
+    padding: 14px 16px; font-size: 13px; line-height: 1.75; color: var(--text-2);
+    white-space: pre-wrap;
+  }
+
+  .ext-card {
+    background: var(--ext-bg); border: 1px solid rgba(2,132,199,0.18);
+    border-radius: var(--r); padding: 16px; margin-bottom: 16px;
+  }
+  .ext-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ext-badge {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--external); background: rgba(2,132,199,0.08);
+    border: 1px solid rgba(2,132,199,0.18); padding: 2px 7px; border-radius: 4px;
+  }
+  .ext-tool { font-size: 13px; font-weight: 500; color: var(--text); }
+  .ext-instructions {
+    font-size: 13.5px; line-height: 1.7; color: var(--text);
+    margin-bottom: 14px;
+  }
   .ext-link {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 500; color: #2563eb; text-decoration: none;
-    margin-top: 14px; border: 1px solid #bfdbfe; border-radius: var(--radius-md);
-    padding: 7px 12px; background: #eff6ff; transition: background .12s;
+    padding: 7px 14px; background: var(--surface);
+    border: 1px solid rgba(2,132,199,0.25); border-radius: var(--r);
+    color: var(--external); font-size: 13px; text-decoration: none;
+    transition: all 0.15s; margin-bottom: 16px;
   }
-  .ext-link:hover { background: #dbeafe; }
-
-  /* Output fields */
-  .output-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
-    text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 8px;
+  .ext-link:hover { background: rgba(2,132,199,0.06); border-color: rgba(2,132,199,0.4); }
+  .ext-input-label {
+    font-size: 12.5px; font-weight: 500; color: var(--text); margin-bottom: 7px;
   }
-  .output-textarea, .output-url {
-    width: 100%; background: var(--background);
-    border: 1px solid var(--input); border-radius: var(--radius-md);
-    color: var(--foreground); font-family: var(--font);
-    font-size: 14px; padding: 9px 12px; outline: none;
-    transition: border-color .15s, box-shadow .15s;
+  .ext-input-hint { font-size: 11.5px; color: var(--text-3); margin-bottom: 8px; }
+  .ext-url-area { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .ext-url-row { display: flex; gap: 8px; align-items: center; }
+  .ext-url-row input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); color: var(--text); font-family: inherit;
+    font-size: 13.5px; padding: 8px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .output-textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
-  .output-textarea:focus, .output-url:focus {
-    border-color: var(--ring); box-shadow: 0 0 0 2px rgba(24,24,27,.1);
+  .ext-url-row input:focus {
+    border-color: var(--external);
+    box-shadow: 0 0 0 3px rgba(2,132,199,0.1);
   }
-  .output-textarea::placeholder, .output-url::placeholder { color: var(--muted-foreground); }
-  .output-section { margin-bottom: 16px; }
-  .url-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted-foreground); }
-
-  /* Expiry warning */
+  .ext-url-row input::placeholder { color: var(--text-3); }
+  .btn-add-url {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-3); background: none; border: none;
+    cursor: pointer; font-family: inherit; transition: color 0.15s; padding: 2px 0;
+  }
+  .btn-add-url:hover { color: var(--external); }
   .expiry-warn {
     display: flex; align-items: flex-start; gap: 8px;
-    background: var(--warning-bg); border: 1px solid var(--warning-border);
-    border-radius: var(--radius-md); padding: 9px 12px; margin-top: 8px;
-    font-size: 12px; color: var(--warning-text); line-height: 1.5;
+    font-size: 12px; color: var(--warning);
+    background: var(--warn-bg); border: 1px solid rgba(217,119,6,0.18);
+    border-radius: 6px; padding: 9px 12px; margin-bottom: 14px;
+    line-height: 1.5;
   }
+  .ext-approve {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 20px; background: var(--external); color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
+  }
+  .ext-approve:hover { background: #0369a1; }
 
-  /* Buttons */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--font); font-size: 14px; font-weight: 500;
-    padding: 8px 14px; border-radius: var(--radius-md); cursor: pointer;
-    border: 1px solid transparent; transition: background .12s, box-shadow .12s;
-    white-space: nowrap; line-height: 1;
+  /* ── TABS (toggle between states for demo) ── */
+  .demo-tabs {
+    display: flex; gap: 6px; margin-bottom: 28px; flex-wrap: wrap;
   }
-  .btn-default { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
-  .btn-default:hover { background: #27272a; }
-  .btn-default.success-state { background: var(--success); border-color: var(--success); }
-  .btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
-  .btn-outline:hover { background: var(--accent); }
-  .btn-sm { font-size: 13px; padding: 6px 11px; }
+  .demo-tab {
+    padding: 5px 12px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; color: var(--text-2); background: none;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .demo-tab:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
+  .demo-tab.on { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,0.07); }
+  .demo-tab.ext { border-color: rgba(2,132,199,0.3); color: var(--external); background: var(--ext-bg); }
 
-  /* Action row */
-  .action-row {
-    display: flex; align-items: center; gap: 12px;
-    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
-  }
-  .action-hint { font-size: 12px; color: var(--muted-foreground); }
+  .state-panel { display: none; }
+  .state-panel.visible { display: block; }
 
-  /* Responsive */
-  @media (max-width: 700px) {
-    .workspace { flex-direction: column; height: auto; overflow: visible; }
-    .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; display: flex; }
-    .sidebar-header { display: none; }
-    .step-item { min-width: 56px; flex-direction: column; align-items: center; gap: 3px; padding: 10px 8px; border-left: none; border-bottom: 2px solid transparent; }
-    .step-item.active { border-bottom-color: var(--primary); border-left: none; }
-    .step-label { text-align: center; }
-    .step-name { display: none; }
-    .panel { padding: 20px 16px 40px; }
-    .demo-toggle { display: none; }
+  /* conversation history */
+  .conv-history { margin-bottom: 12px; }
+  .conv-msg {
+    display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start;
   }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  .conv-role {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 7px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+  }
+  .role-user { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+  .role-ai { background: rgba(99,102,241,0.08); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); }
+  .conv-text { font-size: 13.5px; line-height: 1.7; color: var(--text-2); flex: 1; }
+  .conv-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-inner">
-    <a href="/" class="back-link">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Dashboard
-    </a>
-    <span class="sep">/</span>
-    <span class="project-name">Deewas — April salary season campaign</span>
-    <div class="header-spacer"></div>
-    <div class="progress-wrap" id="progress-wrap">
-      <span class="progress-label" id="progress-label">2 / 10</span>
-      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:20%"></div></div>
+<nav>
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-mark">G</div>
+      Gigity
     </div>
-    <span class="badge-completed" id="badge-completed">Completed</span>
-    <div class="demo-toggle">
-      <button class="demo-tab active" onclick="setDemo(3, this)">Step 3</button>
-      <button class="demo-tab" onclick="setDemo(8, this)">Step 8</button>
-      <button class="demo-tab" onclick="setDemo(2, this)">Done step</button>
-    </div>
+    <div class="sep"></div>
+    <span class="nav-project">April payday campaign</span>
   </div>
-</header>
+  <div class="nav-right">
+    <button class="btn-back" onclick="window.location='dashboard.html'">← All videos</button>
+  </div>
+</nav>
 
-<div class="workspace">
-  <nav class="sidebar" aria-label="Workflow steps">
-    <div class="sidebar-header">Steps</div>
-    <div id="step-list"></div>
-  </nav>
-  <main class="panel" id="panel"></main>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Steps</div>
+
+    <!-- Step 1 — done -->
+    <div class="step-item done" data-step="1">
+      <div class="step-icon si-done">✓</div>
+      <div class="step-info">
+        <div class="step-name">Campaign brief</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+
+    <!-- Step 2 — done -->
+    <div class="step-item done" data-step="2">
+      <div class="step-icon si-done">✓</div>
+      <div class="step-info">
+        <div class="step-name">Story script</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+
+    <!-- Step 3 — ACTIVE (has result) -->
+    <div class="step-item active" data-step="3" id="sb-3">
+      <div class="step-icon si-active">3</div>
+      <div class="step-info">
+        <div class="step-name">SunoAI lyrics</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+
+    <!-- Steps 4-8 locked -->
+    <div class="step-item locked" data-step="4">
+      <div class="step-icon si-pending">4</div>
+      <div class="step-info">
+        <div class="step-name">Music prompt</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="5">
+      <div class="step-icon si-pending">5</div>
+      <div class="step-info">
+        <div class="step-name">Character prompts</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="6">
+      <div class="step-icon si-external">↗</div>
+      <div class="step-info">
+        <div class="step-name">Character images</div>
+        <div class="step-tool ext-tag">Manual · Midjourney</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="7">
+      <div class="step-icon si-pending">7</div>
+      <div class="step-info">
+        <div class="step-name">Scene image prompts</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="8">
+      <div class="step-icon si-pending">8</div>
+      <div class="step-info">
+        <div class="step-name">KlingAI prompts</div>
+        <div class="step-tool llm-tag">AI · Gigity</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="9">
+      <div class="step-icon si-external">↗</div>
+      <div class="step-info">
+        <div class="step-name">Video clips</div>
+        <div class="step-tool ext-tag">Manual · KlingAI</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="10">
+      <div class="step-icon si-external">↗</div>
+      <div class="step-info">
+        <div class="step-name">Assemble video</div>
+        <div class="step-tool ext-tag">Manual · CapCut</div>
+      </div>
+    </div>
+    <div class="step-item locked" data-step="11">
+      <div class="step-icon si-external">↗</div>
+      <div class="step-info">
+        <div class="step-name">Publish</div>
+        <div class="step-tool ext-tag">Manual · TikTok / YT / IG</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <main>
+
+    <!-- DEMO STATE SWITCHER -->
+    <div class="demo-tabs">
+      <button class="demo-tab on" onclick="showState('result')">LLM step — has result</button>
+      <button class="demo-tab" onclick="showState('generating')">LLM step — generating</button>
+      <button class="demo-tab" onclick="showState('done')">LLM step — approved</button>
+      <button class="demo-tab" onclick="showState('followup')">LLM step — follow-up thread</button>
+      <button class="demo-tab ext" onclick="showState('external')">External step (step 6)</button>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STATE: HAS RESULT
+    ══════════════════════════════════════ -->
+    <div class="state-panel visible" id="state-result">
+      <div class="step-header">
+        <div class="step-num">Step 3 · AI</div>
+        <h1 class="step-title">SunoAI Lyrics</h1>
+        <p class="step-desc">Review the generated song lyrics. Approve to continue to Step 4, or refine with a follow-up message.</p>
+      </div>
+
+      <div class="result-card">
+        <div class="result-card-head">
+          <div class="result-label"><div class="ai-dot"></div> AI output</div>
+        </div>
+        <div class="result-body">[Verse 1]
+Bắt đầu tháng mới, lương về tay rồi
+Mở Deewas ra, theo dõi mọi thứ thôi
+Cà phê sáng nay, đã được lưu lại
+Tiền dư cuối tháng — dành cho ước mơ
+
+[Pre-chorus]
+Không cần lo lắng, không cần phức tạp
+Deewas hiểu bạn, từng đồng từng bước
+
+[Chorus]
+Deewas — tiền của bạn, bạn làm chủ
+Deewas — cân bằng chi tiêu mỗi ngày
+Deewas — không còn thắc mắc đi đâu hết
+Tiền bạn xứng đáng được trân trọng</div>
+      </div>
+
+      <div class="followup-area">
+        <div class="followup-label">Refine this result — or approve to continue →</div>
+        <div class="followup-input-row">
+          <textarea class="followup-input" placeholder="Make it more energetic, shorter chorus..." rows="2"></textarea>
+          <button class="btn-send">Send</button>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-retry">↺ Retry</button>
+        <button class="btn-approve">Approve →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STATE: GENERATING
+    ══════════════════════════════════════ -->
+    <div class="state-panel" id="state-generating">
+      <div class="step-header">
+        <div class="step-num">Step 3 · AI</div>
+        <h1 class="step-title">SunoAI Lyrics</h1>
+        <p class="step-desc">Generating lyrics based on your story script and brand tone...</p>
+      </div>
+
+      <div class="generating-card">
+        <div class="gen-spinner"></div>
+        <span>Generating lyrics — this usually takes 5–10 seconds...</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STATE: APPROVED (done)
+    ══════════════════════════════════════ -->
+    <div class="state-panel" id="state-done">
+      <div class="step-header">
+        <div class="step-num">Step 3 · AI</div>
+        <h1 class="step-title">SunoAI Lyrics</h1>
+      </div>
+
+      <div class="done-card">
+        <span>✓</span> Approved — Step 4 unlocked
+      </div>
+
+      <div class="result-card">
+        <div class="result-card-head">
+          <div class="result-label" style="color:var(--success)"><div class="ai-dot" style="background:var(--success)"></div> Approved output</div>
+        </div>
+        <div class="result-body" style="color:var(--text-2)">[Verse 1]
+Bắt đầu tháng mới, lương về tay rồi
+Mở Deewas ra, theo dõi mọi thứ thôi
+Cà phê sáng nay, đã được lưu lại
+Tiền dư cuối tháng — dành cho ước mơ
+
+[Chorus]
+Deewas — tiền của bạn, bạn làm chủ
+Deewas — cân bằng chi tiêu mỗi ngày</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STATE: FOLLOW-UP THREAD
+    ══════════════════════════════════════ -->
+    <div class="state-panel" id="state-followup">
+      <div class="step-header">
+        <div class="step-num">Step 3 · AI</div>
+        <h1 class="step-title">SunoAI Lyrics</h1>
+        <p class="step-desc">Conversation thread — refined with follow-up messages.</p>
+      </div>
+
+      <div class="conv-history">
+        <div class="conv-msg">
+          <div class="conv-role role-ai">AI</div>
+          <div class="conv-text">[Verse 1]
+Bắt đầu tháng mới, lương về tay rồi
+Mở Deewas ra, theo dõi mọi thứ thôi...
+
+[Chorus]
+Deewas — tiền của bạn, bạn làm chủ
+Deewas — cân bằng chi tiêu mỗi ngày</div>
+        </div>
+        <div class="conv-msg">
+          <div class="conv-role role-user">You</div>
+          <div class="conv-text">Make the chorus shorter and punchier. 2 lines max.</div>
+        </div>
+        <hr class="conv-divider">
+        <div class="conv-msg">
+          <div class="conv-role role-ai">AI</div>
+          <div class="conv-text">[Verse 1]
+Bắt đầu tháng mới, lương về tay rồi
+Mở Deewas ra, theo dõi mọi thứ thôi
+Cà phê sáng nay, đã được lưu lại
+Tiền dư cuối tháng — dành cho ước mơ
+
+[Chorus]
+Deewas — bạn làm chủ
+Tiền của bạn, mỗi ngày</div>
+        </div>
+      </div>
+
+      <div class="followup-area">
+        <div class="followup-label">Continue refining — or approve</div>
+        <div class="followup-input-row">
+          <textarea class="followup-input" placeholder="Now make the verse rhyme better..." rows="2"></textarea>
+          <button class="btn-send">Send</button>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-retry">↺ Start fresh</button>
+        <button class="btn-approve">Approve →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STATE: EXTERNAL STEP (step 6)
+    ══════════════════════════════════════ -->
+    <div class="state-panel" id="state-external">
+      <div class="step-header">
+        <div class="step-num">Step 6 · External</div>
+        <h1 class="step-title">Generate Character Images</h1>
+        <p class="step-desc">Use the character prompts from Step 5 to generate images in Midjourney or DALL-E. Paste the image URLs below to continue.</p>
+      </div>
+
+      <!-- Step 5 output shown inline (critical — user needs prompts in front of them) -->
+      <div class="context-card">
+        <div class="context-head">
+          <div class="step-icon si-done" style="width:18px;height:18px;font-size:10px;flex-shrink:0">✓</div>
+          <span class="context-tag">Step 5 output — Character prompts</span>
+          <span class="context-toggle" id="toggleCtx">hide ↑</span>
+        </div>
+        <div class="context-body" id="ctxBody">Character 1 — Minh (lead)
+Portrait of a Vietnamese man, 26 years old, short dark hair, wearing a light blue button-down shirt, friendly confident expression, clean minimalist background, soft studio lighting, digital illustration style, 8k
+
+Character 2 — Lan (friend)
+Portrait of a Vietnamese woman, 25 years old, shoulder-length hair with highlights, casual white top, laughing warmly, clean background, same illustration style as Character 1, consistent lighting</div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-head">
+          <span class="ext-badge">External step</span>
+          <span class="ext-tool">Midjourney or DALL-E</span>
+        </div>
+
+        <div class="ext-instructions">
+          Copy each character prompt above and generate images in <strong>Midjourney</strong> or <strong>DALL-E</strong>.
+          Use the same style modifiers on every character to keep them consistent.
+          When done, upload each image somewhere accessible (Google Drive, Imgur, etc.) and paste the URLs below.
+        </div>
+
+        <a class="ext-link" href="https://www.midjourney.com" target="_blank">
+          ↗ Open Midjourney
+        </a>
+
+        <div class="expiry-warn">
+          ⚠️ AI-generated image URLs from Midjourney and DALL-E expire in 24–72 hours. Upload to a permanent host (Google Drive, Imgur, Cloudinary) before pasting here.
+        </div>
+
+        <div class="ext-input-label">Character image URLs</div>
+        <div class="ext-input-hint">One URL per character. These will be used in Step 7 to generate scene images.</div>
+        <div class="ext-url-area" id="extUrls">
+          <div class="ext-url-row">
+            <input type="url" placeholder="Minh — https://drive.google.com/...">
+          </div>
+          <div class="ext-url-row">
+            <input type="url" placeholder="Lan — https://drive.google.com/...">
+          </div>
+        </div>
+        <button class="btn-add-url" id="addExtUrl">+ Add another character image</button>
+
+        <div style="margin-top: 16px;">
+          <button class="ext-approve">Mark as done →</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <script>
-const STEPS = [
-  { n:1,  title:'Business context',  tool:'Gigity',  type:'external' },
-  { n:2,  title:'Reference videos',  tool:'Gigity',  type:'external' },
-  { n:3,  title:'Generate story',    tool:'ChatGPT', type:'prompt'   },
-  { n:4,  title:'Story to lyrics',   tool:'ChatGPT', type:'prompt'   },
-  { n:5,  title:'Music prompt',      tool:'ChatGPT', type:'prompt',  hasUrl: true, expiry: true },
-  { n:6,  title:'Character images',  tool:'ChatGPT', type:'prompt',  hasUrl: true, expiry: true },
-  { n:7,  title:'Scene images',      tool:'ChatGPT', type:'prompt',  hasUrl: true, expiry: true },
-  { n:8,  title:'Animate scenes',    tool:'KlingAI', type:'external', hasUrl: true, expiry: true },
-  { n:9,  title:'Assemble video',    tool:'CapCut',  type:'external' },
-  { n:10, title:'Upload & publish',  tool:'Manual',  type:'external' },
-];
-
-const PROMPTS = {
-  3: `You are helping me write an advertising story for <span class="var">Deewas</span>.
-
-App: <span class="var">Personal financial management app with AI</span>
-Audience: <span class="var">Young adults 22-30 managing their first salary</span>
-Tone: <span class="var">Warm, encouraging, modern — not preachy</span>
-Character: <span class="var">Minh, 25-year-old office worker, friendly</span>
-Platforms: <span class="var">TikTok, YouTube Shorts</span>
-
-Write a short advertising story for a 30-60 second video. 4-6 scenes. Follow Minh through a moment of money stress → discovering Deewas → relief. End on an emotional beat, not a feature list. No voiceover — show don't tell.`,
-  4: `Using the story from step 3:
-
-[paste story here]
-
-Rewrite as song lyrics for SunoAI:
-- Verse 1 (2-4 lines): the problem
-- Chorus (2-3 lines): the turning point
-- Verse 2 (2-4 lines): the resolution
-- Outro (1-2 lines): brand feeling
-
-Keep lines short. Priority: emotional impact and natural rhythm.`,
-  5: `Using lyrics from step 4:
-
-[paste lyrics here]
-
-Create a SunoAI music prompt:
-- Genre: soft lo-fi / chill pop / acoustic indie
-- Mood: warm, hopeful, modern
-- Tempo: medium
-- 3-4 specific instruments
-- Duration: ~45-60 seconds
-
-Include the full lyrics. Format as a single block ready to paste into SunoAI.`,
-  6: `Create an image prompt for character <span class="var">Minh</span>.
-
-Character: <span class="var">25-year-old Vietnamese office worker, friendly, casual-smart clothing</span>
-Reference: <span class="var">https://drive.google.com/minh-reference.jpg</span>
-Style: Warm illustration, clean background, 9:16 frame
-Emotion: Stressed but hopeful
-
-Generate a Midjourney/DALL-E prompt with style modifiers, lighting, and framing. No text in image.`,
-  7: `For each scene in the story:
-
-[paste story from step 3]
-
-Character: <span class="var">Minh, 25-year-old office worker</span>
-Style: Warm illustration, 9:16 aspect ratio, consistent character look
-
-For each scene output:
-Scene N: [description]
-Prompt: [full Midjourney/DALL-E prompt]`,
-};
-
-const INSTRUCTIONS = {
-  1: { text: 'Your brand profile is already configured.\n\nProduct: Deewas — Personal financial management app with AI\nAudience: Young adults 22-30\nTone: Warm, encouraging, modern\nCharacter: Minh (25-year-old office worker)\n\nAll context is injected into every generated prompt automatically.', link: null },
-  2: { text: 'Reference videos saved:\n• https://tiktok.com/@deewas.app/video/12345\n• https://youtube.com/shorts/abc123\n\nThese are included in the step 3 prompt so ChatGPT can see your preferred storytelling style.', link: null },
-  8: { text: 'Open KlingAI. Upload each scene image from step 7 using "Image to Video" mode.\n\nSettings:\n• Duration: 5-8 seconds per clip\n• Motion: subtle\n• Quality: Standard\n\nDownload each clip before the URL expires (24-72 hours).', link: 'https://klingai.com', label: 'Open KlingAI →' },
-  9: { text: 'Open CapCut and assemble:\n1. Import video clips in story order\n2. Import SunoAI music track\n3. Trim to 30-60 seconds total\n4. Add logo overlay (https://deewas.app/logo.png)\n5. Export 1080×1920 (9:16)', link: 'https://capcut.com', label: 'Open CapCut →' },
-  10: { text: 'Upload the final video:\n• TikTok: New post → Upload\n• YouTube Shorts: Upload → Set visibility\n• Instagram Reels: New reel → Upload\n\nMark done to complete the project.', link: null },
-};
-
-let doneSteps = new Set([1, 2]);
-let activeStep = 3;
-
-function buildSidebar() {
-  const list = document.getElementById('step-list');
-  list.innerHTML = '';
-  STEPS.forEach(step => {
-    const isDone = doneSteps.has(step.n);
-    const isActive = step.n === activeStep;
-    const isLocked = !isDone && step.n > activeStep;
-    const div = document.createElement('div');
-    div.className = ['step-item', isDone ? 'done' : '', isActive ? 'active' : '', isLocked ? 'locked' : ''].filter(Boolean).join(' ');
-    div.onclick = () => { if (!isLocked) selectStep(step.n); };
-    div.innerHTML = `
-      <div class="step-icon">${isDone
-        ? '<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        : isLocked
-        ? '<svg width="9" height="11" viewBox="0 0 9 11" fill="none"><rect x="1" y="4.5" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 4.5V3C2.5 1.9 3.4 1 4.5 1S6.5 1.9 6.5 3V4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>'
-        : step.n
-      }</div>
-      <div class="step-label">
-        <div class="step-num">Step ${step.n}</div>
-        <div class="step-name">${step.title}</div>
-      </div>`;
-    list.appendChild(div);
-  });
-}
-
-function buildPanel(n) {
-  const step = STEPS.find(s => s.n === n);
-  const isDone = doneSteps.has(n);
-  const isLocked = !isDone && n > activeStep;
-  let html = '<div class="step-card">';
-
-  // Header
-  html += `<div class="step-card-meta">Step ${n} of 10 <span class="tool-badge">${step.tool}</span></div>
-    <div class="step-card-title">${step.title}</div>
-    <div class="step-card-sub">${getSubtitle(n)}</div>`;
-
-  // Done banner
-  if (isDone) html += `<div class="done-banner">
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 7.5L6 11L12.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Step completed
-  </div>`;
-
-  if (step.type === 'prompt') {
-    const prompt = PROMPTS[n] || `[Generated prompt for step ${n} — brand context injected automatically]`;
-    html += `<div class="prompt-label">Generated Prompt</div>
-      <div class="prompt-box">${prompt}</div>
-      <div class="copy-row">
-        <span class="copy-hint">Open ChatGPT, paste this prompt, copy the output below</span>
-        <button class="btn btn-default btn-sm" onclick="copyPrompt(this, ${n})">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1 8.5V2C1 1.4 1.4 1 2 1H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          Copy prompt
-        </button>
-      </div>`;
-  } else {
-    const instr = INSTRUCTIONS[n] || { text: 'Follow the steps for this tool.', link: null };
-    html += `<div class="instruction-card">
-      <p>${esc(instr.text)}</p>
-      ${instr.link ? `<a href="${instr.link}" target="_blank" class="ext-link">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M6.5 1H10V4.5M10 1L5 6M1.5 3H3.5M1.5 3V9.5H8V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        ${instr.label}
-      </a>` : ''}
-    </div>`;
+  // Demo tab switcher
+  function showState(name) {
+    document.querySelectorAll('.state-panel').forEach(p => p.classList.remove('visible'))
+    document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('on'))
+    document.getElementById('state-' + name).classList.add('visible')
+    event.target.classList.add('on')
   }
 
-  // Output fields
-  if (n >= 3) {
-    const needsText = [3,4,5,6,7].includes(n);
-    if (needsText) {
-      html += `<div class="output-section">
-        <div class="output-label">Your output from ${step.tool}</div>
-        <textarea class="output-textarea" placeholder="Paste the ${step.tool} response here...">${isDone ? '[Output saved]' : ''}</textarea>
-      </div>`;
-    }
-    if (step.hasUrl) {
-      html += `<div class="output-section">
-        <div class="url-label-row">
-          Asset URL
-          ${step.expiry ? `<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>` : ''}
-        </div>
-        <input class="output-url" type="url" placeholder="Paste the image / audio / video URL...">
-        ${step.expiry ? `<div class="expiry-warn">
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M6.5 4V6.5L8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          AI tool URLs expire in 24-72 hours. Download and re-host on Google Drive or Dropbox before saving.
-        </div>` : ''}
-      </div>`;
-    }
+  // Context toggle
+  document.getElementById('toggleCtx').addEventListener('click', function() {
+    const body = document.getElementById('ctxBody')
+    const hidden = body.style.display === 'none'
+    body.style.display = hidden ? '' : 'none'
+    this.textContent = hidden ? 'hide ↑' : 'show ↓'
+  })
+
+  // Add ext URL
+  document.getElementById('addExtUrl').addEventListener('click', () => {
+    const row = document.createElement('div')
+    row.className = 'ext-url-row'
+    row.innerHTML = `<input type="url" placeholder="Character image URL...">`
+    document.getElementById('extUrls').appendChild(row)
+    row.querySelector('input').focus()
+  })
+
+  // Sidebar click — show done step result
+  document.querySelectorAll('.step-item.done').forEach(item => {
+    item.addEventListener('click', () => showStateForDone(item))
+  })
+  function showStateForDone(item) {
+    // In real app: shows the approved output for that step read-only
   }
-
-  // Action row
-  if (isDone) {
-    html += `<div class="action-row"><span class="action-hint">This step is complete. Click the next step in the sidebar to continue.</span></div>`;
-  } else if (isLocked) {
-    html += `<div class="action-row"><span class="action-hint">Complete step ${n - 1} first to unlock this step.</span></div>`;
-  } else {
-    const next = STEPS.find(s => s.n === n + 1);
-    html += `<div class="action-row">
-      <button class="btn btn-default" onclick="markDone(${n})">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5 9.5L11 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        ${n === 10 ? 'Complete project' : 'Mark step done'}
-      </button>
-      <span class="action-hint">${n === 10 ? 'Marks the project as completed.' : `Advances to step ${n + 1}${next ? ': ' + next.title : ''}`}</span>
-    </div>`;
-  }
-
-  html += '</div>';
-  document.getElementById('panel').innerHTML = html;
-
-  // Auto-resize textareas
-  document.querySelectorAll('.output-textarea').forEach(el => {
-    el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
-    el.addEventListener('input', () => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; });
-  });
-}
-
-function getSubtitle(n) {
-  const subs = {
-    1: 'Your brand profile is configured with all context.',
-    2: 'Reference videos saved in your brand profile.',
-    3: 'Generate the advertising story that drives the video narrative.',
-    4: 'Turn the story into SunoAI-ready song lyrics.',
-    5: 'Create the SunoAI prompt and generate your music track.',
-    6: 'Generate character reference images for the story.',
-    7: 'One image prompt per scene — paste into your image tool.',
-    8: 'Send each scene image to KlingAI to create video clips.',
-    9: 'Assemble clips, music, and logo in CapCut.',
-    10: 'Upload the final video to all platforms.',
-  };
-  return subs[n] || '';
-}
-
-function selectStep(n) {
-  activeStep = Math.max(activeStep, n <= activeStep ? activeStep : n);
-  buildSidebar();
-  buildPanel(n);
-  // Scroll sidebar item into view
-  const items = document.querySelectorAll('.step-item');
-  if (items[n - 1]) items[n - 1].scrollIntoView({ block: 'nearest' });
-}
-
-function markDone(n) {
-  doneSteps.add(n);
-  const next = n + 1;
-  if (next <= 10) activeStep = next;
-  buildSidebar();
-  buildPanel(activeStep);
-  updateHeader();
-}
-
-function updateHeader() {
-  const done = doneSteps.size;
-  document.getElementById('progress-label').textContent = `${done} / 10`;
-  document.getElementById('progress-fill').style.width = `${done * 10}%`;
-  const complete = done === 10;
-  document.getElementById('progress-wrap').style.display = complete ? 'none' : 'flex';
-  document.getElementById('badge-completed').style.display = complete ? '' : 'none';
-}
-
-function setDemo(n, btn) {
-  if (n === 8) { doneSteps = new Set([1,2,3,4,5,6,7]); activeStep = 8; }
-  else if (n === 2) { doneSteps = new Set([1,2]); activeStep = 2; n = 2; }
-  else { doneSteps = new Set([1,2]); activeStep = 3; n = 3; }
-  btn.closest('.demo-toggle').querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  buildSidebar(); buildPanel(n); updateHeader();
-}
-
-function copyPrompt(btn, n) {
-  const box = btn.closest('.step-card').querySelector('.prompt-box');
-  navigator.clipboard.writeText(box ? box.innerText : '').then(() => {
-    btn.classList.add('success-state');
-    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!`;
-    setTimeout(() => {
-      btn.classList.remove('success-state');
-      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M1 8.5V2C1 1.4 1.4 1 2 1H8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Copy prompt`;
-    }, 2200);
-  }).catch(() => {});
-}
-
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-buildSidebar(); buildPanel(3); updateHeader();
 </script>
 </body>
 </html>

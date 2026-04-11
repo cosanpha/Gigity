@@ -1,10 +1,6 @@
-import { ENV } from '@/constants/environments'
+import { VERSION } from '@/constants/env.client'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  console.info('- Version -')
-  return NextResponse.json(
-    { serverVersion: ENV.NEXT_PUBLIC_VERSION },
-    { status: 200 }
-  )
+  return NextResponse.json({ serverVersion: VERSION }, { status: 200 })
 }

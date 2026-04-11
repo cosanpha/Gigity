@@ -1,0 +1,168 @@
+---
+description: 'Gigity project rules — Next.js 16 / React 19 / Tailwind 4 / MongoDB'
+globs: ['src/**/*.ts', 'src/**/*.tsx', 'src/app/**/*.ts', 'src/app/**/*.tsx']
+alwaysApply: true
+---
+
+# Gigity — Project Rules
+
+## What is Gigity
+
+AI video workflow orchestrator. A solo developer tool that replaces 5+ AI tools
+(ChatGPT, SunoAI, KlingAI, Midjourney, CapCut) with one workflow. User enters
+brand context once, then follows 11 guided steps to produce a short-form ad video.
+
+## Stack
+
+- Next.js 16.1.1 / React 19 / Tailwind CSS 4
+- Bun as package manager (use `bun add`, not `npm install`)
+- MongoDB + Mongoose for persistence
+- LLM integration via plain `fetch` (no `openai` npm package)
+- No auth in V1 — single user, personal tool
+
+## Implementation plans
+
+All feature plans live in `docs/implementations/`. Always read the relevant plan
+before implementing. Follow it exactly — do not add features, patterns, or error
+handling not in the plan.
+
+Plans are numbered in build order:
+
+- `00a` → `00b` → `00c` → `01a` → `01b` → ... → `05`
+- Each plan lists its prerequisites at the top
+
+## File structure conventions
+
+```
+src/
+  app/
+    api/v1/            ← API routes
+    brand/             ← brand pages
+    projects/[id]/     ← workflow view page + co-located server component
+    page.tsx           ← dashboard (server component)
+    layout.tsx
+    globals.css
+  components/          ← shared components (NOT src/app/(components)/)
+  constants/
+    env.server.ts      ← server-only vars (MONGODB, OPENAI_API_KEY)
+    env.client.ts      ← NEXT_PUBLIC_* vars only
+  lib/
+    db.ts
+    interpolate.ts
+    llm.ts
+    workflow-templates.ts
+  models/
+    BrandProfile.ts
+    VideoProject.ts
+```
+
+## Hard rules
+
+### Environment variables
+
+- Server secrets use `MONGODB` (not `MONGODB_URI`), `OPENAI_API_KEY`
+- Always import from `@/constants/env.server` in API routes — never `process.env` directly
+- Never import `env.server.ts` from a client component
+
+### Components
+
+- Shared components → `src/components/`
+- Route-specific components (e.g. `WorkflowClient`) → co-located in `src/app/projects/[id]/`
+- Do NOT use `src/app/(components)/`
+
+### Styling — Tailwind utilities only
+
+Translate the design (see `docs/designs/*.html`) to Tailwind utilities. Do not copy
+CSS class names from the design HTML.
+
+Design token → Tailwind mapping:
+| Token | Tailwind |
+|-------|----------|
+| accent `#6366f1` | `bg-indigo-500` / `text-indigo-500` |
+| accent hover | `hover:bg-indigo-600` |
+| primary text | `text-zinc-950` |
+| secondary text | `text-zinc-500` |
+| border | `border-zinc-200` |
+| surface | `bg-zinc-100` |
+| success | `text-green-600` / `bg-green-500` |
+| warning | `text-amber-600` |
+| radius | `rounded-[6px]` |
+| nav height | `h-[52px]` |
+| page max-width | `max-w-[780px]` |
+
+### Next.js 16 — params is a Promise
+
+Route params must be awaited:
+
+```ts
+// Correct
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+}
+// Wrong — will throw
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id // ❌
+}
+```
+
+### Mongoose models
+
+Always use the re-registration guard:
+
+```ts
+const Model = mongoose.models.ModelName ?? mongoose.model('ModelName', schema)
+```
+
+### API routes
+
+- Always call `await connectDB()` first
+- Use `.lean()` on all read queries (returns plain objects, not Mongoose docs)
+- Return `NextResponse.json(...)` — always with `return`
+
+### DB connection
+
+```ts
+import { connectDB } from '@/lib/db'
+await connectDB()
+```
+
+## Component style (Next.js, NOT React Native)
+
+Do not apply the React Native component rules from `.cursor/rules/component-patterns/`.
+This is a Next.js web app, not a React Native app.
+
+```tsx
+// Correct pattern for this project
+'use client' // only when needed
+
+interface ComponentProps {
+  name: string
+  className?: string
+}
+
+export function ComponentName({ name, className }: ComponentProps) {
+  return <div className={className}>{name}</div>
+}
+```
+
+- Named exports (not default exports) for components
+- No `memo()` wrapping unless there's a measured performance issue
+- No `useCallback` unless the function is a prop to a child component
+- Functional components only
+
+## What not to do
+
+- Do not add `try/catch` unless the plan specifies it
+- Do not add loading states or optimistic UI beyond what the plan specifies
+- Do not create utility functions or abstractions for one-time use
+- Do not add console.log statements
+- Do not add comments explaining what the code does (only add comments the plan specifies)
+- Do not use the `openai` npm package — LLM calls use plain `fetch`
+- Do not add Zod or any validation library — validation is done manually in route handlers
+

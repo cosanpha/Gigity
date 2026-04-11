@@ -193,7 +193,7 @@ function computeSpecificity(selector: string): {
     c = 0
 
   // Remove :not() wrapper but count its contents
-  let cleaned = selector
+  const cleaned = selector
 
   // Count IDs: #foo
   const ids = cleaned.match(/#[a-zA-Z_-][\w-]*/g)

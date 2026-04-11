@@ -1,475 +1,645 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gigity — Brand Setup</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --background: #ffffff;
-    --foreground: #09090b;
-    --card: #ffffff;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    --secondary: #f4f4f5;
-    --accent: #f4f4f5;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
-    --primary: #18181b;
-    --primary-foreground: #fafafa;
-    --destructive: #ef4444;
-    --success: #16a34a;
-    --success-bg: #f0fdf4;
-    --success-border: #bbf7d0;
-    --warning-bg: #fffbeb;
-    --warning-text: #b45309;
-    --warning-border: #fde68a;
-    --ring: #18181b;
-    --radius: 0.5rem;
-    --radius-md: 0.375rem;
-    --radius-sm: 0.25rem;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: var(--font);
-    background: var(--background);
-    color: var(--foreground);
-    min-height: 100vh;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Gigity — Brand Setup</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --surface-2: #f4f4f5;
+        --border: #e4e4e7;
+        --border-2: #d4d4d8;
+        --text: #09090b;
+        --text-2: #71717a;
+        --text-3: #a1a1aa;
+        --accent: #6366f1;
+        --accent-h: #4f46e5;
+        --success: #16a34a;
+        --r: 6px;
+      }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      nav {
+        height: 52px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        z-index: 10;
+      }
+      .logo {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .logo-mark {
+        width: 26px;
+        height: 26px;
+        background: var(--accent);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .sep {
+        width: 1px;
+        height: 18px;
+        background: var(--border);
+      }
+      .nav-crumb {
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .page {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 44px 24px 80px;
+      }
+      .page-head {
+        margin-bottom: 36px;
+      }
+      .page-title {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.4px;
+        margin-bottom: 6px;
+      }
+      .page-sub {
+        font-size: 13px;
+        color: var(--text-2);
+        line-height: 1.65;
+        max-width: 520px;
+      }
+      .section-label {
+        font-size: 10.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-3);
+        margin-bottom: 18px;
+      }
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 28px 0;
+      }
+      .field {
+        margin-bottom: 20px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+      label.lbl {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 6px;
+      }
+      .lbl-hint {
+        font-weight: 400;
+        color: var(--text-3);
+        margin-left: 6px;
+        font-size: 12px;
+      }
+      input[type='text'],
+      input[type='url'],
+      textarea {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 14px;
+        padding: 9px 12px;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      input:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--text-3);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      .field-help {
+        font-size: 12px;
+        color: var(--text-3);
+        margin-top: 6px;
+        line-height: 1.55;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 520px) {
+        .row2 {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  /* Header */
-  .header {
-    position: sticky; top: 0; z-index: 40;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-  }
-  .header-inner {
-    max-width: 700px; margin: 0 auto; padding: 0 24px;
-    height: 52px; display: flex; align-items: center; gap: 8px;
-  }
-  .back-link {
-    display: flex; align-items: center; gap: 5px;
-    text-decoration: none; color: var(--muted-foreground);
-    font-size: 13px; font-weight: 500; transition: color .15s;
-  }
-  .back-link:hover { color: var(--foreground); }
-  .sep { color: var(--border); font-size: 16px; }
-  .header-title { font-size: 13px; font-weight: 600; color: var(--foreground); }
-  .header-spacer { flex: 1; }
+      /* platforms */
+      .plat-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .plat-chip {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 13px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text-2);
+        user-select: none;
+        transition: all 0.15s;
+        background: var(--bg);
+      }
+      .plat-chip:hover {
+        border-color: var(--border-2);
+        color: var(--text);
+        background: var(--surface-2);
+      }
+      .plat-chip.on {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--accent);
+      }
+      .plat-chip input {
+        display: none;
+      }
 
-  /* Main */
-  .main { max-width: 700px; margin: 0 auto; padding: 36px 24px 100px; }
-  .page-header { margin-bottom: 32px; }
-  .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 6px; }
-  .page-sub { font-size: 14px; color: var(--muted-foreground); line-height: 1.6; max-width: 480px; }
+      /* tone */
+      .tone-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tone-chip {
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 13px;
+        color: var(--text-2);
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s;
+        background: var(--bg);
+      }
+      .tone-chip:hover {
+        border-color: var(--border-2);
+        color: var(--text);
+        background: var(--surface-2);
+      }
+      .tone-chip.on {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--accent);
+      }
 
-  /* Separator */
-  .separator { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+      /* url list */
+      .url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .url-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .url-row input {
+        flex: 1;
+      }
+      .btn-rm {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        color: var(--text-3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.15s;
+      }
+      .btn-rm:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.06);
+      }
+      .btn-add {
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-2);
+        cursor: pointer;
+        padding: 4px 0;
+        transition: color 0.15s;
+        background: none;
+        border: none;
+        font-family: inherit;
+      }
+      .btn-add:hover {
+        color: var(--accent);
+      }
 
-  /* Section label */
-  .section-label {
-    font-size: 13px; font-weight: 600; color: var(--foreground);
-    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-  }
-  .section-label-num {
-    width: 20px; height: 20px; background: var(--primary); color: var(--primary-foreground);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; flex-shrink: 0;
-  }
+      /* actions */
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-top: 4px;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 20px;
+        background: var(--accent);
+        color: #fff;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        border-radius: var(--r);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-primary:hover {
+        background: var(--accent-h);
+      }
+      .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 16px;
+        background: transparent;
+        color: var(--text-2);
+        font-family: inherit;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-ghost:hover {
+        border-color: var(--border-2);
+        color: var(--text);
+        background: var(--surface-2);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="logo">
+        <div class="logo-mark">G</div>
+        Gigity
+      </div>
+      <div class="sep"></div>
+      <span class="nav-crumb">Brand Setup</span>
+    </nav>
 
-  /* Fields */
-  .field { margin-bottom: 16px; }
-  .field:last-child { margin-bottom: 0; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--foreground); margin-bottom: 6px; }
-  .field-hint { font-size: 12px; color: var(--muted-foreground); margin-top: 5px; line-height: 1.5; }
-  .field-input, .field-textarea {
-    width: 100%; background: var(--background);
-    border: 1px solid var(--input); border-radius: var(--radius-md);
-    color: var(--foreground); font-family: var(--font);
-    font-size: 14px; padding: 8px 12px; outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .field-input:focus, .field-textarea:focus {
-    border-color: var(--ring); box-shadow: 0 0 0 2px rgba(24,24,27,.1);
-  }
-  .field-input::placeholder, .field-textarea::placeholder { color: var(--muted-foreground); }
-  .field-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+    <div class="page">
+      <div class="page-head">
+        <h1 class="page-title">Set up your brand</h1>
+        <p class="page-sub">
+          Enter your product once. Every workflow step gets pre-populated with
+          this context — no more re-explaining your app to AI tools on every
+          session.
+        </p>
+      </div>
 
-  /* Platforms — toggle group style */
-  .platform-group { display: flex; gap: 8px; flex-wrap: wrap; }
-  .platform-chip {
-    display: flex; align-items: center; gap: 7px;
-    padding: 7px 13px; border: 1px solid var(--border);
-    border-radius: var(--radius-md); cursor: pointer; user-select: none;
-    font-size: 13px; font-weight: 500; color: var(--muted-foreground);
-    background: var(--background); transition: border-color .12s, color .12s, background .12s;
-  }
-  .platform-chip input { display: none; }
-  .platform-chip:hover { border-color: var(--ring); color: var(--foreground); }
-  .platform-chip.checked {
-    border-color: var(--primary); color: var(--foreground);
-    background: var(--secondary);
-  }
-  .check-icon {
-    width: 14px; height: 14px; border-radius: 3px;
-    border: 1.5px solid var(--border); background: var(--background);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    transition: border-color .12s, background .12s;
-  }
-  .platform-chip.checked .check-icon { border-color: var(--primary); background: var(--primary); }
+      <form>
+        <div class="section-label">Product</div>
 
-  /* Buttons */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--font); font-size: 14px; font-weight: 500;
-    padding: 8px 14px; border-radius: var(--radius-md);
-    cursor: pointer; border: 1px solid transparent;
-    transition: background .12s, border-color .12s; white-space: nowrap;
-  }
-  .btn-default { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
-  .btn-default:hover { background: #27272a; }
-  .btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
-  .btn-outline:hover { background: var(--accent); }
-  .btn-ghost { background: none; color: var(--foreground); border-color: transparent; }
-  .btn-ghost:hover { background: var(--accent); }
-  .btn-sm { font-size: 13px; padding: 6px 11px; }
-  .btn-dashed {
-    background: none; border: 1.5px dashed var(--border);
-    color: var(--muted-foreground); font-family: var(--font);
-    font-size: 13px; font-weight: 500; padding: 8px 14px;
-    border-radius: var(--radius-md); cursor: pointer;
-    transition: border-color .12s, color .12s;
-    display: inline-flex; align-items: center; gap: 6px; width: 100%;
-    justify-content: center;
-  }
-  .btn-dashed:hover { border-color: var(--primary); color: var(--foreground); }
-
-  /* Character cards */
-  .char-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-  .char-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 12px 14px;
-    display: flex; gap: 12px; align-items: flex-start;
-  }
-  .char-card-info { flex: 1; min-width: 0; }
-  .char-card-name { font-size: 13px; font-weight: 600; color: var(--foreground); }
-  .char-card-desc { font-size: 12px; color: var(--muted-foreground); margin-top: 2px; }
-  .char-card-img { font-size: 11px; color: var(--muted-foreground); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
-  .char-card-img a { color: #2563eb; text-decoration: none; font-size: 11px; }
-  .char-card-img a:hover { text-decoration: underline; }
-  .char-remove {
-    background: none; border: none; cursor: pointer;
-    color: var(--muted-foreground); padding: 3px;
-    border-radius: var(--radius-sm); transition: color .12s, background .12s; flex-shrink: 0;
-  }
-  .char-remove:hover { color: var(--destructive); background: #fef2f2; }
-
-  /* Add char form */
-  .add-char-form {
-    background: var(--muted); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 14px;
-    display: none; flex-direction: column; gap: 12px; margin-bottom: 10px;
-  }
-  .add-char-form.open { display: flex; }
-  .add-char-form .field-input { background: var(--background); font-size: 13px; padding: 7px 10px; }
-  .add-char-form .field-label { font-size: 12px; margin-bottom: 5px; }
-  .add-char-footer { display: flex; gap: 8px; justify-content: flex-end; }
-
-  /* URL list */
-  .url-list { display: flex; flex-direction: column; gap: 8px; }
-  .url-row { display: flex; gap: 8px; align-items: center; }
-  .url-row .field-input { flex: 1; }
-  .url-remove {
-    background: none; border: none; cursor: pointer;
-    color: var(--muted-foreground); padding: 4px;
-    border-radius: var(--radius-sm); transition: color .12s, background .12s;
-    flex-shrink: 0;
-  }
-  .url-remove:hover { color: var(--destructive); background: #fef2f2; }
-
-  /* Warning */
-  .warning-note {
-    display: flex; align-items: flex-start; gap: 8px;
-    background: var(--warning-bg); border: 1px solid var(--warning-border);
-    border-radius: var(--radius-md); padding: 10px 12px; margin-top: 8px;
-    font-size: 12px; color: var(--warning-text); line-height: 1.5;
-  }
-
-  /* Footer */
-  .form-footer {
-    margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);
-    display: flex; align-items: center; gap: 12px; justify-content: flex-end;
-  }
-  .save-hint { font-size: 12px; color: var(--muted-foreground); flex: 1; }
-
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(70px);
-    background: var(--foreground); color: var(--primary-foreground);
-    font-size: 13px; font-weight: 500; padding: 10px 16px;
-    border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0,0,0,.2);
-    transition: transform .22s cubic-bezier(.34,1.56,.64,1), opacity .22s;
-    opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 8px;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-  @media (max-width: 600px) {
-    .header-inner { padding: 0 16px; }
-    .main { padding: 20px 16px 80px; }
-    .field-row { grid-template-columns: 1fr; }
-  }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-</style>
-</head>
-<body>
-
-<header class="header">
-  <div class="header-inner">
-    <a href="/" class="back-link">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 3L5 7L9 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Dashboard
-    </a>
-    <span class="sep">/</span>
-    <span class="header-title">Brand Setup</span>
-    <div class="header-spacer"></div>
-  </div>
-</header>
-
-<main class="main">
-  <div class="page-header">
-    <h1 class="page-title">Set up your brand</h1>
-    <p class="page-sub">Enter your product context once. Gigity injects it into every prompt across all 10 workflow steps.</p>
-  </div>
-
-  <!-- 1. Product -->
-  <div class="section-label">
-    <span class="section-label-num">1</span>
-    Product
-  </div>
-  <div class="field">
-    <label class="field-label" for="brand-name">Product name</label>
-    <input class="field-input" id="brand-name" type="text" value="Deewas" placeholder="e.g. Deewas">
-  </div>
-  <div class="field">
-    <label class="field-label" for="brand-desc">Description</label>
-    <textarea class="field-textarea" id="brand-desc">Personal financial management app with AI — helps young adults track spending, set savings goals, and build better money habits.</textarea>
-    <div class="field-hint">Injected into story and lyrics prompts. Be specific — ChatGPT uses this to ground the narrative.</div>
-  </div>
-  <div class="field field-row">
-    <div class="field">
-      <label class="field-label" for="brand-audience">Target audience</label>
-      <input class="field-input" id="brand-audience" type="text" value="Young adults 22-30 managing their first salary">
-    </div>
-    <div class="field">
-      <label class="field-label" for="brand-tone">Tone &amp; style</label>
-      <input class="field-input" id="brand-tone" type="text" value="Warm, encouraging, modern — not preachy">
-    </div>
-  </div>
-
-  <hr class="separator">
-
-  <!-- 2. Platforms -->
-  <div class="section-label">
-    <span class="section-label-num">2</span>
-    Platforms
-  </div>
-  <div class="field">
-    <div class="platform-group">
-      <label class="platform-chip checked" onclick="togglePlatform(this)">
-        <input type="checkbox" checked>
-        <span class="check-icon"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        TikTok
-      </label>
-      <label class="platform-chip checked" onclick="togglePlatform(this)">
-        <input type="checkbox" checked>
-        <span class="check-icon"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        YouTube Shorts
-      </label>
-      <label class="platform-chip" onclick="togglePlatform(this)">
-        <input type="checkbox">
-        <span class="check-icon"></span>
-        Instagram Reels
-      </label>
-    </div>
-    <div class="field-hint" style="margin-top:10px">Selected platforms are mentioned in prompts so ChatGPT tailors story pacing and format.</div>
-  </div>
-
-  <hr class="separator">
-
-  <!-- 3. Logo -->
-  <div class="section-label">
-    <span class="section-label-num">3</span>
-    Logo
-  </div>
-  <div class="field">
-    <label class="field-label" for="logo-url">Logo URL</label>
-    <input class="field-input" id="logo-url" type="url" value="https://deewas.app/logo.png" placeholder="https://...">
-    <div class="field-hint">Paste a direct image URL. No file upload — host it anywhere. Used in the CapCut assembly step.</div>
-  </div>
-
-  <hr class="separator">
-
-  <!-- 4. Characters -->
-  <div class="section-label">
-    <span class="section-label-num">4</span>
-    Characters
-  </div>
-  <div class="char-list" id="char-list">
-    <div class="char-card">
-      <div class="char-card-info">
-        <div class="char-card-name">Minh</div>
-        <div class="char-card-desc">25-year-old office worker, friendly, relatable, slightly stressed about money</div>
-        <div class="char-card-img">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="3.5" cy="3.5" r="1" fill="currentColor"/><path d="M1 7.5L3 5.5L5 7L7 5L9 7.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <a href="https://drive.google.com/minh-reference.jpg" target="_blank">minh-reference.jpg</a>
+        <div class="row2">
+          <div class="field">
+            <label
+              class="lbl"
+              for="name"
+              >Brand name</label
+            >
+            <input
+              type="text"
+              id="name"
+              placeholder="Deewas"
+              value="Deewas"
+            />
+          </div>
+          <div class="field">
+            <label
+              class="lbl"
+              for="logo"
+              >Logo URL <span class="lbl-hint">optional</span></label
+            >
+            <input
+              type="url"
+              id="logo"
+              placeholder="https://..."
+            />
+          </div>
         </div>
-      </div>
-      <button class="char-remove" onclick="removeChar(this)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-    <div class="char-card">
-      <div class="char-card-info">
-        <div class="char-card-name">Linh</div>
-        <div class="char-card-desc">22-year-old student, budget-conscious, first part-time salary</div>
-        <div class="char-card-img">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="3.5" cy="3.5" r="1" fill="currentColor"/><path d="M1 7.5L3 5.5L5 7L7 5L9 7.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <a href="https://drive.google.com/linh-reference.jpg" target="_blank">linh-reference.jpg</a>
+
+        <div class="field">
+          <label
+            class="lbl"
+            for="desc"
+            >Description</label
+          >
+          <textarea
+            id="desc"
+            rows="3"
+            placeholder="What does your product do? Be specific."
+          >
+Personal financial management app with AI budgeting. Helps young adults track spending, set savings goals, and understand where their money goes each month.</textarea
+          >
+          <p class="field-help">
+            This feeds the system prompt for every AI step. Specific beats
+            vague.
+          </p>
         </div>
-      </div>
-      <button class="char-remove" onclick="removeChar(this)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-  </div>
-  <div class="add-char-form" id="add-char-form">
-    <div class="field">
-      <label class="field-label">Name</label>
-      <input class="field-input" id="new-char-name" type="text" placeholder="e.g. Minh">
-    </div>
-    <div class="field">
-      <label class="field-label">Description</label>
-      <input class="field-input" id="new-char-desc" type="text" placeholder="e.g. 25-year-old office worker, friendly">
-    </div>
-    <div class="field" style="margin-bottom:0">
-      <label class="field-label">Reference image URL</label>
-      <input class="field-input" id="new-char-img" type="url" placeholder="https://...">
-      <div class="warning-note">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M6.5 4V6.5L8 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-        AI tool URLs expire in 24-72 hours. Download and re-host before saving here.
-      </div>
-    </div>
-    <div class="add-char-footer">
-      <button class="btn btn-outline btn-sm" onclick="cancelAddChar()">Cancel</button>
-      <button class="btn btn-default btn-sm" onclick="saveNewChar()">Add Character</button>
-    </div>
-  </div>
-  <button class="btn-dashed" id="btn-show-add-char" onclick="showAddChar()">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    Add character
-  </button>
-  <div class="field-hint" style="margin-top:10px">Characters are injected into image generation prompts (steps 6 &amp; 7). V1 saves reference URLs — you manage visual consistency manually.</div>
 
-  <hr class="separator">
+        <hr class="divider" />
+        <div class="section-label">Audience &amp; Tone</div>
 
-  <!-- 5. Reference Videos -->
-  <div class="section-label">
-    <span class="section-label-num">5</span>
-    Reference videos
-  </div>
-  <div class="field-hint" style="margin-bottom:12px">TikTok/YouTube video URLs in the style you want. ChatGPT uses these to understand your preferred storytelling format.</div>
-  <div class="url-list" id="video-url-list">
-    <div class="url-row">
-      <input class="field-input" type="url" value="https://www.tiktok.com/@deewas.app/video/12345" placeholder="https://...">
-      <button class="url-remove" onclick="removeUrlRow(this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+        <div class="field">
+          <label
+            class="lbl"
+            for="audience"
+            >Target audience</label
+          >
+          <input
+            type="text"
+            id="audience"
+            value="Young adults 22–32 managing their first salary, want to feel in control of money without being overwhelmed"
+            placeholder="Who are your users?"
+          />
+          <p class="field-help">
+            Name a person, not a category — "Sarah, 26, just got her first real
+            job" beats "millennials".
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="lbl"
+            >Tone <span class="lbl-hint">select any that fit</span></label
+          >
+          <div
+            class="tone-wrap"
+            id="tones"
+          >
+            <span
+              class="tone-chip on"
+              data-v="Warm"
+              >Warm</span
+            >
+            <span
+              class="tone-chip on"
+              data-v="Encouraging"
+              >Encouraging</span
+            >
+            <span
+              class="tone-chip on"
+              data-v="Modern"
+              >Modern</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Professional"
+              >Professional</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Playful"
+              >Playful</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Bold"
+              >Bold</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Calm"
+              >Calm</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Energetic"
+              >Energetic</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Minimalist"
+              >Minimalist</span
+            >
+            <span
+              class="tone-chip"
+              data-v="Relatable"
+              >Relatable</span
+            >
+          </div>
+        </div>
+
+        <hr class="divider" />
+        <div class="section-label">Platforms</div>
+
+        <div class="field">
+          <label class="lbl">Where are you publishing?</label>
+          <div
+            class="plat-grid"
+            id="platforms"
+          >
+            <label class="plat-chip on"
+              ><input
+                type="checkbox"
+                checked
+              />
+              📱 TikTok</label
+            >
+            <label class="plat-chip on"
+              ><input
+                type="checkbox"
+                checked
+              />
+              ▶ YouTube Shorts</label
+            >
+            <label class="plat-chip on"
+              ><input
+                type="checkbox"
+                checked
+              />
+              📸 Instagram Reels</label
+            >
+            <label class="plat-chip"
+              ><input type="checkbox" /> 🎬 YouTube</label
+            >
+            <label class="plat-chip"
+              ><input type="checkbox" /> 𝕏 Twitter / X</label
+            >
+          </div>
+        </div>
+
+        <hr class="divider" />
+        <div class="section-label">Reference videos</div>
+
+        <div class="field">
+          <label class="lbl"
+            >Example video URLs <span class="lbl-hint">optional</span></label
+          >
+          <p
+            class="field-help"
+            style="margin-bottom: 10px"
+          >
+            Videos with the vibe you want — style references. The AI uses these
+            as tone and format guidance.
+          </p>
+          <div
+            class="url-list"
+            id="urlList"
+          >
+            <div class="url-row">
+              <input
+                type="url"
+                placeholder="https://www.tiktok.com/..."
+                value="https://www.tiktok.com/@deewas_app/video/7318230491"
+              />
+              <button
+                type="button"
+                class="btn-rm"
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+            <div class="url-row">
+              <input
+                type="url"
+                placeholder="https://www.youtube.com/shorts/..."
+              />
+              <button
+                type="button"
+                class="btn-rm"
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-add"
+            id="addUrl"
+          >
+            + Add another URL
+          </button>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="actions">
+          <button
+            type="submit"
+            class="btn-primary"
+          >
+            Save brand profile
+          </button>
+          <button
+            type="button"
+            class="btn-ghost"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
-    <div class="url-row">
-      <input class="field-input" type="url" value="https://youtube.com/shorts/abc123" placeholder="https://...">
-      <button class="url-remove" onclick="removeUrlRow(this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-    </div>
-  </div>
-  <button class="btn-dashed" style="margin-top:8px" onclick="addUrlRow()">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1V11M1 6H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    Add reference video
-  </button>
 
-  <!-- Footer -->
-  <div class="form-footer">
-    <span class="save-hint">Saved to MongoDB. Context is injected into every prompt automatically.</span>
-    <button class="btn btn-outline" onclick="history.back()">Cancel</button>
-    <button class="btn btn-default" onclick="saveBrand()">
-      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 7L5.5 10.5L11 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Save brand profile
-    </button>
-  </div>
-</main>
-
-<div class="toast" id="toast">
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  Brand profile saved
-</div>
-
-<script>
-function togglePlatform(chip) {
-  chip.classList.toggle('checked');
-  chip.querySelector('input').checked = chip.classList.contains('checked');
-}
-function removeChar(btn) { btn.closest('.char-card').remove(); }
-function showAddChar() {
-  document.getElementById('add-char-form').classList.add('open');
-  document.getElementById('btn-show-add-char').style.display = 'none';
-  document.getElementById('new-char-name').focus();
-}
-function cancelAddChar() {
-  document.getElementById('add-char-form').classList.remove('open');
-  document.getElementById('btn-show-add-char').style.display = '';
-  ['new-char-name','new-char-desc','new-char-img'].forEach(id => document.getElementById(id).value = '');
-}
-let charId = 3;
-function saveNewChar() {
-  const name = document.getElementById('new-char-name').value.trim();
-  const desc = document.getElementById('new-char-desc').value.trim();
-  const img = document.getElementById('new-char-img').value.trim();
-  if (!name) { document.getElementById('new-char-name').focus(); return; }
-  const card = document.createElement('div');
-  card.className = 'char-card';
-  card.innerHTML = `<div class="char-card-info">
-    <div class="char-card-name">${esc(name)}</div>
-    <div class="char-card-desc">${esc(desc || '—')}</div>
-    ${img ? `<div class="char-card-img"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="1" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg><a href="${esc(img)}" target="_blank">${esc(img.split('/').pop() || img)}</a></div>` : ''}
-  </div>
-  <button class="char-remove" onclick="removeChar(this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
-  document.getElementById('char-list').appendChild(card);
-  cancelAddChar();
-}
-function addUrlRow() {
-  const row = document.createElement('div');
-  row.className = 'url-row';
-  row.innerHTML = `<input class="field-input" type="url" placeholder="https://..."><button class="url-remove" onclick="removeUrlRow(this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;
-  document.getElementById('video-url-list').appendChild(row);
-  row.querySelector('input').focus();
-}
-function removeUrlRow(btn) { btn.closest('.url-row').remove(); }
-function saveBrand() {
-  const t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// Auto-resize textareas
-document.querySelectorAll('textarea').forEach(el => {
-  el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
-  el.addEventListener('input', () => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; });
-});
-</script>
-</body>
+    <script type="module">
+      // tone chips
+      document
+        .querySelectorAll('.tone-chip')
+        .forEach(c =>
+          c.addEventListener('click', () => c.classList.toggle('on'))
+        )
+      // platform chips
+      document
+        .querySelectorAll('.plat-chip')
+        .forEach(c =>
+          c.addEventListener('click', () => c.classList.toggle('on'))
+        )
+      // remove url rows
+      function wireRemove() {
+        document
+          .querySelectorAll('.btn-rm')
+          .forEach(
+            btn => (btn.onclick = () => btn.closest('.url-row').remove())
+          )
+      }
+      wireRemove()
+      // add url row
+      document.getElementById('addUrl').addEventListener('click', () => {
+        const row = document.createElement('div')
+        row.className = 'url-row'
+        row.innerHTML = `<input type="url" placeholder="https://..."><button type="button" class="btn-rm" title="Remove">×</button>`
+        document.getElementById('urlList').appendChild(row)
+        wireRemove()
+        row.querySelector('input').focus()
+      })
+    </script>
+  </body>
 </html>
+

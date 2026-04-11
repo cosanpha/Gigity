@@ -1,5 +1,5 @@
 /**
- * Command registry — single source of truth for all browse commands.
+ * Command registry - single source of truth for all browse commands.
  *
  * Dependency graph:
  *   commands.ts ──▶ server.ts (runtime dispatch)
@@ -217,7 +217,7 @@ export const COMMAND_DESCRIPTIONS: Record<
   press: {
     category: 'Interaction',
     description:
-      'Press key — Enter, Tab, Escape, ArrowUp/Down/Left/Right, Backspace, Delete, Home, End, PageUp, PageDown, or modifiers like Shift+Enter',
+      'Press key - Enter, Tab, Escape, ArrowUp/Down/Left/Right, Backspace, Delete, Home, End, PageUp, PageDown, or modifiers like Shift+Enter',
     usage: 'press <key>',
   },
   scroll: {
@@ -361,7 +361,7 @@ export const COMMAND_DESCRIPTIONS: Record<
   // Watch
   watch: {
     category: 'Meta',
-    description: 'Passive observation — periodic snapshots while user browses',
+    description: 'Passive observation - periodic snapshots while user browses',
     usage: 'watch [stop]',
   },
   // State
@@ -380,7 +380,7 @@ export const COMMAND_DESCRIPTIONS: Record<
   inspect: {
     category: 'Inspection',
     description:
-      'Deep CSS inspection via CDP — full rule cascade, box model, computed styles',
+      'Deep CSS inspection via CDP - full rule cascade, box model, computed styles',
     usage: 'inspect [selector] [--all] [--history]',
   },
   style: {
@@ -414,3 +414,4 @@ for (const key of descKeys) {
   if (!allCmds.has(key))
     throw new Error(`COMMAND_DESCRIPTIONS has unknown command: ${key}`)
 }
+

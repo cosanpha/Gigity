@@ -1,5 +1,5 @@
 /**
- * URL validation for navigation commands — blocks dangerous schemes and cloud metadata endpoints.
+ * URL validation for navigation commands - blocks dangerous schemes and cloud metadata endpoints.
  * Localhost and private IPs are allowed (primary use case: QA testing local dev servers).
  */
 
@@ -32,7 +32,7 @@ function normalizeHostname(hostname: string): string {
  * Catches hex (0xA9FEA9FE), decimal (2852039166), and octal (0251.0376.0251.0376) forms.
  */
 function isMetadataIp(hostname: string): boolean {
-  // Try to parse as a numeric IP via URL constructor — it normalizes all forms
+  // Try to parse as a numeric IP via URL constructor - it normalizes all forms
   try {
     const probe = new URL(`http://${hostname}`)
     const normalized = probe.hostname
@@ -44,7 +44,7 @@ function isMetadataIp(hostname: string): boolean {
     )
       return true
   } catch {
-    // Not a valid hostname — can't be a metadata IP
+    // Not a valid hostname - can't be a metadata IP
   }
   return false
 }
@@ -60,7 +60,7 @@ async function resolvesToBlockedIp(hostname: string): Promise<boolean> {
     const addresses = await resolve4(hostname)
     return addresses.some(addr => BLOCKED_METADATA_HOSTS.has(addr))
   } catch {
-    // DNS resolution failed — not a rebinding risk
+    // DNS resolution failed - not a rebinding risk
     return false
   }
 }
@@ -88,7 +88,7 @@ export async function validateNavigationUrl(url: string): Promise<void> {
   }
 
   // DNS rebinding protection: resolve hostname and check if it points to metadata IPs.
-  // Skip for loopback/private IPs — they can't be DNS-rebinded and the async DNS
+  // Skip for loopback/private IPs - they can't be DNS-rebinded and the async DNS
   // resolution adds latency that breaks concurrent E2E tests under load.
   const isLoopback =
     hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
@@ -101,3 +101,4 @@ export async function validateNavigationUrl(url: string): Promise<void> {
     )
   }
 }
+

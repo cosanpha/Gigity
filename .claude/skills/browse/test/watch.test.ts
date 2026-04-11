@@ -1,7 +1,7 @@
 /**
  * Tests for watch mode state machine in BrowserManager.
  *
- * Pure unit tests — no browser needed. Just instantiate BrowserManager
+ * Pure unit tests - no browser needed. Just instantiate BrowserManager
  * and test the watch state methods (startWatch, stopWatch, addWatchSnapshot,
  * isWatching).
  */
@@ -9,7 +9,7 @@
 import { describe, test, expect } from 'bun:test'
 import { BrowserManager } from '../src/browser-manager'
 
-describe('watch mode — state machine', () => {
+describe('watch mode - state machine', () => {
   test('isWatching returns false by default', () => {
     const bm = new BrowserManager()
     expect(bm.isWatching()).toBe(false)
@@ -71,7 +71,7 @@ describe('watch mode — state machine', () => {
     const result1 = bm.stopWatch()
     expect(result1.snapshots.length).toBe(1)
 
-    // Second cycle — should start fresh
+    // Second cycle - should start fresh
     bm.startWatch()
     const result2 = bm.stopWatch()
     expect(result2.snapshots.length).toBe(0)
@@ -97,7 +97,7 @@ describe('watch mode — state machine', () => {
     expect(bm.isWatching()).toBe(false)
     expect(r2.snapshots).toEqual(['snap-2a', 'snap-2b'])
 
-    // Cycle 3 — no snapshots added
+    // Cycle 3 - no snapshots added
     bm.startWatch()
     expect(bm.isWatching()).toBe(true)
     const r3 = bm.stopWatch()

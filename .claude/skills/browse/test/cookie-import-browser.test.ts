@@ -13,12 +13,12 @@
  * Remaining bytes = actual cookie value
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
 import { Database } from 'bun:sqlite'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
-import * as path from 'path'
 import * as os from 'os'
+import * as path from 'path'
 
 // ─── Test Constants ─────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ function createMacFixtureDb() {
     chromiumEpoch(Math.floor(Date.now() / 1000) - 86400)
   )
 
-  // Domain 1: .github.com — 3 encrypted cookies
+  // Domain 1: .github.com - 3 encrypted cookies
   insert.run(
     '.github.com',
     'session_id',
@@ -149,7 +149,7 @@ function createMacFixtureDb() {
     2
   )
 
-  // Domain 2: .google.com — 2 cookies
+  // Domain 2: .google.com - 2 cookies
   insert.run(
     '.google.com',
     'NID',
@@ -175,7 +175,7 @@ function createMacFixtureDb() {
     1
   )
 
-  // Domain 3: .example.com — 1 unencrypted cookie (value field set, no encrypted_value)
+  // Domain 3: .example.com - 1 unencrypted cookie (value field set, no encrypted_value)
   insert.run(
     '.example.com',
     'plain_cookie',
@@ -189,7 +189,7 @@ function createMacFixtureDb() {
     1
   )
 
-  // Domain 4: .expired.com — 1 expired cookie (should be filtered out)
+  // Domain 4: .expired.com - 1 expired cookie (should be filtered out)
   insert.run(
     '.expired.com',
     'old',
@@ -203,7 +203,7 @@ function createMacFixtureDb() {
     1
   )
 
-  // Domain 5: .session.com — session cookie (has_expires=0)
+  // Domain 5: .session.com - session cookie (has_expires=0)
   insert.run(
     '.session.com',
     'sess',
@@ -217,7 +217,7 @@ function createMacFixtureDb() {
     1
   )
 
-  // Domain 6: .corrupt.com — cookie with garbage encrypted_value
+  // Domain 6: .corrupt.com - cookie with garbage encrypted_value
   insert.run(
     '.corrupt.com',
     'bad',
@@ -231,7 +231,7 @@ function createMacFixtureDb() {
     1
   )
 
-  // Domain 7: .mixed.com — one good, one corrupt
+  // Domain 7: .mixed.com - one good, one corrupt
   insert.run(
     '.mixed.com',
     'good',
@@ -778,3 +778,4 @@ describe('Cookie Import Browser', () => {
     })
   })
 })
+

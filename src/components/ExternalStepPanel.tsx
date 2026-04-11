@@ -1,10 +1,9 @@
 'use client'
 
 import { interpolate } from '@/lib/interpolate'
-import { StepDefinition } from '@/lib/workflow-templates'
+import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
 import { useState } from 'react'
-import { AssetUrlInput } from './AssetUrlInput'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
@@ -24,35 +23,9 @@ interface ExternalStepPanelProps {
   state: StepState
   priorStepOutput: string | null // shown in collapsible context card
   brandCtx: { platform: string }
-  assetUrl: string
-  onAssetUrlChange: (v: string) => void
   onApprove: () => void
   onReopen?: () => void
-  projectAssets?: ProjectAssets // step 10: all collected project assets
-  step7Images?: string[] // step 9: scene image URLs from step 7
-  step8Output?: string // step 9: KlingAI prompts from step 8
-}
-
-const STEPS_REQUIRING_URL = [9]
-
-function parseKlingScenes(text: string): Array<{
-  title: string
-  lyric: string
-  prompt: string
-}> {
-  const blocks = text.split(/\*\*Scene \d+/).slice(1)
-  return blocks.map(block => {
-    const titleMatch = block.match(/^[^*\n]*/)
-    const lyricMatch = block.match(/Lyric:\s*"([^"]+)"/)
-    const promptMatch = block.match(
-      /KlingAI prompt:\s*([\s\S]+?)(?=\n\n|\n\*\*|$)/
-    )
-    return {
-      title: `Scene ${titleMatch?.[0]?.replace(/[^—\w\s]/g, '').trim() ?? ''}`,
-      lyric: lyricMatch?.[1] ?? '',
-      prompt: promptMatch?.[1]?.trim() ?? '',
-    }
-  })
+  projectAssets?: ProjectAssets // CapCut: all collected project assets
 }
 
 function AssetGroup({
@@ -181,16 +154,11 @@ export function ExternalStepPanel({
   state,
   priorStepOutput,
   brandCtx,
-  assetUrl,
-  onAssetUrlChange,
   onApprove,
   onReopen,
   projectAssets,
-  step7Images,
-  step8Output,
 }: ExternalStepPanelProps) {
   const [contextOpen, setContextOpen] = useState(true)
-  const needsUrl = STEPS_REQUIRING_URL.includes(stepNumber)
   const instruction = interpolate(stepDef.instruction ?? '', {
     platform: brandCtx.platform,
   })
@@ -200,7 +168,9 @@ export function ExternalStepPanel({
       {/* Step header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step {stepNumber} of 11</span>
+          <span>
+            Step {stepNumber} of {WORKFLOW_TOTAL_STEPS}
+          </span>
           <span>·</span>
           <span className="flex items-center gap-1">
             <span className="rounded border border-zinc-300 px-1.5 py-0.5 text-[11px]">
@@ -227,9 +197,9 @@ export function ExternalStepPanel({
             {onReopen && (
               <button
                 onClick={onReopen}
-                className="text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
+                className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
               >
-                ↺ Re-open
+                Re-open
               </button>
             )}
           </div>
@@ -255,7 +225,7 @@ export function ExternalStepPanel({
       {/* Active state */}
       {state.status !== 'done' && (
         <div className="flex flex-col gap-5">
-          {/* Step 10: project asset panel */}
+          {/* CapCut: project asset panel */}
           {projectAssets && (
             <div className="mb-6">
               <div className="mb-3 flex items-center justify-between">
@@ -290,7 +260,7 @@ export function ExternalStepPanel({
             </div>
           )}
 
-          {/* Collapsible context card — prior step output */}
+          {/* Collapsible context card - prior step output */}
           {priorStepOutput && (
             <div className="overflow-hidden rounded-[6px] border border-zinc-200">
               <button
@@ -309,58 +279,6 @@ export function ExternalStepPanel({
                   </pre>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Step 9: scene reference panel */}
-          {stepNumber === 9 && step8Output && step7Images && (
-            <div className="mb-4">
-              <p className="mb-2 text-[13px] font-medium text-zinc-700">
-                Scene reference
-              </p>
-              <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto rounded-[6px] border border-zinc-200">
-                {parseKlingScenes(step8Output).map((scene, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-3 border-b border-zinc-100 p-3 last:border-0"
-                  >
-                    {step7Images[i] && (
-                      <a
-                        href={step7Images[i]}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Image
-                          src={step7Images[i]}
-                          alt={scene.title}
-                          className="h-16 w-9 shrink-0 rounded object-cover"
-                          width={64}
-                          height={64}
-                        />
-                      </a>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-medium text-zinc-700">
-                        {scene.title}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-zinc-500 italic">
-                        &ldquo;{scene.lyric}&rdquo;
-                      </p>
-                      <p className="mt-1 line-clamp-2 text-[11px] text-zinc-600">
-                        {scene.prompt}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(scene.prompt)
-                      }
-                      className="shrink-0 self-start text-[11px] text-zinc-400 hover:text-zinc-600"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
@@ -390,23 +308,14 @@ export function ExternalStepPanel({
             </div>
           )}
 
-          {/* URL input (step 9 only) */}
-          {needsUrl && (
-            <AssetUrlInput
-              label="Asset URL"
-              placeholder="https://..."
-              rows={3}
-              onChange={onAssetUrlChange}
-            />
-          )}
-
           {/* Approve button */}
           <button
             onClick={onApprove}
-            disabled={needsUrl && !assetUrl.trim()}
             className="self-start rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {stepNumber === 11 ? 'Mark as published ✓' : 'Mark as done ✓'}
+            {stepNumber === WORKFLOW_TOTAL_STEPS
+              ? 'Mark as published ✓'
+              : 'Mark as done ✓'}
           </button>
         </div>
       )}

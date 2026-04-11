@@ -1,5 +1,5 @@
 /**
- * Cookie picker UI — self-contained HTML page
+ * Cookie picker UI - self-contained HTML page
  *
  * Dark theme, two-panel layout, vanilla HTML/CSS/JS.
  * Left: source browser domains with search + import buttons.
@@ -18,7 +18,7 @@ export function getCookiePickerHTML(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cookie Import — gstack browse</title>
+<title>Cookie Import - gstack browse</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {

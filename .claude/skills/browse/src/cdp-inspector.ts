@@ -1,5 +1,5 @@
 /**
- * CDP Inspector — Chrome DevTools Protocol integration for deep CSS inspection
+ * CDP Inspector - Chrome DevTools Protocol integration for deep CSS inspection
  *
  * Manages a persistent CDP session per active page for:
  *   - Full CSS rule cascade inspection (matched rules, computed styles, inline styles)
@@ -147,7 +147,7 @@ async function getOrCreateSession(page: Page): Promise<any> {
       await session.send('DOM.getDocument', { depth: 0 })
       return session
     } catch {
-      // Session is stale — recreate
+      // Session is stale - recreate
       cdpSessions.delete(page)
       initializedPages.delete(page)
     }
@@ -254,7 +254,7 @@ export async function inspectElement(
     nodeId = result.nodeId
     if (!nodeId) throw new Error(`Element not found: ${selector}`)
   } catch (err: any) {
-    throw new Error(`Element not found: ${selector} — ${err.message}`)
+    throw new Error(`Element not found: ${selector} - ${err.message}`)
   }
 
   // Get element attributes
@@ -463,7 +463,7 @@ export async function inspectElement(
     }
   }
 
-  // Sort by specificity (highest first — these win)
+  // Sort by specificity (highest first - these win)
   matchedRules.sort((a, b) => -compareSpecificity(a.specificity, b.specificity))
 
   // Mark overridden properties: the first rule in the sorted list (highest specificity) wins
@@ -694,7 +694,7 @@ export async function undoModification(
       )
     }
   } else {
-    // Inline modification — restore or remove
+    // Inline modification - restore or remove
     await page.evaluate(
       ([sel, prop, val]) => {
         const el = document.querySelector(sel)
@@ -873,3 +873,4 @@ export function detachSession(page?: Page): void {
   // Note: WeakMap doesn't support iteration, so we can't detach all.
   // Callers with specific pages should call this per-page.
 }
+

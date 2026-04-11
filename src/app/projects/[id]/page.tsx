@@ -1,7 +1,11 @@
 import { Navbar } from '@/components/Navbar'
 import { WorkflowClient } from '@/components/WorkflowClient'
-import { SUNO_API_KEY } from '@/constants/env.server'
+import { SUNO_API_BASE_URL, SUNO_API_KEY } from '@/constants/env.server'
 import { connectDB } from '@/lib/db'
+import {
+  migrateLegacyElevenSteps,
+  migrateLegacyTenSteps,
+} from '@/lib/migrate-project-steps'
 import { WORKFLOW_STEPS } from '@/lib/workflow-templates'
 import BrandProfile from '@/models/BrandProfile'
 import VideoProject from '@/models/VideoProject'
@@ -22,6 +26,21 @@ export default async function ProjectPage({ params }: Props) {
   const serializedProject = JSON.parse(JSON.stringify(project))
   const serializedBrand = JSON.parse(JSON.stringify(brand))
 
+  let steps = serializedProject.steps
+  let migrated = false
+  const m11 = migrateLegacyElevenSteps(steps)
+  steps = m11.steps
+  migrated = migrated || m11.migrated
+  const m10 = migrateLegacyTenSteps(steps)
+  steps = m10.steps
+  migrated = migrated || m10.migrated
+  if (migrated) {
+    serializedProject.steps = steps
+    await VideoProject.findByIdAndUpdate(id, {
+      $set: { steps },
+    })
+  }
+
   return (
     <>
       <Navbar
@@ -32,7 +51,7 @@ export default async function ProjectPage({ params }: Props) {
         project={serializedProject}
         brand={serializedBrand}
         stepDefs={WORKFLOW_STEPS}
-        sunoEnabled={!!SUNO_API_KEY}
+        sunoEnabled={Boolean(SUNO_API_KEY?.trim() && SUNO_API_BASE_URL?.trim())}
       />
     </>
   )

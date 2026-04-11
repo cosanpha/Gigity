@@ -1,21 +1,21 @@
 /**
- * Read commands — extract data from pages without side effects
+ * Read commands - extract data from pages without side effects
  *
  * text, html, links, forms, accessibility, js, eval, css, attrs,
  * console, network, cookies, storage, perf
  */
 
-import type { BrowserManager } from './browser-manager'
-import { consoleBuffer, networkBuffer, dialogBuffer } from './buffers'
-import type { Page, Frame } from 'playwright'
 import * as fs from 'fs'
 import * as path from 'path'
-import { TEMP_DIR, isPathWithin } from './platform'
+import type { Frame, Page } from 'playwright'
+import type { BrowserManager } from './browser-manager'
+import { consoleBuffer, dialogBuffer, networkBuffer } from './buffers'
 import {
-  inspectElement,
   formatInspectorResult,
   getModificationHistory,
+  inspectElement,
 } from './cdp-inspector'
+import { TEMP_DIR, isPathWithin } from './platform'
 
 /** Detect await keyword, ignoring comments. Accepted risk: await in string literals triggers wrapping (harmless). */
 function hasAwait(code: string): boolean {
@@ -61,13 +61,13 @@ const SAFE_DIRECTORIES = [TEMP_DIR, process.cwd()].map(d => {
 export function validateReadPath(filePath: string): void {
   // Always resolve to absolute first (fixes relative path symlink bypass)
   const resolved = path.resolve(filePath)
-  // Resolve symlinks — throw on non-ENOENT errors
+  // Resolve symlinks - throw on non-ENOENT errors
   let realPath: string
   try {
     realPath = fs.realpathSync(resolved)
   } catch (err: any) {
     if (err.code === 'ENOENT') {
-      // File doesn't exist — resolve directory part for symlinks (e.g., /tmp → /private/tmp)
+      // File doesn't exist - resolve directory part for symlinks (e.g., /tmp → /private/tmp)
       try {
         const dir = fs.realpathSync(path.dirname(resolved))
         realPath = path.join(dir, path.basename(resolved))
@@ -394,7 +394,7 @@ export async function handleReadCommand(
         for (const [key, value] of Object.entries(store)) {
           if (typeof value !== 'string') continue
           if (SENSITIVE_KEY.test(key) || SENSITIVE_VALUE.test(value)) {
-            store[key] = `[REDACTED — ${value.length} chars]`
+            store[key] = `[REDACTED - ${value.length} chars]`
           }
         }
       }
@@ -486,3 +486,4 @@ export async function handleReadCommand(
       throw new Error(`Unknown read command: ${command}`)
   }
 }
+

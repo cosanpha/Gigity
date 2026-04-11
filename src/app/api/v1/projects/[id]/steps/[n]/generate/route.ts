@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const { id, n } = await params
   const stepNumber = parseInt(n, 10)
 
-  if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 11) {
+  if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 9) {
     return NextResponse.json({ error: 'Invalid step number' }, { status: 400 })
   }
 
@@ -42,7 +42,7 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const step = project.steps[stepNumber - 1]
 
-  // Prevent concurrent calls — UI should disable the button while generating
+  // Prevent concurrent calls - UI should disable the button while generating
   if (step.status === 'generating') {
     return NextResponse.json({ error: 'Already generating' }, { status: 409 })
   }
@@ -70,10 +70,10 @@ export async function POST(req: Request, { params }: Ctx) {
     step_2_output: getStepOutput(project.steps as any[], 2),
     step_3_output: getStepOutput(project.steps as any[], 3),
     step_4_output: getStepOutput(project.steps as any[], 4),
-    step_5_output: getStepOutput(project.steps as any[], 5),
+    step_5_output: getStepLlmOutput(project.steps as any[], 5),
+    step_5_assets_output: getStepAssetOutput(project.steps as any[], 5),
     step_6_output: getStepOutput(project.steps as any[], 6),
     step_7_output: getStepOutput(project.steps as any[], 7),
-    step_8_output: getStepOutput(project.steps as any[], 8),
   }
 
   const userPrompt = interpolate(stepDef.promptTemplate!, ctx)
@@ -105,12 +105,12 @@ export async function POST(req: Request, { params }: Ctx) {
     }
     step.conversation.push({ role: 'assistant', content: response })
     step.llmResponse = response
-    step.status = 'pending' // back to pending — user must Approve to advance
+    step.status = 'pending' // back to pending - user must Approve to advance
 
     await project.save()
     return NextResponse.json({ ok: true, llmResponse: response })
   } catch (err: any) {
-    // LLM call failed — reset to pending, return error
+    // LLM call failed - reset to pending, return error
     step.status = 'pending'
     await project.save()
     return NextResponse.json({ error: err.message }, { status: 502 })
@@ -121,4 +121,16 @@ function getStepOutput(steps: any[], n: number): string {
   const s = steps[n - 1]
   if (!s || s.status !== 'done') return ''
   return s.llmResponse ?? s.outputAssetUrl ?? ''
+}
+
+function getStepLlmOutput(steps: any[], n: number): string {
+  const s = steps[n - 1]
+  if (!s || s.status !== 'done') return ''
+  return s.llmResponse ?? ''
+}
+
+function getStepAssetOutput(steps: any[], n: number): string {
+  const s = steps[n - 1]
+  if (!s || s.status !== 'done') return ''
+  return s.outputAssetUrl?.trim() ?? ''
 }

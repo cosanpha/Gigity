@@ -1,5 +1,5 @@
 /**
- * gstack browse server — persistent Chromium daemon
+ * gstack browse server - persistent Chromium daemon
  *
  * Architecture:
  *   Bun.serve HTTP on localhost → routes commands to Playwright
@@ -13,40 +13,40 @@
  *   Port:       random 10000-60000 (or BROWSE_PORT env for debug override)
  */
 
+import {
+  emitActivity,
+  getActivityAfter,
+  getActivityHistory,
+  getSubscriberCount,
+  subscribe,
+} from './activity'
 import { BrowserManager } from './browser-manager'
-import { handleReadCommand } from './read-commands'
-import { handleWriteCommand } from './write-commands'
-import { handleMetaCommand } from './meta-commands'
-import { handleCookiePickerRoute } from './cookie-picker-routes'
-import { sanitizeExtensionUrl } from './sidebar-utils'
+import {
+  detachSession,
+  getModificationHistory,
+  inspectElement,
+  modifyStyle,
+  resetModifications,
+  type InspectorResult,
+} from './cdp-inspector'
 import {
   COMMAND_DESCRIPTIONS,
   PAGE_CONTENT_COMMANDS,
   wrapUntrustedContent,
 } from './commands'
+import { ensureStateDir, readVersionHash, resolveConfig } from './config'
+import { handleCookiePickerRoute } from './cookie-picker-routes'
+import { handleMetaCommand } from './meta-commands'
+import { handleReadCommand } from './read-commands'
+import { sanitizeExtensionUrl } from './sidebar-utils'
 import { handleSnapshot, SNAPSHOT_FLAGS } from './snapshot'
-import { resolveConfig, ensureStateDir, readVersionHash } from './config'
-import {
-  emitActivity,
-  subscribe,
-  getActivityAfter,
-  getActivityHistory,
-  getSubscriberCount,
-} from './activity'
-import {
-  inspectElement,
-  modifyStyle,
-  resetModifications,
-  getModificationHistory,
-  detachSession,
-  type InspectorResult,
-} from './cdp-inspector'
+import { handleWriteCommand } from './write-commands'
 // Bun.spawn used instead of child_process.spawn (compiled bun binaries
 // fail posix_spawn on all executables including /bin/bash)
+import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as net from 'net'
 import * as path from 'path'
-import * as crypto from 'crypto'
 
 // ─── Config ─────────────────────────────────────────────────────
 const config = resolveConfig()
@@ -90,7 +90,7 @@ function generateHelpText(): string {
   ]
 
   const lines = [
-    'gstack browse — headless browser for AI agents',
+    'gstack browse - headless browser for AI agents',
     '',
     'Commands:',
   ]
@@ -122,33 +122,33 @@ function generateHelpText(): string {
 
 // ─── Buffer (from buffers.ts) ────────────────────────────────────
 import {
-  consoleBuffer,
-  networkBuffer,
-  dialogBuffer,
   addConsoleEntry,
-  addNetworkEntry,
   addDialogEntry,
+  addNetworkEntry,
+  consoleBuffer,
+  dialogBuffer,
+  networkBuffer,
+  type DialogEntry,
   type LogEntry,
   type NetworkEntry,
-  type DialogEntry,
 } from './buffers'
 export {
-  consoleBuffer,
-  networkBuffer,
-  dialogBuffer,
   addConsoleEntry,
-  addNetworkEntry,
   addDialogEntry,
+  addNetworkEntry,
+  consoleBuffer,
+  dialogBuffer,
+  networkBuffer,
+  type DialogEntry,
   type LogEntry,
   type NetworkEntry,
-  type DialogEntry,
 }
 
 const CONSOLE_LOG_PATH = config.consoleLog
 const NETWORK_LOG_PATH = config.networkLog
 const DIALOG_LOG_PATH = config.dialogLog
 
-// ─── Sidebar Agent (integrated — no separate process) ─────────────
+// ─── Sidebar Agent (integrated - no separate process) ─────────────
 
 interface ChatEntry {
   id: number
@@ -176,11 +176,11 @@ const SESSIONS_DIR = path.join(
   '.gstack',
   'sidebar-sessions'
 )
-const AGENT_TIMEOUT_MS = 300_000 // 5 minutes — multi-page tasks need time
+const AGENT_TIMEOUT_MS = 300_000 // 5 minutes - multi-page tasks need time
 const MAX_QUEUE = 5
 
 let sidebarSession: SidebarSession | null = null
-// Per-tab agent state — each tab gets its own agent subprocess
+// Per-tab agent state - each tab gets its own agent subprocess
 interface TabAgentState {
   status: 'idle' | 'processing' | 'hung'
   startTime: number | null
@@ -198,7 +198,7 @@ let messageQueue: Array<{
   extensionUrl?: string | null
 }> = []
 let currentMessage: string | null = null
-// Per-tab chat buffers — each browser tab gets its own conversation
+// Per-tab chat buffers - each browser tab gets its own conversation
 const chatBuffers = new Map<number, ChatEntry[]>() // tabId -> entries
 let chatNextId = 0
 let agentTabId: number | null = null // which tab the current agent is working on
@@ -266,7 +266,7 @@ const BROWSE_BIN = findBrowseBin()
 function findClaudeBin(): string | null {
   const home = process.env.HOME || ''
   const candidates = [
-    // Conductor app bundled binary (not a symlink — works reliably)
+    // Conductor app bundled binary (not a symlink - works reliably)
     path.join(
       home,
       'Library',
@@ -295,7 +295,7 @@ function findClaudeBin(): string | null {
         return []
       }
     })(),
-    // Standard install (symlink — resolve it)
+    // Standard install (symlink - resolve it)
     path.join(home, '.local', 'bin', 'claude'),
     '/usr/local/bin/claude',
     '/opt/homebrew/bin/claude',
@@ -315,7 +315,7 @@ function findClaudeBin(): string | null {
   for (const c of candidates) {
     try {
       if (!fs.existsSync(c)) continue
-      // Resolve symlinks — posix_spawn can fail on symlinks in compiled bun binaries
+      // Resolve symlinks - posix_spawn can fail on symlinks in compiled bun binaries
       return fs.realpathSync(c)
     } catch {}
   }
@@ -378,14 +378,14 @@ function loadSession(): SidebarSession | null {
     const session = JSON.parse(
       fs.readFileSync(sessionFile, 'utf-8')
     ) as SidebarSession
-    // Validate worktree still exists — crash may have left stale path
+    // Validate worktree still exists - crash may have left stale path
     if (session.worktreePath && !fs.existsSync(session.worktreePath)) {
       console.log(
-        `[browse] Stale worktree path: ${session.worktreePath} — clearing`
+        `[browse] Stale worktree path: ${session.worktreePath} - clearing`
       )
       session.worktreePath = null
     }
-    // Clear stale claude session ID — can't resume across server restarts
+    // Clear stale claude session ID - can't resume across server restarts
     if (session.claudeSessionId) {
       console.log(
         `[browse] Clearing stale claude session: ${session.claudeSessionId}`
@@ -465,7 +465,7 @@ function createWorktree(sessionId: string): string | null {
     if (headCheck.exitCode !== 0) return null
     const head = headCheck.stdout.toString().trim()
 
-    // Create worktree (detached HEAD — no branch conflicts)
+    // Create worktree (detached HEAD - no branch conflicts)
     const result = Bun.spawnSync(
       ['git', 'worktree', 'add', '--detach', worktreeDir, head],
       {
@@ -698,7 +698,7 @@ function spawnClaude(
   ].join('\n')
 
   const prompt = `${systemPrompt}\n\n<user-message>\n${escapedMessage}\n</user-message>`
-  // Never resume — each message is a fresh context. Resuming carries stale
+  // Never resume - each message is a fresh context. Resuming carries stale
   // page URLs and old navigation state that makes the agent fight the user.
   const args = [
     '-p',
@@ -778,7 +778,7 @@ function killAgent(): void {
   agentStatus = 'idle'
 }
 
-// Agent health check — detect hung processes
+// Agent health check - detect hung processes
 let agentHealthInterval: ReturnType<typeof setInterval> | null = null
 function startAgentHealthCheck(): void {
   agentHealthInterval = setInterval(() => {
@@ -879,7 +879,7 @@ async function flushBuffers() {
       lastDialogFlushed = dialogBuffer.totalAdded
     }
   } catch {
-    // Flush failures are non-fatal — buffers are in memory
+    // Flush failures are non-fatal - buffers are in memory
   } finally {
     flushInProgress = false
   }
@@ -902,9 +902,9 @@ const idleCheckInterval = setInterval(() => {
   }
 }, 60_000)
 
-// ─── Command Sets (from commands.ts — single source of truth) ───
-import { READ_COMMANDS, WRITE_COMMANDS, META_COMMANDS } from './commands'
-export { READ_COMMANDS, WRITE_COMMANDS, META_COMMANDS }
+// ─── Command Sets (from commands.ts - single source of truth) ───
+import { META_COMMANDS, READ_COMMANDS, WRITE_COMMANDS } from './commands'
+export { META_COMMANDS, READ_COMMANDS, WRITE_COMMANDS }
 
 // ─── Inspector State (in-memory) ──────────────────────────────
 let inspectorData: InspectorResult | null = null
@@ -1015,11 +1015,11 @@ async function handleCommand(body: any): Promise<Response> {
 
   // Pin to a specific tab if requested (set by BROWSE_TAB env var in sidebar agents).
   // This prevents parallel agents from interfering with each other's tab context.
-  // Safe because Bun's event loop is single-threaded — no concurrent handleCommand.
+  // Safe because Bun's event loop is single-threaded - no concurrent handleCommand.
   let savedTabId: number | null = null
   if (tabId !== undefined && tabId !== null) {
     savedTabId = browserManager.getActiveTabId()
-    // bringToFront: false — internal tab pinning must NOT steal window focus
+    // bringToFront: false - internal tab pinning must NOT steal window focus
     try {
       browserManager.switchTab(tabId, { bringToFront: false })
     } catch {}
@@ -1077,7 +1077,7 @@ async function handleCommand(body: any): Promise<Response> {
             const snapshot = await handleSnapshot(['-i'], browserManager)
             browserManager.addWatchSnapshot(snapshot)
           } catch {
-            // Page may be navigating — skip this snapshot
+            // Page may be navigating - skip this snapshot
           }
         }, 5000)
         browserManager.watchInterval = watchInterval
@@ -1208,7 +1208,7 @@ async function shutdown() {
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 // Windows: taskkill /F bypasses SIGTERM, but 'exit' fires for some shutdown paths.
-// Defense-in-depth — primary cleanup is the CLI's stale-state detection via health check.
+// Defense-in-depth - primary cleanup is the CLI's stale-state detection via health check.
 if (process.platform === 'win32') {
   process.on('exit', () => {
     try {
@@ -1294,12 +1294,12 @@ async function start() {
     fetch: async req => {
       const url = new URL(req.url)
 
-      // Cookie picker routes — HTML page unauthenticated, data/action routes require auth
+      // Cookie picker routes - HTML page unauthenticated, data/action routes require auth
       if (url.pathname.startsWith('/cookie-picker')) {
         return handleCookiePickerRoute(url, req, browserManager, AUTH_TOKEN)
       }
 
-      // Health check — no auth required, does NOT reset idle timer
+      // Health check - no auth required, does NOT reset idle timer
       if (url.pathname === '/health') {
         const healthy = await browserManager.isHealthy()
         return new Response(
@@ -1309,7 +1309,7 @@ async function start() {
             uptime: Math.floor((Date.now() - startTime) / 1000),
             tabs: browserManager.getTabCount(),
             currentUrl: browserManager.getCurrentUrl(),
-            // token removed — see .auth.json for extension bootstrap
+            // token removed - see .auth.json for extension bootstrap
             chatEnabled: true,
             agent: {
               status: agentStatus,
@@ -1328,7 +1328,7 @@ async function start() {
         )
       }
 
-      // Refs endpoint — auth required, does NOT reset idle timer
+      // Refs endpoint - auth required, does NOT reset idle timer
       if (url.pathname === '/refs') {
         if (!validateAuth(req)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1350,7 +1350,7 @@ async function start() {
         )
       }
 
-      // Activity stream — SSE, auth required, does NOT reset idle timer
+      // Activity stream - SSE, auth required, does NOT reset idle timer
       if (url.pathname === '/activity/stream') {
         // Inline auth: accept Bearer header OR ?token= query param (EventSource can't send headers)
         const streamToken = url.searchParams.get('token')
@@ -1426,7 +1426,7 @@ async function start() {
         })
       }
 
-      // Activity history — REST, auth required, does NOT reset idle timer
+      // Activity history - REST, auth required, does NOT reset idle timer
       if (url.pathname === '/activity/history') {
         if (!validateAuth(req)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1449,7 +1449,7 @@ async function start() {
         )
       }
 
-      // ─── Sidebar endpoints (auth required — token from /health) ────
+      // ─── Sidebar endpoints (auth required - token from /health) ────
 
       // Sidebar routes are always available in headed mode (ungated in v0.12.0)
 
@@ -1462,7 +1462,7 @@ async function start() {
           })
         }
         try {
-          // Sync active tab from Chrome extension — detects manual tab switches
+          // Sync active tab from Chrome extension - detects manual tab switches
           const activeUrl = url.searchParams.get('activeUrl')
           if (activeUrl) {
             browserManager.syncActiveTabByUrl(activeUrl)
@@ -1522,7 +1522,7 @@ async function start() {
         }
       }
 
-      // Sidebar chat history — read from in-memory buffer
+      // Sidebar chat history - read from in-memory buffer
       if (url.pathname === '/sidebar-chat') {
         if (!validateAuth(req)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1574,11 +1574,11 @@ async function start() {
             headers: { 'Content-Type': 'application/json' },
           })
         }
-        // The Chrome extension sends the active tab's URL — prefer it over
+        // The Chrome extension sends the active tab's URL - prefer it over
         // Playwright's page.url() which can be stale in headed mode when
         // the user navigates manually.
         const extensionUrl = body.activeTabUrl || null
-        // Sync active tab BEFORE reading the ID — the user may have switched
+        // Sync active tab BEFORE reading the ID - the user may have switched
         // tabs manually and the server's activeTabId is stale.
         if (extensionUrl) {
           browserManager.syncActiveTabByUrl(extensionUrl)
@@ -1670,7 +1670,7 @@ async function start() {
         })
       }
 
-      // Stop agent (user-initiated) — queued messages remain for dismissal
+      // Stop agent (user-initiated) - queued messages remain for dismissal
       if (url.pathname === '/sidebar-agent/stop' && req.method === 'POST') {
         if (!validateAuth(req)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1782,7 +1782,7 @@ async function start() {
         )
       }
 
-      // Agent event relay — sidebar-agent.ts POSTs events here
+      // Agent event relay - sidebar-agent.ts POSTs events here
       if (url.pathname === '/sidebar-agent/event' && req.method === 'POST') {
         if (!validateAuth(req)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -1851,7 +1851,7 @@ async function start() {
 
       // ─── Inspector endpoints ──────────────────────────────────────
 
-      // POST /inspector/pick — receive element pick from extension, run CDP inspection
+      // POST /inspector/pick - receive element pick from extension, run CDP inspection
       if (url.pathname === '/inspector/pick' && req.method === 'POST') {
         const body = await req.json()
         const { selector, activeTabUrl } = body
@@ -1886,7 +1886,7 @@ async function start() {
         }
       }
 
-      // GET /inspector — return latest inspector data
+      // GET /inspector - return latest inspector data
       if (url.pathname === '/inspector' && req.method === 'GET') {
         if (!inspectorData) {
           return new Response(JSON.stringify({ data: null }), {
@@ -1909,7 +1909,7 @@ async function start() {
         )
       }
 
-      // POST /inspector/apply — apply a CSS modification
+      // POST /inspector/apply - apply a CSS modification
       if (url.pathname === '/inspector/apply' && req.method === 'POST') {
         const body = await req.json()
         const { selector, property, value } = body
@@ -1942,7 +1942,7 @@ async function start() {
         }
       }
 
-      // POST /inspector/reset — clear all modifications
+      // POST /inspector/reset - clear all modifications
       if (url.pathname === '/inspector/reset' && req.method === 'POST') {
         try {
           const page = browserManager.getPage()
@@ -1960,7 +1960,7 @@ async function start() {
         }
       }
 
-      // GET /inspector/history — return modification list
+      // GET /inspector/history - return modification list
       if (url.pathname === '/inspector/history' && req.method === 'GET') {
         return new Response(
           JSON.stringify({ history: getModificationHistory() }),
@@ -1971,7 +1971,7 @@ async function start() {
         )
       }
 
-      // GET /inspector/events — SSE for inspector state changes
+      // GET /inspector/events - SSE for inspector state changes
       if (url.pathname === '/inspector/events' && req.method === 'GET') {
         const encoder = new TextEncoder()
         const stream = new ReadableStream({
@@ -2085,7 +2085,7 @@ async function start() {
 
 start().catch(err => {
   console.error(`[browse] Failed to start: ${err.message}`)
-  // Write error to disk for the CLI to read — on Windows, the CLI can't capture
+  // Write error to disk for the CLI to read - on Windows, the CLI can't capture
   // stderr because the server is launched with detached: true, stdio: 'ignore'.
   try {
     const errorLogPath = path.join(config.stateDir, 'browse-startup-error.log')
@@ -2095,7 +2095,8 @@ start().catch(err => {
       `${new Date().toISOString()} ${err.message}\n${err.stack || ''}\n`
     )
   } catch {
-    // stateDir may not exist — nothing more we can do
+    // stateDir may not exist - nothing more we can do
   }
   process.exit(1)
 })
+

@@ -8,7 +8,7 @@ export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: stri
 /**
  * Build the system message for a generate call.
  * Contains brand context + all prior approved step outputs.
- * NOT stored in DB — recomputed on every call.
+ * NOT stored in DB - recomputed on every call.
  */
 export function buildSystemMessage(
   brand: Pick<IBrandProfile, 'name' | 'description' | 'targetAudience' | 'tone' | 'platforms' | 'exampleVideoUrls'>,
@@ -28,9 +28,9 @@ export function buildSystemMessage(
     lines.push(`Reference videos: ${brand.exampleVideoUrls.join(', ')}`)
   }
 
-  // Include all prior approved LLM step outputs (steps 1–8 only)
+  // Include all prior approved LLM step outputs (steps 1–7 only)
   const doneSteps = steps.filter(
-    s => s.status === 'done' && s.stepNumber <= 8 && s.llmResponse
+    s => s.status === 'done' && s.stepNumber <= 7 && s.llmResponse
   )
 
   if (doneSteps.length > 0) {

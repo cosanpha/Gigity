@@ -26,7 +26,7 @@ describe('interpolate', () => {
   it('passes unknown variable through unchanged', () => {
     const result = interpolate('Hello {{unknown_var}}', { brand_name: 'Deewas' })
     expect(result).toBe('Hello {{unknown_var}}')
-    // Don't strip unknown vars — they might be intentional or a typo to debug
+    // Don't strip unknown vars - they might be intentional or a typo to debug
   })
 
   it('substitutes step_N_output variables', () => {

@@ -48,7 +48,7 @@ export async function PUT(req: Request, { params }: Ctx) {
   }
 }
 
-// DELETE — blocked if any VideoProject references this brand
+// DELETE - blocked if any VideoProject references this brand
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
     await connectDB()

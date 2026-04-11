@@ -1,9 +1,9 @@
 /**
  * Layer 1: Unit tests for sidebar utilities.
- * Tests pure functions — no server, no processes, no network.
+ * Tests pure functions - no server, no processes, no network.
  */
 
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { sanitizeExtensionUrl } from '../src/sidebar-utils'
 
 describe('sanitizeExtensionUrl', () => {
@@ -102,3 +102,4 @@ describe('sanitizeExtensionUrl', () => {
     expect(result).toContain('example.com')
   })
 })
+

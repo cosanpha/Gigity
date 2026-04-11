@@ -1,3 +1,4 @@
+import { SUNO_API_BASE_URL, SUNO_API_KEY } from '@/constants/env.server'
 import { connectDB } from '@/lib/db'
 import { getStepDefinition } from '@/lib/workflow-templates'
 import VideoProject from '@/models/VideoProject'
@@ -5,8 +6,8 @@ import { NextResponse } from 'next/server'
 
 type Ctx = { params: Promise<{ id: string; n: string }> }
 
-// Steps that require a URL when approved (step 7 is LLM + images combined)
-const STEPS_REQUIRING_URL = [6, 7, 9]
+// Steps that require outputAssetUrl when approved (character, scene, Kling)
+const STEPS_REQUIRING_URL = [5, 6, 7]
 
 export async function POST(req: Request, { params }: Ctx) {
   try {
@@ -15,7 +16,7 @@ export async function POST(req: Request, { params }: Ctx) {
     const { id, n } = await params
     const stepNumber = parseInt(n, 10)
 
-    if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 11) {
+    if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 9) {
       return NextResponse.json(
         { error: 'Invalid step number' },
         { status: 400 }
@@ -32,7 +33,7 @@ export async function POST(req: Request, { params }: Ctx) {
     const stepDef = getStepDefinition(stepNumber)
     const step = project.steps[stepNumber - 1]
 
-    // Idempotent — approving an already-done step is a no-op
+    // Idempotent - approving an already-done step is a no-op
     if (step.status === 'done') {
       return NextResponse.json({ ok: true })
     }
@@ -53,7 +54,7 @@ export async function POST(req: Request, { params }: Ctx) {
       )
     }
 
-    // External steps with URL: steps 6 and 9 require outputAssetUrl
+    // Character (5), scene (6), Kling (7) require outputAssetUrl
     if (STEPS_REQUIRING_URL.includes(stepNumber)) {
       const url = outputAssetUrl?.trim()
       if (!url) {
@@ -63,14 +64,31 @@ export async function POST(req: Request, { params }: Ctx) {
         )
       }
       step.outputAssetUrl = url
+    } else if (stepNumber === 4) {
+      const fromBody = outputAssetUrl?.trim()
+      if (fromBody) {
+        step.outputAssetUrl = fromBody
+      }
+      const sunoConfigured =
+        Boolean(SUNO_API_KEY?.trim()) && Boolean(SUNO_API_BASE_URL?.trim())
+      if (sunoConfigured && !step.outputAssetUrl?.trim()) {
+        return NextResponse.json(
+          { error: 'Generate a song before approving this step' },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (stepNumber === 4) {
+      step.sunoTaskId = null
     }
 
     // Mark done
     step.status = 'done'
     step.completedAt = new Date()
 
-    // Completing step 11 finishes the whole project
-    if (stepNumber === 11) {
+    // Completing step 9 finishes the whole project
+    if (stepNumber === 9) {
       project.status = 'completed'
     }
 

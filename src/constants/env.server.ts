@@ -11,3 +11,6 @@ export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
 export const SUNO_API_KEY = process.env.SUNO_API_KEY
+export const SUNO_API_BASE_URL = process.env.SUNO_API_BASE_URL ?? ''
+export const PUBLIC_APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'

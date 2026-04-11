@@ -3,14 +3,14 @@ import { connectDB } from '@/lib/db'
 import BrandProfile from '@/models/BrandProfile'
 import { NextResponse } from 'next/server'
 
-// GET /api/v1/brand — return all brand profiles
+// GET /api/v1/brand - return all brand profiles
 export async function GET() {
   await connectDB()
   const profiles = await BrandProfile.find().sort({ createdAt: 1 }).lean()
   return NextResponse.json(profiles)
 }
 
-// POST /api/v1/brand — create brand profile
+// POST /api/v1/brand - create brand profile
 export async function POST(req: Request) {
   try {
     await connectDB()

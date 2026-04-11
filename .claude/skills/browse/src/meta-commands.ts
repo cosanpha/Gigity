@@ -1,24 +1,24 @@
 /**
- * Meta commands — tabs, server control, screenshots, chain, diff, snapshot
+ * Meta commands - tabs, server control, screenshots, chain, diff, snapshot
  */
 
-import type { BrowserManager } from './browser-manager'
-import { handleSnapshot } from './snapshot'
-import { getCleanText } from './read-commands'
-import {
-  READ_COMMANDS,
-  WRITE_COMMANDS,
-  META_COMMANDS,
-  PAGE_CONTENT_COMMANDS,
-  wrapUntrustedContent,
-} from './commands'
-import { validateNavigationUrl } from './url-validation'
 import * as Diff from 'diff'
 import * as fs from 'fs'
 import * as path from 'path'
-import { TEMP_DIR, isPathWithin } from './platform'
-import { resolveConfig } from './config'
 import type { Frame } from 'playwright'
+import type { BrowserManager } from './browser-manager'
+import {
+  META_COMMANDS,
+  PAGE_CONTENT_COMMANDS,
+  READ_COMMANDS,
+  WRITE_COMMANDS,
+  wrapUntrustedContent,
+} from './commands'
+import { resolveConfig } from './config'
+import { TEMP_DIR, isPathWithin } from './platform'
+import { getCleanText } from './read-commands'
+import { handleSnapshot } from './snapshot'
+import { validateNavigationUrl } from './url-validation'
 
 // Security: Path validation to prevent path traversal attacks
 const SAFE_DIRECTORIES = [TEMP_DIR, process.cwd()]
@@ -66,7 +66,7 @@ export async function handleMetaCommand(
       return tabs
         .map(
           t =>
-            `${t.active ? '→ ' : '  '}[${t.id}] ${t.title || '(untitled)'} — ${t.url}`
+            `${t.active ? '→ ' : '  '}[${t.id}] ${t.title || '(untitled)'} - ${t.url}`
         )
         .join('\n')
     }
@@ -114,7 +114,7 @@ export async function handleMetaCommand(
     }
 
     case 'restart': {
-      // Signal that we want a restart — the CLI will detect exit and restart
+      // Signal that we want a restart - the CLI will detect exit and restart
       console.log('[browse] Restart requested. Exiting for CLI to restart.')
       await shutdown()
       return 'Restarting...'
@@ -142,7 +142,7 @@ export async function handleMetaCommand(
           const parts = coords.split(',').map(Number)
           if (parts.length !== 4 || parts.some(isNaN))
             throw new Error(
-              'Usage: screenshot --clip x,y,width,height — all must be numbers'
+              'Usage: screenshot --clip x,y,width,height - all must be numbers'
             )
           clipRect = {
             x: parts[0],
@@ -180,10 +180,10 @@ export async function handleMetaCommand(
       validateOutputPath(outputPath)
 
       if (clipRect && targetSelector) {
-        throw new Error('Cannot use --clip with a selector/ref — choose one')
+        throw new Error('Cannot use --clip with a selector/ref - choose one')
       }
       if (viewportOnly && clipRect) {
-        throw new Error('Cannot use --viewport with --clip — choose one')
+        throw new Error('Cannot use --viewport with --clip - choose one')
       }
 
       if (targetSelector) {
@@ -353,7 +353,7 @@ export async function handleMetaCommand(
     // ─── Headed Mode ──────────────────────────────────────
     case 'connect': {
       // connect is handled as a pre-server command in cli.ts
-      // If we get here, server is already running — tell the user
+      // If we get here, server is already running - tell the user
       if (bm.getConnectionMode() === 'headed') {
         return 'Already in headed mode with extension.'
       }
@@ -362,7 +362,7 @@ export async function handleMetaCommand(
 
     case 'disconnect': {
       if (bm.getConnectionMode() !== 'headed') {
-        return 'Not in headed mode — nothing to disconnect.'
+        return 'Not in headed mode - nothing to disconnect.'
       }
       // Signal that we want a restart in headless mode
       console.log(
@@ -413,7 +413,7 @@ export async function handleMetaCommand(
               return `Browser activated. Scrolled ${args[0]} into view.`
             }
           } catch {
-            // Ref not found — still activated the browser
+            // Ref not found - still activated the browser
           }
         }
 
@@ -451,7 +451,7 @@ export async function handleMetaCommand(
       }
 
       bm.startWatch()
-      return 'WATCHING — observing user browsing. Periodic snapshots every 5s.\nRun `$B watch stop` to stop and get summary.'
+      return 'WATCHING - observing user browsing. Periodic snapshots every 5s.\nRun `$B watch stop` to stop and get summary.'
     }
 
     // ─── Inbox ──────────────────────────────────────────
@@ -464,7 +464,7 @@ export async function handleMetaCommand(
           stdio: ['pipe', 'pipe', 'pipe'],
         }).trim()
       } catch {
-        return 'Not in a git repository — cannot locate inbox.'
+        return 'Not in a git repository - cannot locate inbox.'
       }
 
       const inboxDir = path.join(gitRoot, '.context', 'sidebar-inbox')
@@ -547,7 +547,7 @@ export async function handleMetaCommand(
 
       if (action === 'save') {
         const state = await bm.saveState()
-        // V1: cookies + URLs only (not localStorage — breaks on load-before-navigate)
+        // V1: cookies + URLs only (not localStorage - breaks on load-before-navigate)
         const saveData = {
           version: 1,
           savedAt: new Date().toISOString(),
@@ -637,3 +637,4 @@ export async function handleMetaCommand(
       throw new Error(`Unknown meta command: ${command}`)
   }
 }
+

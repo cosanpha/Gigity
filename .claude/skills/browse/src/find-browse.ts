@@ -1,13 +1,13 @@
 /**
- * find-browse — locate the gstack browse binary.
+ * find-browse - locate the gstack browse binary.
  *
  * Compiled to browse/dist/find-browse (standalone binary, no bun runtime needed).
  * Outputs the absolute path to the browse binary on stdout, or exits 1 if not found.
  */
 
 import { existsSync } from 'fs'
-import { join } from 'path'
 import { homedir } from 'os'
+import { join } from 'path'
 
 // ─── Binary Discovery ───────────────────────────────────────────
 
@@ -69,3 +69,4 @@ function main() {
 }
 
 main()
+

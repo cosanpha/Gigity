@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import {
-  filterArgs,
   emitActivity,
+  filterArgs,
   getActivityAfter,
   getActivityHistory,
   subscribe,
 } from '../src/activity'
 
-describe('filterArgs — privacy filtering', () => {
+describe('filterArgs - privacy filtering', () => {
   it('redacts fill value for password fields', () => {
     expect(filterArgs('fill', ['#password', 'mysecret123'])).toEqual([
       '#password',
@@ -139,7 +139,7 @@ describe('subscribe', () => {
 
     emitActivity({ type: 'command_start', command: 'sub-test' })
 
-    // queueMicrotask is async — wait a tick
+    // queueMicrotask is async - wait a tick
     await new Promise(resolve => setTimeout(resolve, 10))
 
     expect(received.length).toBeGreaterThanOrEqual(1)
@@ -158,3 +158,4 @@ describe('subscribe', () => {
     expect(received.filter(e => e.command === 'should-not-see').length).toBe(0)
   })
 })
+

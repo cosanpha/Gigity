@@ -203,7 +203,7 @@ describe('Ref invalidation', () => {
   test('stale ref after goto returns clear error', async () => {
     await handleWriteCommand('goto', [baseUrl + '/snapshot.html'], bm)
     await handleMetaCommand('snapshot', ['-i'], bm, shutdown)
-    // Navigate away — should invalidate refs
+    // Navigate away - should invalidate refs
     await handleWriteCommand('goto', [baseUrl + '/basic.html'], bm)
     // Try to use old ref
     try {
@@ -254,7 +254,7 @@ describe('Ref staleness detection', () => {
       bm
     )
 
-    // Try to click — should get descriptive staleness error
+    // Try to click - should get descriptive staleness error
     try {
       await handleWriteCommand('click', [ref], bm)
       expect(true).toBe(false) // Should not reach here
@@ -273,7 +273,7 @@ describe('Ref staleness detection', () => {
     expect(linkLine).toBeDefined()
     const refMatch = linkLine!.match(/@(e\d+)/)
     const ref = `@${refMatch![1]}`
-    // Should work normally — element still exists
+    // Should work normally - element still exists
     const result = await handleWriteCommand('hover', [ref], bm)
     expect(result).toContain('Hovered')
   })

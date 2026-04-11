@@ -1,11 +1,11 @@
 /**
- * Adversarial security tests — XSS and boundary-check hardening
+ * Adversarial security tests - XSS and boundary-check hardening
  *
  * Test 19: Sidepanel escapes entry.command in activity feed (prevents XSS)
  * Test 20: Freeze hook uses trailing slash in boundary check (prevents prefix collision)
  */
 
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -30,3 +30,4 @@ describe('Adversarial security', () => {
     expect(source).toContain('"${FREEZE_DIR}/"')
   })
 })
+

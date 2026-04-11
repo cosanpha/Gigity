@@ -1,5 +1,5 @@
 /**
- * Sidebar Agent — polls agent-queue from server, spawns claude -p for each
+ * Sidebar Agent - polls agent-queue from server, spawns claude -p for each
  * message, streams live events back to the server via /sidebar-agent/event.
  *
  * This runs as a NON-COMPILED bun process because compiled bun binaries
@@ -18,14 +18,14 @@ const QUEUE =
   path.join(process.env.HOME || '/tmp', '.gstack', 'sidebar-agent-queue.jsonl')
 const SERVER_PORT = parseInt(process.env.BROWSE_SERVER_PORT || '34567', 10)
 const SERVER_URL = `http://127.0.0.1:${SERVER_PORT}`
-const POLL_MS = 200 // 200ms poll — keeps time-to-first-token low
+const POLL_MS = 200 // 200ms poll - keeps time-to-first-token low
 const B =
   process.env.BROWSE_BIN ||
   path.resolve(__dirname, '../../.claude/skills/gstack/browse/dist/browse')
 
 let lastLine = 0
 let authToken: string | null = null
-// Per-tab processing — each tab can run its own agent concurrently
+// Per-tab processing - each tab can run its own agent concurrently
 const processingTabs = new Set<number>()
 
 // ─── File drop relay ──────────────────────────────────────────
@@ -49,7 +49,7 @@ function writeToInbox(
 ): void {
   const gitRoot = getGitRoot()
   if (!gitRoot) {
-    console.error('[sidebar-agent] Cannot write to inbox — not in a git repo')
+    console.error('[sidebar-agent] Cannot write to inbox - not in a git repo')
     return
   }
 
@@ -132,7 +132,7 @@ function describeToolCall(tool: string, input: any): string {
   if (tool === 'Bash' && input.command) {
     const cmd = input.command
 
-    // Browse binary commands — the most common case
+    // Browse binary commands - the most common case
     const browseMatch = cmd.match(/\$B\s+(\w+)|browse[^\s]*\s+(\w+)/)
     if (browseMatch) {
       const browseCmd = browseMatch[1] || browseMatch[2]
@@ -299,19 +299,19 @@ async function handleStreamEvent(event: any, tabId?: number): Promise<void> {
     event.type === 'content_block_delta' &&
     event.delta?.type === 'input_json_delta'
   ) {
-    // Tool input streaming — skip, we already announced the tool
+    // Tool input streaming - skip, we already announced the tool
   }
 
   if (event.type === 'result') {
     await sendEvent({ type: 'result', text: event.result || '' }, tabId)
   }
 
-  // Tool result events — summarize and relay
+  // Tool result events - summarize and relay
   if (
     event.type === 'tool_result' ||
     (event.type === 'assistant' && event.message?.content)
   ) {
-    // Tool results come in the next assistant turn — handled above
+    // Tool results come in the next assistant turn - handled above
   }
 }
 
@@ -337,7 +337,7 @@ async function askClaude(queueEntry: any): Promise<void> {
       'Bash,Read,Glob,Grep,Write',
     ]
 
-    // Validate cwd exists — queue may reference a stale worktree
+    // Validate cwd exists - queue may reference a stale worktree
     let effectiveCwd = cwd || process.cwd()
     try {
       fs.accessSync(effectiveCwd)
@@ -351,7 +351,7 @@ async function askClaude(queueEntry: any): Promise<void> {
       env: {
         ...process.env,
         BROWSE_STATE_FILE: stateFile || '',
-        // Pin this agent to its tab — prevents cross-tab interference
+        // Pin this agent to its tab - prevents cross-tab interference
         // when multiple agents run simultaneously
         BROWSE_TAB: String(tid),
       },
@@ -404,7 +404,7 @@ async function askClaude(queueEntry: any): Promise<void> {
       })
     })
 
-    // Timeout (default 300s / 5 min — multi-page tasks need time)
+    // Timeout (default 300s / 5 min - multi-page tasks need time)
     const timeoutMs = parseInt(
       process.env.SIDEBAR_AGENT_TIMEOUT || '300000',
       10
@@ -461,13 +461,13 @@ async function poll() {
     if (!entry.message && !entry.prompt) continue
 
     const tid = entry.tabId ?? 0
-    // Skip if this tab already has an agent running — server queues per-tab
+    // Skip if this tab already has an agent running - server queues per-tab
     if (processingTabs.has(tid)) continue
 
     console.log(`[sidebar-agent] Processing tab ${tid}: "${entry.message}"`)
     // Write to inbox so workspace agent can pick it up
     writeToInbox(entry.message || entry.prompt, entry.pageUrl, entry.sessionId)
-    // Fire and forget — each tab's agent runs concurrently
+    // Fire and forget - each tab's agent runs concurrently
     askClaude(entry).catch(err => {
       console.error(`[sidebar-agent] Error on tab ${tid}:`, err)
       sendEvent({ type: 'agent_error', error: String(err) }, tid)
@@ -495,3 +495,4 @@ async function main() {
 }
 
 main().catch(console.error)
+

@@ -1,8 +1,8 @@
 /**
- * Chromium browser cookie import — read and decrypt cookies from real browsers
+ * Chromium browser cookie import - read and decrypt cookies from real browsers
  *
  * Supports macOS and Linux Chromium-based browsers.
- * Pure logic module — no Playwright dependency, no HTTP concerns.
+ * Pure logic module - no Playwright dependency, no HTTP concerns.
  *
  * Decryption pipeline:
  *
@@ -100,7 +100,7 @@ interface BrowserMatch {
 }
 
 // ─── Browser Registry ───────────────────────────────────────────
-// Hardcoded — NEVER interpolate user input into shell commands.
+// Hardcoded - NEVER interpolate user input into shell commands.
 
 const BROWSER_REGISTRY: BrowserInfo[] = [
   {
@@ -225,7 +225,7 @@ export function listProfiles(browserName: string): ProfileEntry[] {
       if (profiles.some(p => p.name === entry.name)) continue
 
       // Try to read display name from Preferences.
-      // Prefer account email — signed-in Chrome profiles often have generic
+      // Prefer account email - signed-in Chrome profiles often have generic
       // names like "Person 2" while the email is far more readable.
       let displayName = entry.name
       try {
@@ -243,13 +243,13 @@ export function listProfiles(browserName: string): ProfileEntry[] {
           }
         }
       } catch {
-        // Ignore — fall back to directory name
+        // Ignore - fall back to directory name
       }
 
       profiles.push({ name: entry.name, displayName })
     }
 
-    // Found profiles on this platform — no need to check others
+    // Found profiles on this platform - no need to check others
     if (profiles.length > 0) break
   }
 
@@ -301,7 +301,7 @@ export async function importCookies(
 
   try {
     const now = chromiumNow()
-    // Parameterized query — no SQL injection
+    // Parameterized query - no SQL injection
     const placeholders = domains.map(() => '?').join(',')
     const rows = db
       .query(

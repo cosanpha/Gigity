@@ -1,5 +1,5 @@
 /**
- * Shared buffers and types — extracted to break circular dependency
+ * Shared buffers and types - extracted to break circular dependency
  * between server.ts and browser-manager.ts
  *
  * CircularBuffer<T>: O(1) insert ring buffer with fixed capacity.
@@ -35,7 +35,7 @@ export class CircularBuffer<T> {
     if (this._size < this.capacity) {
       this._size++
     } else {
-      // Buffer full — advance head (overwrites oldest)
+      // Buffer full - advance head (overwrites oldest)
       this.head = (this.head + 1) % this.capacity
     }
     this._totalAdded++
@@ -72,16 +72,16 @@ export class CircularBuffer<T> {
   clear(): void {
     this.head = 0
     this._size = 0
-    // Don't reset totalAdded — flush cursor depends on it
+    // Don't reset totalAdded - flush cursor depends on it
   }
 
-  /** Get entry by index (0 = oldest) — used by network response matching */
+  /** Get entry by index (0 = oldest) - used by network response matching */
   get(index: number): T | undefined {
     if (index < 0 || index >= this._size) return undefined
     return this.buffer[(this.head + index) % this.capacity]
   }
 
-  /** Set entry by index (0 = oldest) — used by network response matching */
+  /** Set entry by index (0 = oldest) - used by network response matching */
   set(index: number, entry: T): void {
     if (index < 0 || index >= this._size) return
     this.buffer[(this.head + index) % this.capacity] = entry
@@ -135,3 +135,4 @@ export function addNetworkEntry(entry: NetworkEntry) {
 export function addDialogEntry(entry: DialogEntry) {
   dialogBuffer.push(entry)
 }
+

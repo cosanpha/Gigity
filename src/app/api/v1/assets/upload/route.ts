@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     )
   }
 
-  // Already on Cloudinary — return as-is
+  // Already on Cloudinary - return as-is
   if (isCloudinaryUrl(url)) {
     return NextResponse.json({ url })
   }

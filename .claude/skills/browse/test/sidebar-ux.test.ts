@@ -95,7 +95,7 @@ describe('/sidebar-chat agentStatus', () => {
   )
 
   test('sidebar-chat response includes agentStatus field', () => {
-    // Find the GET /sidebar-chat handler — look for the data response, not the auth error
+    // Find the GET /sidebar-chat handler - look for the data response, not the auth error
     const handlerStart = serverSrc.indexOf("url.pathname === '/sidebar-chat'")
     // Find the response that returns entries + total (skip the auth error response)
     const entriesResponse = serverSrc.indexOf('{ entries, total', handlerStart)

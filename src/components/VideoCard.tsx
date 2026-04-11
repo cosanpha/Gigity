@@ -1,9 +1,10 @@
 'use client'
 
+import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { StepProgressBar } from './StepProgressBar'
-import { useRouter } from 'next/navigation'
 
 interface WorkflowStep {
   stepNumber: number
@@ -37,28 +38,31 @@ export function VideoCard({ project }: VideoCardProps) {
   }
 
   return (
-    <div className="group relative flex items-center justify-between rounded-[6px] border border-zinc-200 px-5 py-4 hover:border-zinc-300 hover:bg-zinc-50 transition-colors">
-      <Link href={`/projects/${id}`} className="flex min-w-0 flex-1 flex-col gap-0.5">
+    <div className="group relative flex items-center justify-between rounded-[6px] border border-zinc-200 px-5 py-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50">
+      <Link
+        href={`/projects/${id}`}
+        className="flex min-w-0 flex-1 flex-col gap-0.5"
+      >
         <span className="truncate text-[14px] font-medium text-zinc-950">
           {project.title}
         </span>
         <span className="text-[13px] text-zinc-500">
           Started {formatRelativeDate(project.createdAt)} ·{' '}
           {project.status === 'completed'
-            ? 'All 11 steps done'
-            : `Step ${doneCount + 1} of 11`}
+            ? `All ${WORKFLOW_TOTAL_STEPS} steps done`
+            : `Step ${doneCount + 1} of ${WORKFLOW_TOTAL_STEPS}`}
         </span>
       </Link>
 
-      <div className="flex shrink-0 items-center gap-4 ml-4">
+      <div className="ml-4 flex shrink-0 items-center gap-4">
         <StepProgressBar steps={steps} />
         <StatusBadge status={project.status} />
 
-        {/* Delete button — visible on hover */}
+        {/* Delete button - visible on hover */}
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="hidden rounded px-2 py-1 text-[12px] text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 group-hover:block disabled:opacity-50"
+          className="hidden rounded px-2 py-1 text-[12px] text-zinc-400 transition-colors group-hover:block hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
           title="Delete project"
         >
           {deleting ? '...' : '✕'}

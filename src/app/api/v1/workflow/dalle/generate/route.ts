@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     )
   }
 
-  // Upload to Cloudinary immediately — DALL-E URLs expire in ~1 hour
+  // Upload to Cloudinary immediately - DALL-E URLs expire in ~1 hour
   const cloudUrl = isCloudinaryUrl(tempUrl)
     ? tempUrl
     : await uploadFromUrl(tempUrl, 'gigity/images')

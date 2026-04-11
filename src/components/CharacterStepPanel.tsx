@@ -1,23 +1,20 @@
 'use client'
 
+import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
 import { useState } from 'react'
+import { CopyButton } from './LLMStepPanel'
 
-type Step5State = {
+type CharacterStepState = {
   status: 'pending' | 'generating' | 'done'
   llmResponse: string | null
+  outputAssetUrl: string | null
   conversation: Array<{ role: string; content: string }>
   error: string | null
 }
 
-type Step6State = {
-  status: 'pending' | 'generating' | 'done'
-  outputAssetUrl: string | null
-}
-
 interface CharacterStepPanelProps {
-  step5State: Step5State
-  step6State: Step6State
+  stepState: CharacterStepState
   followUp: string
   onFollowUpChange: (v: string) => void
   onGenerate: () => void
@@ -25,12 +22,13 @@ interface CharacterStepPanelProps {
   onSendFollowUp: () => void
   onApprove: (imageUrls: string) => void
   onReopen: () => void
+  onContentChange: (content: string) => void
 }
 
 function extractCharacterPrompts(
   text: string
 ): Array<{ name: string; prompt: string }> {
-  const blocks = text.split(/\*\*Character — /).slice(1)
+  const blocks = text.split(/\*\*Character - /).slice(1)
   return blocks.map(block => {
     const name = block
       .split('\n')[0]
@@ -40,6 +38,26 @@ function extractCharacterPrompts(
     const prompt = promptMatch?.[1]?.split('\n')[0]?.trim() ?? ''
     return { name, prompt }
   })
+}
+
+const CHARACTER_BLOCK_SEP = '**Character - '
+
+function replaceCharacterMidjourneyPrompt(
+  fullText: string,
+  characterIndex: number,
+  newPrompt: string
+): string {
+  const parts = fullText.split(CHARACTER_BLOCK_SEP)
+  const i = characterIndex + 1
+  if (i <= 0 || i >= parts.length) return fullText
+  const next = parts[i].replace(/Midjourney prompt:\s*[^\n]*/, () => {
+    return `Midjourney prompt: ${newPrompt}`
+  })
+  if (next === parts[i] && !/Midjourney prompt:/.test(parts[i])) {
+    return fullText
+  }
+  parts[i] = next
+  return parts.join(CHARACTER_BLOCK_SEP)
 }
 
 function DalleGenerateButton({
@@ -86,7 +104,7 @@ function DalleGenerateButton({
             Generating…
           </span>
         ) : status === 'done' ? (
-          '↺ Re-generate'
+          'Re-generate'
         ) : (
           'Generate with DALL-E'
         )}
@@ -99,8 +117,7 @@ function DalleGenerateButton({
 }
 
 export function CharacterStepPanel({
-  step5State,
-  step6State,
+  stepState,
   followUp,
   onFollowUpChange,
   onGenerate,
@@ -108,16 +125,17 @@ export function CharacterStepPanel({
   onSendFollowUp,
   onApprove,
   onReopen,
+  onContentChange,
 }: CharacterStepPanelProps) {
   const isFullyDone =
-    step5State.status === 'done' && step6State.status === 'done'
+    stepState.status === 'done' && Boolean(stepState.outputAssetUrl?.trim())
 
-  const characters = step5State.llmResponse
-    ? extractCharacterPrompts(step5State.llmResponse)
+  const characters = stepState.llmResponse
+    ? extractCharacterPrompts(stepState.llmResponse)
     : []
 
   const [characterUrls, setCharacterUrls] = useState<string[]>(() => {
-    const source = step6State.outputAssetUrl ?? ''
+    const source = stepState.outputAssetUrl ?? ''
     return source ? source.split('\n').map(u => u.trim()) : []
   })
 
@@ -138,7 +156,7 @@ export function CharacterStepPanel({
       {/* Step header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step 5 of 11</span>
+          <span>Step 5 of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
           <span>Midjourney / DALL-E</span>
         </div>
@@ -159,16 +177,16 @@ export function CharacterStepPanel({
             </span>
             <button
               onClick={onReopen}
-              className="text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
+              className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
             >
-              ↺ Re-open
+              Re-open
             </button>
           </div>
 
           {/* Read-only character cards */}
           <div className="flex flex-col gap-3">
             {(() => {
-              const doneUrls = (step6State.outputAssetUrl ?? '')
+              const doneUrls = (stepState.outputAssetUrl ?? '')
                 .split('\n')
                 .map(u => u.trim())
                 .filter(Boolean)
@@ -177,12 +195,19 @@ export function CharacterStepPanel({
                   key={i}
                   className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-3"
                 >
-                  <p className="mb-1 text-[12px] font-medium text-zinc-600">
-                    {char.name}
-                  </p>
-                  <pre className="mb-3 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
-                    {char.prompt}
-                  </pre>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-[12px] font-medium text-zinc-600">
+                      {char.name}
+                    </p>
+                    <CopyButton text={char.prompt} />
+                  </div>
+                  <textarea
+                    value={char.prompt}
+                    readOnly
+                    rows={4}
+                    spellCheck={false}
+                    className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-700 outline-none read-only:bg-zinc-50 read-only:text-zinc-700"
+                  />
                   {doneUrls[i] && (
                     <>
                       <a
@@ -223,9 +248,9 @@ export function CharacterStepPanel({
 
       {/* State: no LLM output yet */}
       {!isFullyDone &&
-        step5State.status === 'pending' &&
-        !step5State.llmResponse &&
-        !step5State.error && (
+        stepState.status === 'pending' &&
+        !stepState.llmResponse &&
+        !stepState.error && (
           <div className="flex flex-col items-center justify-center gap-4 py-16">
             <p className="text-[13px] text-zinc-500">
               Ready to generate character prompts.
@@ -240,7 +265,7 @@ export function CharacterStepPanel({
         )}
 
       {/* State: generating */}
-      {!isFullyDone && step5State.status === 'generating' && (
+      {!isFullyDone && stepState.status === 'generating' && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <svg
             className="h-6 w-6 animate-spin text-indigo-500"
@@ -266,12 +291,12 @@ export function CharacterStepPanel({
       )}
 
       {/* State: has LLM output (pending or step5 done but step6 pending) */}
-      {!isFullyDone && step5State.llmResponse && (
+      {!isFullyDone && stepState.llmResponse && (
         <div className="flex flex-col gap-4">
           {/* Error from LLM */}
-          {step5State.error && (
+          {stepState.error && (
             <div className="rounded-[6px] border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-600">{step5State.error}</p>
+              <p className="text-sm text-red-600">{stepState.error}</p>
             </div>
           )}
 
@@ -282,12 +307,26 @@ export function CharacterStepPanel({
                 key={i}
                 className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-3"
               >
-                <p className="mb-1 text-[12px] font-medium text-zinc-600">
-                  {char.name}
-                </p>
-                <pre className="mb-3 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
-                  {char.prompt}
-                </pre>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-[12px] font-medium text-zinc-600">
+                    {char.name}
+                  </p>
+                  <CopyButton text={char.prompt} />
+                </div>
+                <textarea
+                  value={char.prompt}
+                  onChange={e => {
+                    const next = replaceCharacterMidjourneyPrompt(
+                      stepState.llmResponse ?? '',
+                      i,
+                      e.target.value
+                    )
+                    onContentChange(next)
+                  }}
+                  rows={5}
+                  spellCheck={false}
+                  className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-800 outline-none focus:border-indigo-400"
+                />
 
                 {/* Image preview */}
                 {characterUrls[i]?.trim() && (
@@ -339,15 +378,22 @@ export function CharacterStepPanel({
               </div>
             ))
           ) : (
-            <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-              <pre className="font-sans text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
-                {step5State.llmResponse}
-              </pre>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-end">
+                <CopyButton text={stepState.llmResponse ?? ''} />
+              </div>
+              <textarea
+                value={stepState.llmResponse ?? ''}
+                onChange={e => onContentChange(e.target.value)}
+                rows={18}
+                spellCheck={false}
+                className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none focus:border-indigo-400"
+              />
             </div>
           )}
 
-          {/* Prompt refinement — only when LLM step is still pending */}
-          {step5State.status === 'pending' && (
+          {/* Prompt refinement - only when LLM step is still pending */}
+          {stepState.status === 'pending' && (
             <>
               <div className="flex gap-2">
                 <textarea
@@ -370,7 +416,7 @@ export function CharacterStepPanel({
                   onClick={onRetry}
                   className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
                 >
-                  ↺ Start fresh
+                  Start fresh
                 </button>
               </div>
             </>

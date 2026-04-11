@@ -1,0 +1,1 @@
+export const MAX_SUNO_STYLE_PROMPT_CHARS = 200

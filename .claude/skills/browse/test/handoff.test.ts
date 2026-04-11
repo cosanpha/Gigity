@@ -1,15 +1,15 @@
 /**
- * Tests for handoff/resume commands — headless-to-headed browser switching.
+ * Tests for handoff/resume commands - headless-to-headed browser switching.
  *
  * Unit tests cover saveState/restoreState, failure tracking, and edge cases.
  * Integration tests cover the full handoff flow with real Playwright browsers.
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
-import { startTestServer } from './test-server'
-import { BrowserManager, type BrowserState } from '../src/browser-manager'
-import { handleWriteCommand } from '../src/write-commands'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { BrowserManager } from '../src/browser-manager'
 import { handleMetaCommand } from '../src/meta-commands'
+import { handleWriteCommand } from '../src/write-commands'
+import { startTestServer } from './test-server'
 
 let testServer: ReturnType<typeof startTestServer>
 let bm: BrowserManager
@@ -243,3 +243,4 @@ describe('handoff integration', () => {
     }
   }, 45000)
 })
+

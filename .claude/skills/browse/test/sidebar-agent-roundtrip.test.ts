@@ -5,8 +5,8 @@
  * POST /sidebar-command → queue → sidebar-agent → mock claude → events → /sidebar-chat
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
 import { spawn, type Subprocess } from 'bun'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -169,7 +169,7 @@ describe('sidebar-agent round-trip', () => {
     expect(userEntry).toBeDefined()
     expect(userEntry.message).toBe('what is on this page?')
 
-    // The mock claude outputs text — check for any agent text entry
+    // The mock claude outputs text - check for any agent text entry
     const textEntries = entries.filter(
       (e: any) =>
         e.role === 'agent' && (e.type === 'text' || e.type === 'result')
@@ -225,7 +225,7 @@ echo '{"type":"assistant","message":{"content":[{"type":"text","text":"recovered
 echo '{"type":"assistant","message":{"content":[{"type":"text","text":"response to: '"'"'$*'"'"'"}]}}'
 `)
 
-    // Send two messages rapidly — first processes, second queues
+    // Send two messages rapidly - first processes, second queues
     await api('/sidebar-command', {
       method: 'POST',
       body: JSON.stringify({ message: 'first message' }),
@@ -247,3 +247,4 @@ echo '{"type":"assistant","message":{"content":[{"type":"text","text":"response 
     expect(userEntries.length).toBeGreaterThanOrEqual(2)
   }, 25000)
 })
+

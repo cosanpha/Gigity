@@ -10,6 +10,8 @@ export interface IWorkflowStep {
   conversation: IMessage[]
   llmResponse: string | null
   outputAssetUrl: string | null
+  sunoTaskId: string | null
+  sunoSelectedTrackIndex: number | null
   status: 'pending' | 'generating' | 'done'
   completedAt: Date | null
 }
@@ -38,6 +40,8 @@ const WorkflowStepSchema = new Schema<IWorkflowStep>(
     conversation: { type: [MessageSchema], default: [] },
     llmResponse: { type: String, default: null },
     outputAssetUrl: { type: String, default: null },
+    sunoTaskId: { type: String, default: null },
+    sunoSelectedTrackIndex: { type: Number, default: null },
     status: {
       type: String,
       enum: ['pending', 'generating', 'done'],

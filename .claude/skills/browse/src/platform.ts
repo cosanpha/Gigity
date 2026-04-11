@@ -1,8 +1,8 @@
 /**
  * Cross-platform constants for gstack browse.
  *
- * On macOS/Linux: TEMP_DIR = '/tmp', path.sep = '/'  — identical to hardcoded values.
- * On Windows: TEMP_DIR = os.tmpdir(), path.sep = '\\' — correct Windows behavior.
+ * On macOS/Linux: TEMP_DIR = '/tmp', path.sep = '/'  - identical to hardcoded values.
+ * On Windows: TEMP_DIR = os.tmpdir(), path.sep = '\\' - correct Windows behavior.
  */
 
 import * as os from 'os'
@@ -15,3 +15,4 @@ export const TEMP_DIR = IS_WINDOWS ? os.tmpdir() : '/tmp'
 export function isPathWithin(resolvedPath: string, dir: string): boolean {
   return resolvedPath === dir || resolvedPath.startsWith(dir + path.sep)
 }
+

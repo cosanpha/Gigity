@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import * as net from 'net'
 import * as path from 'path'
 
@@ -78,7 +78,7 @@ describe('findPort / isPortAvailable', () => {
 
     expect(isFree).toBe(true)
 
-    // Now immediately try to bind — this would fail with the old
+    // Now immediately try to bind - this would fail with the old
     // Bun.serve() polyfill approach because the test server's
     // listen() would still be pending
     const canBind = await new Promise<boolean>(resolve => {
@@ -94,7 +94,7 @@ describe('findPort / isPortAvailable', () => {
 
   test('polyfill Bun.serve stop() is fire-and-forget (async)', async () => {
     // Verify that the polyfill's stop() does NOT wait for the socket
-    // to actually close — this is the root cause of the race condition.
+    // to actually close - this is the root cause of the race condition.
     // On macOS/Linux the OS reclaims the port fast enough that the race
     // rarely manifests, but on Windows TIME_WAIT makes it 100% repro.
     const result = Bun.spawnSync(
@@ -114,7 +114,7 @@ describe('findPort / isPortAvailable', () => {
           fetch: () => new Response('ok'),
         });
 
-        // stop() returns undefined — it does NOT return a Promise,
+        // stop() returns undefined - it does NOT return a Promise,
         // so callers cannot await socket teardown
         const retval = testServer.stop();
         console.log(typeof retval === 'undefined' ? 'FIRE_AND_FORGET' : 'AWAITABLE');
@@ -127,7 +127,7 @@ describe('findPort / isPortAvailable', () => {
     )
 
     const output = result.stdout.toString().trim()
-    // Confirms the polyfill's stop() is fire-and-forget — callers
+    // Confirms the polyfill's stop() is fire-and-forget - callers
     // cannot wait for the port to be released, hence the race
     expect(output).toBe('FIRE_AND_FORGET')
   })
@@ -159,7 +159,7 @@ describe('findPort / isPortAvailable', () => {
           return;
         }
 
-        // Immediately try to bind — should succeed because close()
+        // Immediately try to bind - should succeed because close()
         // completed before the Promise resolved
         const canBind = await new Promise((resolve) => {
           const srv = net.createServer();
@@ -198,7 +198,8 @@ describe('findPort / isPortAvailable', () => {
       results.push(available)
     }
 
-    // All 5 checks should succeed — no leaked sockets
+    // All 5 checks should succeed - no leaked sockets
     expect(results).toEqual([true, true, true, true, true])
   })
 })
+

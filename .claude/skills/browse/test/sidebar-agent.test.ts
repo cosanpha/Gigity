@@ -13,7 +13,7 @@ import * as os from 'os'
 
 // ─── Helpers: replicate sidebar-agent logic for unit testing ──────
 
-/** Parse a single JSONL line — same logic as sidebar-agent poll() */
+/** Parse a single JSONL line - same logic as sidebar-agent poll() */
 function parseQueueLine(line: string): any | null {
   if (!line.trim()) return null
   try {
@@ -25,7 +25,7 @@ function parseQueueLine(line: string): any | null {
   }
 }
 
-/** Read all valid entries from a JSONL string — same as countLines + readLine loop */
+/** Read all valid entries from a JSONL string - same as countLines + readLine loop */
 function parseQueueFile(content: string): any[] {
   const entries: any[] = []
   const lines = content.split('\n').filter(Boolean)
@@ -36,7 +36,7 @@ function parseQueueFile(content: string): any[] {
   return entries
 }
 
-/** Write to inbox — extracted logic from sidebar-agent.ts writeToInbox() */
+/** Write to inbox - extracted logic from sidebar-agent.ts writeToInbox() */
 function writeToInbox(
   gitRoot: string,
   message: string,
@@ -67,7 +67,7 @@ function writeToInbox(
   return finalFile
 }
 
-/** Shorten paths — same logic as sidebar-agent.ts shorten() */
+/** Shorten paths - same logic as sidebar-agent.ts shorten() */
 function shorten(str: string): string {
   return str
     .replace(/\/Users\/[^/]+/g, '~')
@@ -76,7 +76,7 @@ function shorten(str: string): string {
     .replace(/browse\/dist\/browse/g, '$B')
 }
 
-/** describeToolCall — replicated from sidebar-agent.ts for unit testing */
+/** describeToolCall - replicated from sidebar-agent.ts for unit testing */
 function describeToolCall(tool: string, input: any): string {
   if (!input) return ''
 
@@ -277,7 +277,7 @@ describe('writeToInbox', () => {
     expect(data.timestamp).toBeTruthy()
   })
 
-  test('atomic write — final file exists, no .tmp left', () => {
+  test('atomic write - final file exists, no .tmp left', () => {
     const filePath = writeToInbox(tmpDir, 'atomic test')
     expect(filePath).not.toBeNull()
     expect(fs.existsSync(filePath!)).toBe(true)
@@ -604,7 +604,7 @@ describe('per-tab agent concurrency', () => {
   })
 
   test('sidebar-agent allows concurrent agents across tabs', () => {
-    // poll() should not block globally — it should check per-tab
+    // poll() should not block globally - it should check per-tab
     expect(agentSrc).toContain('processingTabs.has(tid)')
     // askClaude should be fire-and-forget (no await blocking the loop)
     expect(agentSrc).toContain('askClaude(entry).catch')
@@ -680,7 +680,7 @@ describe('BROWSE_TAB tab pinning (cross-tab isolation)', () => {
       serverSrc.indexOf('async function handleCommand('),
       serverSrc.length
     )
-    // Count restore calls — should appear in both success and error paths
+    // Count restore calls - should appear in both success and error paths
     const restoreCount = (handleFn.match(/switchTab\(savedTabId/g) || []).length
     expect(restoreCount).toBeGreaterThanOrEqual(2) // success + error paths
   })

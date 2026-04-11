@@ -1,5 +1,5 @@
 /**
- * Server auth security tests — verify security remediation in server.ts
+ * Server auth security tests - verify security remediation in server.ts
  *
  * Tests are source-level: they read server.ts and verify that auth checks,
  * CORS restrictions, and token removal are correctly in place.

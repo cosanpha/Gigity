@@ -1,5 +1,5 @@
 /**
- * Write commands — navigate and interact with pages (side effects)
+ * Write commands - navigate and interact with pages (side effects)
  *
  * goto, back, forward, reload, click, fill, select, hover, type,
  * press, scroll, wait, viewport, cookie, header, useragent
@@ -309,7 +309,7 @@ export async function handleWriteCommand(
               .selectOption(optionInfo.value, { timeout: 5000 })
             return `Selected "${optionInfo.text}" (auto-routed from click on <option>) → now at ${page.url()}`
           }
-          // Real <option> with no parent <select> or custom [role=option] — fall through to normal click
+          // Real <option> with no parent <select> or custom [role=option] - fall through to normal click
         }
       }
 
@@ -564,7 +564,7 @@ export async function handleWriteCommand(
     case 'cookie-import': {
       const filePath = args[0]
       if (!filePath) throw new Error('Usage: browse cookie-import <json-file>')
-      // Path validation — prevent reading arbitrary files
+      // Path validation - prevent reading arbitrary files
       if (path.isAbsolute(filePath)) {
         const safeDirs = [TEMP_DIR, process.cwd()]
         const resolved = path.resolve(filePath)
@@ -615,7 +615,7 @@ export async function handleWriteCommand(
           : 'Default'
 
       if (domainIdx !== -1 && domainIdx + 1 < args.length) {
-        // Direct import mode — no UI
+        // Direct import mode - no UI
         const domain = args[domainIdx + 1]
         const browser = browserArg || 'comet'
         const result = await importCookies(browser, [domain], profile)
@@ -629,7 +629,7 @@ export async function handleWriteCommand(
         return msg.join(' ')
       }
 
-      // Picker UI mode — open in user's browser
+      // Picker UI mode - open in user's browser
       const port = bm.serverPort
       if (!port) throw new Error('Server port not available')
 
@@ -644,7 +644,7 @@ export async function handleWriteCommand(
       try {
         Bun.spawn(['open', pickerUrl], { stdout: 'ignore', stderr: 'ignore' })
       } catch {
-        // open may fail silently — URL is in the message below
+        // open may fail silently - URL is in the message below
       }
 
       return `Cookie picker opened at ${pickerUrl}\nDetected browsers: ${browsers.map(b => b.name).join(', ')}\nSelect domains to import, then close the picker when done.`
@@ -766,7 +766,7 @@ export async function handleWriteCommand(
         }
       }
 
-      // Sticky/fixed elements — handled separately with computed style check
+      // Sticky/fixed elements - handled separately with computed style check
       if (doSticky) {
         const stickyCount = await page.evaluate(() => {
           let removed = 0

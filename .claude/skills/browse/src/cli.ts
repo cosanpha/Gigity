@@ -1,5 +1,5 @@
 /**
- * gstack CLI — thin wrapper that talks to the persistent server
+ * gstack CLI - thin wrapper that talks to the persistent server
  *
  * Flow:
  *   1. Read .gstack/browse.json for port + token
@@ -11,7 +11,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { resolveConfig, ensureStateDir, readVersionHash } from './config'
+import { ensureStateDir, readVersionHash, resolveConfig } from './config'
 
 const config = resolveConfig()
 const IS_WINDOWS = process.platform === 'win32'
@@ -81,7 +81,7 @@ export function resolveNodeServerScript(
 
 const NODE_SERVER_SCRIPT = IS_WINDOWS ? resolveNodeServerScript() : null
 
-// On Windows, hard-fail if server-node.mjs is missing — the Bun path is known broken.
+// On Windows, hard-fail if server-node.mjs is missing - the Bun path is known broken.
 if (IS_WINDOWS && !NODE_SERVER_SCRIPT) {
   throw new Error(
     'server-node.mjs not found. Run `bun run build` to generate the Windows server bundle.'
@@ -111,7 +111,7 @@ function readState(): ServerState | null {
 function isProcessAlive(pid: number): boolean {
   if (IS_WINDOWS) {
     // Bun's compiled binary can't signal Windows PIDs (always throws ESRCH).
-    // Use tasklist as a fallback. Only for one-shot calls — too slow for polling loops.
+    // Use tasklist as a fallback. Only for one-shot calls - too slow for polling loops.
     try {
       const result = Bun.spawnSync(
         ['tasklist', '/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'],
@@ -131,7 +131,7 @@ function isProcessAlive(pid: number): boolean {
 }
 
 /**
- * HTTP health check — definitive proof the server is alive and responsive.
+ * HTTP health check - definitive proof the server is alive and responsive.
  * Used in all polling loops instead of isProcessAlive() (which is slow on Windows).
  */
 export async function isServerHealthy(port: number): Promise<boolean> {
@@ -192,7 +192,7 @@ async function killServer(pid: number): Promise<void> {
  * Verifies PID ownership before sending signals.
  */
 function cleanupLegacyState(): void {
-  // No legacy state on Windows — /tmp and `ps` don't exist, and gstack
+  // No legacy state on Windows - /tmp and `ps` don't exist, and gstack
   // never ran on Windows before the Node.js fallback was added.
   if (IS_WINDOWS) return
 
@@ -223,7 +223,7 @@ function cleanupLegacyState(): void {
         }
         fs.unlinkSync(fullPath)
       } catch {
-        // Best effort — skip files we can't parse or clean up
+        // Best effort - skip files we can't parse or clean up
       }
     }
     // Clean up legacy log files too
@@ -241,7 +241,7 @@ function cleanupLegacyState(): void {
       } catch {}
     }
   } catch {
-    // /tmp read failed — skip legacy cleanup
+    // /tmp read failed - skip legacy cleanup
   }
 }
 
@@ -262,7 +262,7 @@ async function startServer(
   let proc: any = null
 
   if (IS_WINDOWS && NODE_SERVER_SCRIPT) {
-    // Windows: Bun.spawn() + proc.unref() doesn't truly detach on Windows —
+    // Windows: Bun.spawn() + proc.unref() doesn't truly detach on Windows -
     // when the CLI exits, the server dies with it. Use Node's child_process.spawn
     // with { detached: true } instead, which is the gold standard for Windows
     // process independence. Credit: PR #191 by @fqueiro.
@@ -284,7 +284,7 @@ async function startServer(
   }
 
   // Wait for server to become healthy.
-  // Use HTTP health check (not isProcessAlive) — it's fast (~instant ECONNREFUSED)
+  // Use HTTP health check (not isProcessAlive) - it's fast (~instant ECONNREFUSED)
   // and works reliably on all platforms including Windows.
   const start = Date.now()
   while (Date.now() - start < MAX_START_WAIT) {
@@ -295,7 +295,7 @@ async function startServer(
     await Bun.sleep(100)
   }
 
-  // Server didn't start in time — try to get error details
+  // Server didn't start in time - try to get error details
   if (proc?.stderr) {
     // macOS/Linux: read stderr from the spawned process
     const reader = proc.stderr.getReader()
@@ -327,7 +327,7 @@ async function startServer(
 function acquireServerLock(): (() => void) | null {
   const lockPath = `${config.stateFile}.lock`
   try {
-    // 'wx' — create exclusively, fails if file already exists (atomic check-and-create)
+    // 'wx' - create exclusively, fails if file already exists (atomic check-and-create)
     // Using string flag instead of numeric constants for Bun Windows compatibility
     const fd = fs.openSync(lockPath, 'wx')
     fs.writeSync(fd, `${process.pid}\n`)
@@ -338,13 +338,13 @@ function acquireServerLock(): (() => void) | null {
       } catch {}
     }
   } catch {
-    // Lock already held — check if the holder is still alive
+    // Lock already held - check if the holder is still alive
     try {
       const holderPid = parseInt(fs.readFileSync(lockPath, 'utf8').trim(), 10)
       if (holderPid && isProcessAlive(holderPid)) {
         return null // Another live process holds the lock
       }
-      // Stale lock — remove and retry
+      // Stale lock - remove and retry
       fs.unlinkSync(lockPath)
       return acquireServerLock()
     } catch {
@@ -376,7 +376,7 @@ async function ensureServer(): Promise<ServerState> {
 
   // Guard: never silently replace a headed server with a headless one.
   // Headed mode means a user-visible Chrome window is (or was) controlled.
-  // Silently replacing it would be confusing — tell the user to reconnect.
+  // Silently replacing it would be confusing - tell the user to reconnect.
   if (state && state.mode === 'headed' && isProcessAlive(state.pid)) {
     console.error(
       `[browse] Headed server running (PID ${state.pid}) but not responding.`
@@ -391,7 +391,7 @@ async function ensureServer(): Promise<ServerState> {
   // Acquire lock to prevent concurrent restart races (TOCTOU)
   const releaseLock = acquireServerLock()
   if (!releaseLock) {
-    // Another process is starting the server — wait for it
+    // Another process is starting the server - wait for it
     console.error(
       '[browse] Another instance is starting the server, waiting...'
     )
@@ -452,9 +452,9 @@ async function sendCommand(
     })
 
     if (resp.status === 401) {
-      // Token mismatch — server may have restarted
+      // Token mismatch - server may have restarted
       console.error(
-        '[browse] Auth failed — server may have restarted. Retrying...'
+        '[browse] Auth failed - server may have restarted. Retrying...'
       )
       const newState = readState()
       if (newState && newState.token !== state.token) {
@@ -484,14 +484,14 @@ async function sendCommand(
       console.error('[browse] Command timed out after 30s')
       process.exit(1)
     }
-    // Connection error — server may have crashed
+    // Connection error - server may have crashed
     if (
       err.code === 'ECONNREFUSED' ||
       err.code === 'ECONNRESET' ||
       err.message?.includes('fetch failed')
     ) {
       if (retries >= 1)
-        throw new Error('[browse] Server crashed twice in a row — aborting')
+        throw new Error('[browse] Server crashed twice in a row - aborting')
       console.error('[browse] Server connection lost. Restarting...')
       // Kill the old server to avoid orphaned chromium processes
       const oldState = readState()
@@ -510,7 +510,7 @@ async function main() {
   const args = process.argv.slice(2)
 
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-    console.log(`gstack browse — Fast headless browser for AI coding agents
+    console.log(`gstack browse - Fast headless browser for AI coding agents
 
 Usage: browse <command> [args...]
 
@@ -574,7 +574,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
           process.exit(0)
         }
       } catch {
-        // Headed server alive but not responding — kill and restart
+        // Headed server alive but not responding - kill and restart
       }
     }
 
@@ -617,7 +617,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         }
       }
     } catch {
-      // No lock symlink or not readable — nothing to kill
+      // No lock symlink or not readable - nothing to kill
     }
 
     // Clean up Chromium profile locks (can persist after crashes)
@@ -661,7 +661,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
       console.log(`Connected to real Chrome\n${status}`)
 
       // Auto-start sidebar agent
-      // __dirname is inside $bunfs in compiled binaries — resolve from execPath instead
+      // __dirname is inside $bunfs in compiled binaries - resolve from execPath instead
       let agentScript = path.resolve(__dirname, 'sidebar-agent.ts')
       if (!fs.existsSync(agentScript)) {
         agentScript = path.resolve(
@@ -685,7 +685,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
           fs.writeFileSync(agentQueue, '')
         } catch {}
 
-        // Resolve browse binary path the same way — execPath-relative
+        // Resolve browse binary path the same way - execPath-relative
         let browseBin = path.resolve(__dirname, '..', 'dist', 'browse')
         if (!fs.existsSync(browseBin)) {
           browseBin = process.execPath // the compiled binary itself
@@ -731,7 +731,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
   if (command === 'disconnect') {
     const existingState = readState()
     if (!existingState || existingState.mode !== 'headed') {
-      console.log('Not in headed mode — nothing to disconnect.')
+      console.log('Not in headed mode - nothing to disconnect.')
       process.exit(0)
     }
     // Try graceful shutdown via server
@@ -753,7 +753,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
         process.exit(0)
       }
     } catch {
-      // Server not responding — force cleanup
+      // Server not responding - force cleanup
     }
     // Force kill + cleanup
     if (isProcessAlive(existingState.pid)) {
@@ -785,7 +785,7 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
     try {
       fs.unlinkSync(config.stateFile)
     } catch {}
-    console.log('Disconnected (server was unresponsive — force cleaned).')
+    console.log('Disconnected (server was unresponsive - force cleaned).')
     process.exit(0)
   }
 
@@ -805,3 +805,4 @@ if (import.meta.main) {
     process.exit(1)
   })
 }
+

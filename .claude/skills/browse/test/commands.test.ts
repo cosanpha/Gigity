@@ -5,25 +5,23 @@
  * A real browse server is started and commands are sent via the CLI HTTP interface.
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
-import { startTestServer } from './test-server'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import { spawn } from 'child_process'
+import * as fs from 'fs'
+import * as path from 'path'
 import { BrowserManager } from '../src/browser-manager'
-import { resolveServerScript } from '../src/cli'
-import { handleReadCommand } from '../src/read-commands'
-import { handleWriteCommand } from '../src/write-commands'
-import { handleMetaCommand } from '../src/meta-commands'
 import {
-  consoleBuffer,
-  networkBuffer,
-  dialogBuffer,
   addConsoleEntry,
   addNetworkEntry,
-  addDialogEntry,
   CircularBuffer,
+  consoleBuffer,
+  networkBuffer,
 } from '../src/buffers'
-import * as fs from 'fs'
-import { spawn } from 'child_process'
-import * as path from 'path'
+import { resolveServerScript } from '../src/cli'
+import { handleMetaCommand } from '../src/meta-commands'
+import { handleReadCommand } from '../src/read-commands'
+import { handleWriteCommand } from '../src/write-commands'
+import { startTestServer } from './test-server'
 
 let testServer: ReturnType<typeof startTestServer>
 let bm: BrowserManager
@@ -42,7 +40,7 @@ afterAll(() => {
   try {
     testServer.server.stop()
   } catch {}
-  // bm.close() can hang — just let process exit handle it
+  // bm.close() can hang - just let process exit handle it
   setTimeout(() => process.exit(0), 500)
 })
 
@@ -500,7 +498,7 @@ describe('Cookies and storage', () => {
     await handleReadCommand('storage', ['set', 'session_token', 'abc123'], bm)
     const result = await handleReadCommand('storage', [], bm)
     const storage = JSON.parse(result)
-    expect(storage.localStorage.session_token).toBe('[REDACTED — 6 chars]')
+    expect(storage.localStorage.session_token).toBe('[REDACTED - 6 chars]')
   })
 })
 
@@ -1046,7 +1044,7 @@ describe('CircularBuffer', () => {
 // ─── Dialog Handling ─────────────────────────────────────────
 
 describe('Dialog handling', () => {
-  test('alert does not hang — auto-accepted', async () => {
+  test('alert does not hang - auto-accepted', async () => {
     await handleWriteCommand('goto', [baseUrl + '/dialog.html'], bm)
     await handleWriteCommand('click', ['#alert-btn'], bm)
     // If we get here, dialog was handled (no hang)
@@ -1273,7 +1271,7 @@ describe('File upload', () => {
     const tempFile = '/tmp/browse-test-upload2.txt'
     fs.writeFileSync(tempFile, 'ref upload test')
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, async () => {})
-    // Find the file input ref (it won't appear as "file input" in aria — use CSS selector instead)
+    // Find the file input ref (it won't appear as "file input" in aria - use CSS selector instead)
     const result = await handleWriteCommand(
       'upload',
       ['#file-input', tempFile],
@@ -1313,9 +1311,9 @@ describe('Eval', () => {
   test('eval runs JS file', async () => {
     await handleWriteCommand('goto', [baseUrl + '/basic.html'], bm)
     const tempFile = '/tmp/browse-test-eval.js'
-    fs.writeFileSync(tempFile, 'document.title + " — evaluated"')
+    fs.writeFileSync(tempFile, 'document.title + " - evaluated"')
     const result = await handleReadCommand('eval', [tempFile], bm)
-    expect(result).toBe('Test Page - Basic — evaluated')
+    expect(result).toBe('Test Page - Basic - evaluated')
     fs.unlinkSync(tempFile)
   })
 
@@ -1863,7 +1861,7 @@ describe('Cookie import', () => {
   test('cookie-import auto-fills domain from page URL', async () => {
     await handleWriteCommand('goto', [baseUrl + '/basic.html'], bm)
     const tempFile = '/tmp/browse-test-cookies-nodomain.json'
-    // Cookies without domain — should auto-fill from page URL
+    // Cookies without domain - should auto-fill from page URL
     const cookies = [{ name: 'autofill-test', value: 'works' }]
     fs.writeFileSync(tempFile, JSON.stringify(cookies))
 
@@ -2342,7 +2340,7 @@ describe('State persistence', () => {
     // Navigate away
     await handleWriteCommand('goto', [baseUrl + '/forms.html'], bm)
 
-    // Load state — should restore to basic.html with cookie
+    // Load state - should restore to basic.html with cookie
     const loadResult = await handleMetaCommand(
       'state',
       ['load', 'test-roundtrip'],
@@ -2473,7 +2471,7 @@ describe('Frame', () => {
     const snap = await handleMetaCommand('snapshot', ['-i'], bm, async () => {})
     expect(snap).toContain('[Context: iframe')
 
-    // Clean up — return to main
+    // Clean up - return to main
     await handleMetaCommand('frame', ['main'], bm, async () => {})
   })
 
@@ -2521,3 +2519,4 @@ describe('Frame', () => {
     await handleMetaCommand('frame', ['main'], bm, async () => {})
   })
 })
+

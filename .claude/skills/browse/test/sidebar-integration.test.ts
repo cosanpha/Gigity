@@ -4,15 +4,8 @@
  * exercises sidebar HTTP endpoints with fetch(). No Chrome, no Claude, no sidebar-agent.
  */
 
-import {
-  describe,
-  test,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-} from 'bun:test'
 import { spawn, type Subprocess } from 'bun'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -92,7 +85,7 @@ afterAll(() => {
   } catch {}
 })
 
-// Reset state between tests — creates a fresh session, clears all queues
+// Reset state between tests - creates a fresh session, clears all queues
 async function resetState() {
   await api('/sidebar-session/new', { method: 'POST' })
   fs.writeFileSync(queueFile, '')
@@ -350,3 +343,4 @@ describe('agent kill', () => {
     expect(session.agent.status).toBe('idle')
   })
 })
+

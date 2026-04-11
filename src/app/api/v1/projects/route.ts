@@ -3,7 +3,7 @@ import BrandProfile from '@/models/BrandProfile'
 import VideoProject from '@/models/VideoProject'
 import { NextResponse } from 'next/server'
 
-// POST /api/v1/projects — create a new video project
+// POST /api/v1/projects - create a new video project
 export async function POST(req: Request) {
   try {
     await connectDB()
@@ -30,12 +30,14 @@ export async function POST(req: Request) {
       )
     }
 
-    // Initialize all 11 steps as pending
-    const steps = Array.from({ length: 11 }, (_, i) => ({
+    // Initialize all workflow steps as pending
+    const steps = Array.from({ length: 9 }, (_, i) => ({
       stepNumber: i + 1,
       conversation: [],
       llmResponse: null,
       outputAssetUrl: null,
+      sunoTaskId: null,
+      sunoSelectedTrackIndex: null,
       status: 'pending',
       completedAt: null,
     }))

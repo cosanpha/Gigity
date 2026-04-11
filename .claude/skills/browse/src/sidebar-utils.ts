@@ -1,5 +1,5 @@
 /**
- * Shared sidebar utilities — extracted for testability.
+ * Shared sidebar utilities - extracted for testability.
  */
 
 /**
@@ -21,3 +21,4 @@ export function sanitizeExtensionUrl(
     return null
   }
 }
+

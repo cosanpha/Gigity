@@ -151,7 +151,7 @@ describe('gstack-update-check', () => {
     writeFileSync(join(gstackDir, 'VERSION'), '0.4.0\n')
     // Cache says UP_TO_DATE for 0.3.3, but local is now 0.4.0
     writeFileSync(join(stateDir, 'last-update-check'), 'UP_TO_DATE 0.3.3')
-    // Remote says 0.5.0 — should detect upgrade
+    // Remote says 0.5.0 - should detect upgrade
     writeFileSync(join(gstackDir, 'REMOTE_VERSION'), '0.5.0\n')
 
     const { exitCode, stdout } = run()
@@ -180,7 +180,7 @@ describe('gstack-update-check', () => {
       join(stateDir, 'last-update-check'),
       'UPGRADE_AVAILABLE 0.3.3 0.4.0'
     )
-    // Remote also says 0.4.0 — should be up to date
+    // Remote also says 0.4.0 - should be up to date
     writeFileSync(join(gstackDir, 'REMOTE_VERSION'), '0.4.0\n')
 
     const { exitCode, stdout } = run()
@@ -246,7 +246,7 @@ describe('gstack-update-check', () => {
   test('falls through to remote fetch when cache is corrupt', () => {
     writeFileSync(join(gstackDir, 'VERSION'), '0.3.3\n')
     writeFileSync(join(stateDir, 'last-update-check'), 'garbage data here')
-    // Remote says same version — should end up UP_TO_DATE
+    // Remote says same version - should end up UP_TO_DATE
     writeFileSync(join(gstackDir, 'REMOTE_VERSION'), '0.3.3\n')
 
     const { exitCode, stdout } = run()
@@ -451,7 +451,7 @@ describe('gstack-update-check', () => {
   test('snooze respected on remote fetch path (no cache)', () => {
     writeFileSync(join(gstackDir, 'VERSION'), '0.3.3\n')
     writeFileSync(join(gstackDir, 'REMOTE_VERSION'), '0.4.0\n')
-    // No cache file — goes to remote fetch path
+    // No cache file - goes to remote fetch path
     writeSnooze('0.4.0', 1, nowEpoch() - 3600) // 1h ago
 
     const { exitCode, stdout } = run()
@@ -489,7 +489,7 @@ describe('gstack-update-check', () => {
   test('missing config.yaml does not crash', () => {
     writeFileSync(join(gstackDir, 'VERSION'), '0.3.3\n')
     writeFileSync(join(gstackDir, 'REMOTE_VERSION'), '0.4.0\n')
-    // No config file — should behave normally
+    // No config file - should behave normally
 
     const { exitCode, stdout } = run()
     expect(exitCode).toBe(0)

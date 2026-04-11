@@ -4,7 +4,7 @@
  * Chromium crash handling:
  *   browser.on('disconnected') → log error → process.exit(1)
  *   CLI detects dead server → auto-restarts on next command
- *   We do NOT try to self-heal — don't hide failure.
+ *   We do NOT try to self-heal - don't hide failure.
  *
  * Dialog handling:
  *   page.on('dialog') → auto-accept by default → store in dialog buffer
@@ -20,14 +20,14 @@ import {
   type Browser,
   type BrowserContext,
   type BrowserContextOptions,
-  type Page,
-  type Locator,
   type Cookie,
+  type Locator,
+  type Page,
 } from 'playwright'
 import {
   addConsoleEntry,
-  addNetworkEntry,
   addDialogEntry,
+  addNetworkEntry,
   networkBuffer,
   type DialogEntry,
 } from './buffers'
@@ -60,14 +60,14 @@ export class BrowserManager {
   private extraHeaders: Record<string, string> = {}
   private customUserAgent: string | null = null
 
-  /** Server port — set after server starts, used by cookie-import-browser command */
+  /** Server port - set after server starts, used by cookie-import-browser command */
   public serverPort: number = 0
 
   // ─── Ref Map (snapshot → @e1, @e2, @c1, @c2, ...) ────────
   private refMap: Map<string, RefEntry> = new Map()
 
   // ─── Snapshot Diffing ─────────────────────────────────────
-  // NOT cleared on navigation — it's a text baseline for diffing
+  // NOT cleared on navigation - it's a text baseline for diffing
   private lastSnapshot: string | null = null
 
   // ─── Dialog Handling ──────────────────────────────────────
@@ -199,7 +199,7 @@ export class BrowserManager {
     this.browser = await chromium.launch({
       headless: useHeadless,
       // On Windows, Chromium's sandbox fails when the server is spawned through
-      // the Bun→Node process chain (GitHub #276). Disable it — local daemon
+      // the Bun→Node process chain (GitHub #276). Disable it - local daemon
       // browsing user-specified URLs has marginal sandbox benefit.
       chromiumSandbox: process.platform !== 'win32',
       ...(launchArgs.length > 0 ? { args: launchArgs } : {}),
@@ -239,7 +239,7 @@ export class BrowserManager {
    * is required for extension loading (launch() + newContext() can't
    * load extensions).
    *
-   * The browser launches headed with a visible window — the user sees
+   * The browser launches headed with a visible window - the user sees
    * every action Claude takes in real time.
    */
   async launchHeaded(authToken?: string): Promise<void> {
@@ -296,7 +296,7 @@ export class BrowserManager {
     this.connectionMode = 'headed'
     this.intentionalDisconnect = false
 
-    // Inject visual indicator — subtle top-edge amber gradient
+    // Inject visual indicator - subtle top-edge amber gradient
     // Extension's content script handles the floating pill
     const indicatorScript = () => {
       const injectIndicator = () => {
@@ -348,7 +348,7 @@ export class BrowserManager {
       )
     })
 
-    // Persistent context opens a default page — adopt it instead of creating a new one
+    // Persistent context opens a default page - adopt it instead of creating a new one
     const existingPages = this.context.pages()
     if (existingPages.length > 0) {
       const page = existingPages[0]
@@ -364,7 +364,7 @@ export class BrowserManager {
       await this.newTab()
     }
 
-    // Browser disconnect handler — exit code 2 distinguishes from crashes (1)
+    // Browser disconnect handler - exit code 2 distinguishes from crashes (1)
     if (this.browser) {
       this.browser.on('disconnected', () => {
         if (this.intentionalDisconnect) return
@@ -404,12 +404,12 @@ export class BrowserManager {
     }
   }
 
-  /** Health check — verifies Chromium is connected AND responsive */
+  /** Health check - verifies Chromium is connected AND responsive */
   async isHealthy(): Promise<boolean> {
     if (!this.browser || !this.browser.isConnected()) return false
     try {
       const page = this.pages.get(this.activeTabId)
-      if (!page) return true // connected but no pages — still healthy
+      if (!page) return true // connected but no pages - still healthy
       await Promise.race([
         page.evaluate('1'),
         new Promise((_, reject) =>
@@ -460,7 +460,7 @@ export class BrowserManager {
       if (remaining.length > 0) {
         this.activeTabId = remaining[remaining.length - 1]
       } else {
-        // No tabs left — create a new blank one
+        // No tabs left - create a new blank one
         await this.newTab()
       }
     }
@@ -496,13 +496,13 @@ export class BrowserManager {
     for (const [id, page] of this.pages) {
       try {
         const pageUrl = page.url()
-        // Exact match — best case
+        // Exact match - best case
         if (pageUrl === activeUrl && id !== this.activeTabId) {
           this.activeTabId = id
           this.activeFrame = null
           return
         }
-        // Fuzzy match — origin+pathname (handles query param / fragment differences)
+        // Fuzzy match - origin+pathname (handles query param / fragment differences)
         if (activeOriginPath && fuzzyId === null && id !== this.activeTabId) {
           try {
             const pu = new URL(pageUrl)
@@ -590,7 +590,7 @@ export class BrowserManager {
       const count = await entry.locator.count()
       if (count === 0) {
         throw new Error(
-          `Ref ${selector} (${entry.role} "${entry.name}") is stale — element no longer exists. ` +
+          `Ref ${selector} (${entry.role} "${entry.name}") is stale - element no longer exists. ` +
             `Run 'snapshot' for fresh refs.`
         )
       }
@@ -731,7 +731,7 @@ export class BrowserManager {
   /**
    * Restore browser state into the current context: cookies, pages, storage.
    * Navigates to saved URLs, restores storage, wires page events.
-   * Failures on individual pages are swallowed — partial restore is better than none.
+   * Failures on individual pages are swallowed - partial restore is better than none.
    */
   async restoreState(state: BrowserState): Promise<void> {
     if (!this.context) throw new Error('Browser not launched')
@@ -788,7 +788,7 @@ export class BrowserManager {
       this.activeTabId = activeId ?? [...this.pages.keys()][0]
     }
 
-    // Clear refs — pages are new, locators are stale
+    // Clear refs - pages are new, locators are stale
     this.clearRefs()
   }
 
@@ -851,7 +851,7 @@ export class BrowserManager {
         await this.newTab()
         this.clearRefs()
       } catch {
-        // If even the fallback fails, we're in trouble — but browser is still alive
+        // If even the fallback fails, we're in trouble - but browser is still alive
       }
       return `Context recreation failed: ${err instanceof Error ? err.message : String(err)}. Browser reset to blank tab.`
     }
@@ -912,7 +912,7 @@ export class BrowserManager {
         console.log(`[browse] Handoff: loading extension from ${extensionPath}`)
       } else {
         console.log(
-          '[browse] Handoff: extension not found — headed mode without side panel'
+          '[browse] Handoff: extension not found - headed mode without side panel'
         )
       }
 
@@ -935,7 +935,7 @@ export class BrowserManager {
       })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      return `ERROR: Cannot open headed browser — ${msg}. Headless browser still running.`
+      return `ERROR: Cannot open headed browser - ${msg}. Headless browser still running.`
     }
 
     // 3. Restore state into new headed browser
@@ -977,10 +977,10 @@ export class BrowserManager {
         `STATUS: Waiting for user. Run 'resume' when done.`,
       ].join('\n')
     } catch (err: unknown) {
-      // Restore failed — close the new context, keep old state
+      // Restore failed - close the new context, keep old state
       await newContext.close().catch(() => {})
       const msg = err instanceof Error ? err.message : String(err)
-      return `ERROR: Handoff failed during state restore — ${msg}. Headless browser still running.`
+      return `ERROR: Handoff failed during state restore - ${msg}. Headless browser still running.`
     }
   }
 
@@ -1017,7 +1017,7 @@ export class BrowserManager {
 
   // ─── Console/Network/Dialog/Ref Wiring ────────────────────
   private wirePageEvents(page: Page) {
-    // Track tab close — remove from pages map, switch to another tab
+    // Track tab close - remove from pages map, switch to another tab
     page.on('close', () => {
       for (const [id, p] of this.pages) {
         if (p === page) {
@@ -1036,8 +1036,8 @@ export class BrowserManager {
       }
     })
 
-    // Clear ref map on navigation — refs point to stale elements after page change
-    // (lastSnapshot is NOT cleared — it's a text baseline for diffing)
+    // Clear ref map on navigation - refs point to stale elements after page change
+    // (lastSnapshot is NOT cleared - it's a text baseline for diffing)
     page.on('framenavigated', frame => {
       if (frame === page.mainFrame()) {
         this.clearRefs()
@@ -1066,7 +1066,7 @@ export class BrowserManager {
           await dialog.dismiss()
         }
       } catch {
-        // Dialog may have been dismissed by navigation — ignore
+        // Dialog may have been dismissed by navigation - ignore
       }
     })
 
@@ -1123,3 +1123,4 @@ export class BrowserManager {
     })
   }
 }
+

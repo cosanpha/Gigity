@@ -1,12 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { startTransition, useEffect, useRef, useState } from 'react'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
   llmResponse: string | null
   conversation: Array<{ role: string; content: string }>
   error: string | null
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="shrink-0 rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+      title="Copy to clipboard"
+    >
+      {copied ? '✓ Copied' : 'Copy'}
+    </button>
+  )
 }
 
 interface StoryStepPanelProps {
@@ -33,18 +55,34 @@ export function StoryStepPanel({
   onContentChange,
 }: StoryStepPanelProps) {
   const [editedContent, setEditedContent] = useState(state.llmResponse ?? '')
+  const prevStatusRef = useRef(state.status)
+
+  useEffect(() => {
+    if (prevStatusRef.current === 'generating' && state.status === 'pending') {
+      startTransition(() => setEditedContent(state.llmResponse ?? ''))
+    }
+    prevStatusRef.current = state.status
+  }, [state.status, state.llmResponse])
 
   function handleEdit(value: string) {
     setEditedContent(value)
     onContentChange(value)
   }
 
+  const isEmptyStart =
+    state.status === 'pending' && !state.llmResponse && !state.error
+  const isGenerating = state.status === 'generating'
+  const isLocked = state.status === 'done'
+  const showWorkspace =
+    !isEmptyStart &&
+    !isGenerating &&
+    (Boolean(state.llmResponse) || Boolean(state.error) || isLocked)
+
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
-      {/* Step header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step 2 of 11</span>
+          <span>Step 2 of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
           <span>Gigity</span>
         </div>
@@ -53,8 +91,7 @@ export function StoryStepPanel({
         </h2>
       </div>
 
-      {/* State: no response yet */}
-      {state.status === 'pending' && !state.llmResponse && !state.error && (
+      {isEmptyStart && (
         <div className="flex flex-col items-center justify-center gap-4 py-16">
           <p className="text-[13px] text-zinc-500">
             Ready to generate your story script.
@@ -68,8 +105,7 @@ export function StoryStepPanel({
         </div>
       )}
 
-      {/* State: generating */}
-      {state.status === 'generating' && (
+      {isGenerating && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <svg
             className="h-6 w-6 animate-spin text-indigo-500"
@@ -94,53 +130,36 @@ export function StoryStepPanel({
         </div>
       )}
 
-      {/* State: approved */}
-      {state.status === 'done' && (
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-[11px] text-white">
-              ✓
-            </span>
-            <span className="text-[13px] font-medium text-green-600">
-              Approved
-            </span>
-            <button
-              onClick={onReopen}
-              className="text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              ↺ Re-open
-            </button>
-          </div>
-          <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-4">
-            <pre className="font-sans text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
-              {state.llmResponse}
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {/* State: has response — editable */}
-      {state.status === 'pending' && (state.llmResponse || state.error) && (
+      {showWorkspace && (
         <div className="flex flex-col gap-5">
-          {/* Error */}
+          {isLocked && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[13px] text-green-600">
+                Approved - Re-open to edit the script.
+              </p>
+              {state.llmResponse ? (
+                <CopyButton text={state.llmResponse} />
+              ) : null}
+            </div>
+          )}
+
           {state.error && (
             <div className="rounded-[6px] border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-sm text-red-600">{state.error}</p>
             </div>
           )}
 
-          {/* Editable script textarea */}
           {state.llmResponse && (
             <textarea
-              value={editedContent}
+              value={isLocked ? (state.llmResponse ?? '') : editedContent}
               onChange={e => handleEdit(e.target.value)}
+              readOnly={isLocked}
               rows={24}
               spellCheck={false}
-              className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+              className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-indigo-400"
             />
           )}
 
-          {/* Follow-up */}
           <div className="flex gap-2">
             <textarea
               value={followUp}
@@ -158,7 +177,6 @@ export function StoryStepPanel({
             </button>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={onRetry}
@@ -166,12 +184,21 @@ export function StoryStepPanel({
             >
               ↺ Re-generate
             </button>
-            <button
-              onClick={onApprove}
-              className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
-            >
-              ✓ Approve
-            </button>
+            {isLocked ? (
+              <button
+                onClick={onReopen}
+                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+              >
+                Re-open
+              </button>
+            ) : (
+              <button
+                onClick={onApprove}
+                className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+              >
+                ✓ Approve
+              </button>
+            )}
           </div>
         </div>
       )}

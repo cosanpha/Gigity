@@ -1,14 +1,14 @@
-import { describe, test, expect } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
+import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
 import {
-  resolveConfig,
   ensureStateDir,
-  readVersionHash,
   getGitRoot,
   getRemoteSlug,
+  readVersionHash,
+  resolveConfig,
 } from '../src/config'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as os from 'os'
 
 describe('config', () => {
   describe('getGitRoot', () => {
@@ -178,7 +178,7 @@ describe('config', () => {
   describe('getRemoteSlug', () => {
     test('returns owner-repo format for current repo', () => {
       const slug = getRemoteSlug()
-      // This repo has an origin remote — should return a slug
+      // This repo has an origin remote - should return a slug
       expect(slug).toBeTruthy()
       expect(slug).toMatch(/^[a-zA-Z0-9._-]+-[a-zA-Z0-9._-]+$/)
     })
@@ -377,3 +377,4 @@ describe('startup error log', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 })
+

@@ -1,5 +1,10 @@
 'use client'
 
+import {
+  CLOUDINARY_CLOUD_NAME_PUBLIC,
+  partitionPromptUrlsForCloudinaryRefs,
+} from '@/lib/cloudinary-client'
+import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -13,6 +18,8 @@ type StepState = {
 
 interface SceneStepPanelProps {
   stepState: StepState
+  /** Approved character image URLs from step 6 - shown as reliable refs (avoids broken LLM-parsed links). */
+  characterImageUrls?: string[]
   followUp: string
   onFollowUpChange: (v: string) => void
   onGenerate: () => void
@@ -27,7 +34,6 @@ interface SceneParsed {
   title: string
   lyric: string
   prompt: string
-  refUrls: string[] // image reference URLs found inside the prompt
 }
 
 function extractScenePrompts(text: string): SceneParsed[] {
@@ -35,7 +41,7 @@ function extractScenePrompts(text: string): SceneParsed[] {
   return blocks
     .filter(block => /^\*\*Scene \d+/.test(block.trim()))
     .map(block => {
-      const headerMatch = block.match(/\*\*Scene (\d+)\s*[—-]\s*([^*\n]+)\*\*/)
+      const headerMatch = block.match(/\*\*Scene (\d+)\s*[--]\s*([^*\n]+)\*\*/)
       const sceneNumber = headerMatch ? parseInt(headerMatch[1], 10) : 0
       const title = headerMatch?.[2]?.trim() ?? ''
 
@@ -45,9 +51,7 @@ function extractScenePrompts(text: string): SceneParsed[] {
       const promptMatch = block.match(/Prompt:\s*([\s\S]+?)(?=\n\n|\n\*\*|$)/)
       const prompt = promptMatch?.[1]?.trim().replace(/\n+/g, ' ') ?? ''
 
-      const refUrls = prompt.match(/https?:\/\/\S+/g) ?? []
-
-      return { sceneNumber, title, lyric, prompt, refUrls }
+      return { sceneNumber, title, lyric, prompt }
     })
     .filter(s => s.sceneNumber > 0)
 }
@@ -59,7 +63,9 @@ function DalleGenerateButton({
   getPrompt: () => string
   onGenerated: (url: string) => void
 }) {
-  const [status, setStatus] = useState<'idle' | 'generating' | 'done' | 'error'>('idle')
+  const [status, setStatus] = useState<
+    'idle' | 'generating' | 'done' | 'error'
+  >('idle')
   const [error, setError] = useState<string | null>(null)
 
   async function generate() {
@@ -94,7 +100,7 @@ function DalleGenerateButton({
             Generating…
           </span>
         ) : status === 'done' ? (
-          '↺ Re-generate'
+          'Re-generate'
         ) : (
           'Generate with DALL-E'
         )}
@@ -106,8 +112,32 @@ function DalleGenerateButton({
   )
 }
 
+function ReferenceThumb({ url, label }: { url: string; label: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={label}
+      className="inline-block shrink-0 overflow-hidden rounded object-cover opacity-90 ring-1 ring-zinc-200 transition-opacity hover:opacity-100"
+    >
+      {/* Plain <img>: avoids next/image optimizer issues with some CDNs / signed URLs */}
+      <Image
+        src={url}
+        alt=""
+        width={56}
+        height={96}
+        loading="lazy"
+        decoding="async"
+        className="h-[96px] w-[56px] object-cover"
+      />
+    </a>
+  )
+}
+
 export function SceneStepPanel({
   stepState,
+  characterImageUrls = [],
   followUp,
   onFollowUpChange,
   onGenerate,
@@ -122,9 +152,11 @@ export function SceneStepPanel({
     ? extractScenePrompts(stepState.llmResponse)
     : []
 
-  // Editable prompts — initialised once when LLM output arrives
+  // Editable prompts - initialised once when LLM output arrives
   const [scenePrompts, setScenePrompts] = useState<string[]>(() =>
-    stepState.llmResponse ? extractScenePrompts(stepState.llmResponse).map(s => s.prompt) : []
+    stepState.llmResponse
+      ? extractScenePrompts(stepState.llmResponse).map(s => s.prompt)
+      : []
   )
 
   // Generated / pasted image URLs per scene
@@ -136,7 +168,9 @@ export function SceneStepPanel({
   // Sync scenePrompts when LLM output first arrives (or after retry)
   useEffect(() => {
     if (stepState.llmResponse) {
-      setScenePrompts(extractScenePrompts(stepState.llmResponse).map(s => s.prompt))
+      setScenePrompts(
+        extractScenePrompts(stepState.llmResponse).map(s => s.prompt)
+      )
     }
   }, [stepState.llmResponse])
 
@@ -164,7 +198,7 @@ export function SceneStepPanel({
       {/* Step header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step 7 of 11</span>
+          <span>Step 6 of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
           <span>DALL-E / Midjourney</span>
         </div>
@@ -185,9 +219,9 @@ export function SceneStepPanel({
             </span>
             <button
               onClick={onReopen}
-              className="text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
+              className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
             >
-              ↺ Re-open
+              Re-open
             </button>
           </div>
 
@@ -204,16 +238,36 @@ export function SceneStepPanel({
                 >
                   <p className="mb-0.5 text-[12px] font-semibold text-zinc-700">
                     Scene {scene.sceneNumber}
-                    {scene.title ? ` — ${scene.title}` : ''}
+                    {scene.title ? ` - ${scene.title}` : ''}
                   </p>
                   {scene.lyric && (
                     <p className="mb-2 text-[11px] text-zinc-400 italic">
                       &ldquo;{scene.lyric}&rdquo;
                     </p>
                   )}
-                  <pre className="mb-3 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
+                  <pre className="mb-2 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
                     {scenePrompts[i] ?? scene.prompt}
                   </pre>
+                  {(() => {
+                    const live = scenePrompts[i] ?? scene.prompt
+                    const { validCloudinaryImageRefs } =
+                      partitionPromptUrlsForCloudinaryRefs(live)
+                    if (validCloudinaryImageRefs.length === 0) return null
+                    return (
+                      <div className="mb-3 flex flex-wrap items-end gap-1.5">
+                        {validCloudinaryImageRefs.map((url, ri) => (
+                          <ReferenceThumb
+                            key={`done-${url}-${ri}`}
+                            url={url}
+                            label={`Cloudinary reference ${ri + 1}`}
+                          />
+                        ))}
+                        <span className="text-[11px] text-zinc-400">
+                          Cloudinary refs in prompt
+                        </span>
+                      </div>
+                    )
+                  })()}
                   {doneUrls[i] && (
                     <>
                       <a
@@ -306,107 +360,146 @@ export function SceneStepPanel({
             </div>
           )}
 
+          {characterImageUrls.length > 0 && (
+            <div className="rounded-[6px] border border-zinc-200 bg-white px-3 py-2">
+              <p className="mb-1.5 text-[11px] font-medium text-zinc-500">
+                Character images (step 6)
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {characterImageUrls.map((url, ci) => (
+                  <ReferenceThumb
+                    key={`${url}-${ci}`}
+                    url={url}
+                    label={`Character ${ci + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!CLOUDINARY_CLOUD_NAME_PUBLIC && (
+            <p className="text-[11px] text-amber-700">
+              Set{' '}
+              <code className="rounded bg-amber-100 px-1 py-0.5 text-[10px]">
+                NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+              </code>{' '}
+              (same as{' '}
+              <code className="rounded bg-amber-100 px-1 py-0.5 text-[10px]">
+                CLOUDINARY_CLOUD_NAME
+              </code>
+              ) to restrict prompt references to your Cloudinary account.
+            </p>
+          )}
+
           {/* Scene cards */}
           {scenes.length > 0 ? (
-            scenes.map((scene, i) => (
-              <div
-                key={i}
-                className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-3"
-              >
-                {/* Scene header */}
-                <p className="mb-0.5 text-[12px] font-semibold text-zinc-700">
-                  Scene {scene.sceneNumber}
-                  {scene.title ? ` — ${scene.title}` : ''}
-                </p>
-                {scene.lyric && (
-                  <p className="mb-2 text-[11px] text-zinc-400 italic">
-                    &ldquo;{scene.lyric}&rdquo;
+            scenes.map((scene, i) => {
+              const livePrompt = scenePrompts[i] ?? scene.prompt
+              const { validCloudinaryImageRefs, otherHttpUrls } =
+                partitionPromptUrlsForCloudinaryRefs(livePrompt)
+              return (
+                <div
+                  key={i}
+                  className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-3"
+                >
+                  {/* Scene header */}
+                  <p className="mb-0.5 text-[12px] font-semibold text-zinc-700">
+                    Scene {scene.sceneNumber}
+                    {scene.title ? ` - ${scene.title}` : ''}
                   </p>
-                )}
+                  {scene.lyric && (
+                    <p className="mb-2 text-[11px] text-zinc-400 italic">
+                      &ldquo;{scene.lyric}&rdquo;
+                    </p>
+                  )}
 
-                {/* Character reference thumbnails */}
-                {scene.refUrls.length > 0 && (
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    {scene.refUrls.map((url, ri) => (
-                      <a
-                        key={ri}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Character reference"
-                      >
-                        <Image
-                          src={url}
-                          alt={`Character ref ${ri + 1}`}
-                          width={28}
-                          height={48}
-                          className="rounded object-cover opacity-80 ring-1 ring-zinc-200 transition-opacity hover:opacity-100"
+                  {/* Editable prompt */}
+                  <textarea
+                    value={livePrompt}
+                    onChange={e => updateScenePrompt(i, e.target.value)}
+                    rows={3}
+                    placeholder="Scene prompt - paste a Cloudinary image URL (…/image/upload/…) to preview it below."
+                    className="mb-2 w-full resize-none rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                  />
+
+                  {validCloudinaryImageRefs.length > 0 && (
+                    <div className="mb-2 flex flex-wrap items-end gap-1.5">
+                      {validCloudinaryImageRefs.map((url, ri) => (
+                        <ReferenceThumb
+                          key={`${url}-${ri}`}
+                          url={url}
+                          label={`Cloudinary reference ${ri + 1}`}
                         />
-                      </a>
-                    ))}
-                    <span className="self-end text-[11px] text-zinc-400">
-                      character refs
-                    </span>
-                  </div>
-                )}
-
-                {/* Editable prompt */}
-                <textarea
-                  value={scenePrompts[i] ?? scene.prompt}
-                  onChange={e => updateScenePrompt(i, e.target.value)}
-                  rows={3}
-                  className="mb-3 w-full resize-none rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
-                />
-
-                {/* Image preview */}
-                {sceneUrls[i]?.trim() && (
-                  <div className="mb-3">
-                    <a
-                      href={sceneUrls[i]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Image
-                        src={sceneUrls[i]}
-                        alt={`Scene ${scene.sceneNumber}`}
-                        width={90}
-                        height={160}
-                        className="rounded-[6px] object-cover"
-                      />
-                    </a>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[12px] text-green-600">
-                        ✓ Generated
+                      ))}
+                      <span className="text-[11px] text-zinc-400">
+                        Cloudinary refs in prompt
                       </span>
+                    </div>
+                  )}
+
+                  {otherHttpUrls.length > 0 && (
+                    <p className="mb-3 text-[11px] text-amber-700">
+                      {otherHttpUrls.length} link(s) in this prompt are not
+                      accepted as reference images (need{' '}
+                      <code className="rounded bg-amber-100 px-1 text-[10px]">
+                        res.cloudinary.com/…/image/upload/…
+                      </code>
+                      {CLOUDINARY_CLOUD_NAME_PUBLIC
+                        ? ` under cloud "${CLOUDINARY_CLOUD_NAME_PUBLIC}".`
+                        : ').'}
+                    </p>
+                  )}
+
+                  {/* Image preview */}
+                  {sceneUrls[i]?.trim() && (
+                    <div className="mb-3">
                       <a
                         href={sceneUrls[i]}
-                        download
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                       >
-                        ↓ Download
+                        <Image
+                          src={sceneUrls[i]}
+                          alt={`Scene ${scene.sceneNumber}`}
+                          width={90}
+                          height={160}
+                          className="rounded-[6px] object-cover"
+                        />
                       </a>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-[12px] text-green-600">
+                          ✓ Generated
+                        </span>
+                        <a
+                          href={sceneUrls[i]}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                        >
+                          ↓ Download
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Generate + URL input row */}
-                <div className="flex flex-col gap-2">
-                  <DalleGenerateButton
-                    getPrompt={() => scenePrompts[i] ?? scene.prompt}
-                    onGenerated={url => updateSceneUrl(i, url)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Or paste image URL manually…"
-                    value={sceneUrls[i] ?? ''}
-                    onChange={e => updateSceneUrl(i, e.target.value)}
-                    className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
-                  />
+                  {/* Generate + URL input row */}
+                  <div className="flex flex-col gap-2">
+                    <DalleGenerateButton
+                      getPrompt={() => scenePrompts[i] ?? scene.prompt}
+                      onGenerated={url => updateSceneUrl(i, url)}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Or paste image URL manually…"
+                      value={sceneUrls[i] ?? ''}
+                      onChange={e => updateSceneUrl(i, e.target.value)}
+                      className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                    />
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
               <pre className="font-sans text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
@@ -415,7 +508,7 @@ export function SceneStepPanel({
             </div>
           )}
 
-          {/* Prompt refinement — only while LLM step is still pending */}
+          {/* Prompt refinement - only while LLM step is still pending */}
           {stepState.status === 'pending' && (
             <>
               <div className="flex gap-2">
@@ -439,7 +532,7 @@ export function SceneStepPanel({
                   onClick={onRetry}
                   className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
                 >
-                  ↺ Start fresh
+                  Start fresh
                 </button>
               </div>
             </>

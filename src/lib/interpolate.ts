@@ -10,15 +10,16 @@ export interface InterpolationContext {
   step_3_output?: string | null
   step_4_output?: string | null
   step_5_output?: string | null
+  step_5_assets_output?: string | null
   step_6_output?: string | null
   step_7_output?: string | null
-  step_8_output?: string | null
 }
 
 const KNOWN_KEYS = new Set<string>([
   'brand_name', 'brand_description', 'target_audience', 'tone', 'platform',
   'example_videos', 'step_1_output', 'step_2_output', 'step_3_output',
-  'step_4_output', 'step_5_output', 'step_6_output', 'step_7_output', 'step_8_output',
+  'step_4_output', 'step_5_output', 'step_5_assets_output', 'step_6_output',
+  'step_7_output',
 ])
 
 export function interpolate(template: string, ctx: InterpolationContext): string {

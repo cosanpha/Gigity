@@ -1,4 +1,5 @@
 import { StepDefinition } from '@/lib/workflow-templates'
+import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
@@ -32,7 +33,7 @@ export function StepSidebar({
             key={def.stepNumber}
             onClick={() => !isLocked && onSelect(def.stepNumber)}
             disabled={isLocked}
-            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] transition-colors disabled:cursor-not-allowed ${
+            className={`flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-[13px] transition-colors disabled:cursor-not-allowed ${
               isActive
                 ? 'bg-indigo-50 text-indigo-700'
                 : isLocked
@@ -55,11 +56,11 @@ export function StepSidebar({
               }`}
             >
               {state.status === 'done' ? (
-                '✓'
+                <LucideCheck size={12} />
               ) : state.status === 'generating' ? (
                 <Spinner />
               ) : def.type === 'external_instruction' && !isLocked ? (
-                '↗'
+                <LucideArrowUpRight size={12} />
               ) : (
                 def.stepNumber
               )}

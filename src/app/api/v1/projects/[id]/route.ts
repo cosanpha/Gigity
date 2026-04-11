@@ -8,10 +8,12 @@ type StepPayload = {
   status: 'pending' | 'generating' | 'done'
   llmResponse: string | null
   outputAssetUrl: string | null
+  sunoTaskId: string | null
+  sunoSelectedTrackIndex: number | null
   conversation: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
-// PATCH /api/v1/projects/:id — update title and/or save steps progress
+// PATCH /api/v1/projects/:id - update title and/or save steps progress
 export async function PATCH(req: Request, { params }: Ctx) {
   await connectDB()
   const { id } = await params
@@ -31,6 +33,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
       project.steps[i].status = s.status
       project.steps[i].llmResponse = s.llmResponse ?? null
       project.steps[i].outputAssetUrl = s.outputAssetUrl ?? null
+      project.steps[i].sunoTaskId = s.sunoTaskId ?? null
+      project.steps[i].sunoSelectedTrackIndex =
+        typeof s.sunoSelectedTrackIndex === 'number'
+          ? s.sunoSelectedTrackIndex
+          : null
       project.steps[i].conversation = s.conversation ?? []
     })
   }

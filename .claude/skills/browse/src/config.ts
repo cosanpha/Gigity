@@ -112,10 +112,10 @@ export function ensureStateDir(config: BrowseConfig): void {
           `[${new Date().toISOString()}] Warning: could not update .gitignore at ${gitignorePath}: ${err.message}\n`
         )
       } catch {
-        // stateDir write failed too — nothing more we can do
+        // stateDir write failed too - nothing more we can do
       }
     }
-    // ENOENT (no .gitignore) — skip silently
+    // ENOENT (no .gitignore) - skip silently
   }
 }
 
@@ -157,3 +157,4 @@ export function readVersionHash(
     return null
   }
 }
+

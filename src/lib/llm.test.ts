@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, mock } from 'bun:test'
 
 mock.module('server-only', () => ({}))
@@ -21,7 +22,6 @@ const brandBase = {
 const noSteps: any[] = []
 
 describe('buildSystemMessage', () => {
-
   it('includes brand context with no prior steps', () => {
     const msg = buildSystemMessage(brandBase, noSteps)
     expect(msg).toContain('Deewas')
@@ -34,8 +34,18 @@ describe('buildSystemMessage', () => {
 
   it('includes prior approved step outputs', () => {
     const steps: any[] = [
-      { stepNumber: 1, status: 'done', llmResponse: 'Campaign brief here', outputAssetUrl: null },
-      { stepNumber: 2, status: 'done', llmResponse: 'Story script here', outputAssetUrl: null },
+      {
+        stepNumber: 1,
+        status: 'done',
+        llmResponse: 'Campaign brief here',
+        outputAssetUrl: null,
+      },
+      {
+        stepNumber: 2,
+        status: 'done',
+        llmResponse: 'Story script here',
+        outputAssetUrl: null,
+      },
     ]
     const msg = buildSystemMessage(brandBase, steps)
     expect(msg).toContain('Prior approved outputs')
@@ -45,25 +55,33 @@ describe('buildSystemMessage', () => {
 
   it('excludes steps that are not done', () => {
     const steps: any[] = [
-      { stepNumber: 1, status: 'pending', llmResponse: 'Draft', outputAssetUrl: null },
+      {
+        stepNumber: 1,
+        status: 'pending',
+        llmResponse: 'Draft',
+        outputAssetUrl: null,
+      },
     ]
     const msg = buildSystemMessage(brandBase, steps)
     expect(msg).not.toContain('Prior approved outputs')
     expect(msg).not.toContain('Draft')
   })
 
-  it('excludes step outputs beyond step 8', () => {
+  it('excludes step outputs beyond step 7', () => {
     const steps: any[] = [
-      { stepNumber: 9, status: 'done', llmResponse: 'Should be excluded', outputAssetUrl: null },
+      {
+        stepNumber: 8,
+        status: 'done',
+        llmResponse: 'Should be excluded',
+        outputAssetUrl: null,
+      },
     ]
     const msg = buildSystemMessage(brandBase, steps)
     expect(msg).not.toContain('Should be excluded')
   })
-
 })
 
 describe('buildMessages', () => {
-
   it('returns system + user for first generate (no conversation)', () => {
     const msgs = buildMessages('system context', 'user prompt', [])
     expect(msgs).toHaveLength(2)
@@ -88,10 +106,14 @@ describe('buildMessages', () => {
       { role: 'user' as const, content: 'Follow-up 1' },
       { role: 'assistant' as const, content: 'Second response' },
     ]
-    const msgs = buildMessages('sys', 'initial prompt', conversation, 'Follow-up 2')
+    const msgs = buildMessages(
+      'sys',
+      'initial prompt',
+      conversation,
+      'Follow-up 2'
+    )
     expect(msgs).toHaveLength(6)
     expect(msgs[2].content).toBe('First response')
     expect(msgs[5].content).toBe('Follow-up 2')
   })
-
 })

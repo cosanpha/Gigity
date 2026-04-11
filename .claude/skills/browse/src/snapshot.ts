@@ -1,7 +1,7 @@
 /**
- * Snapshot command — accessibility tree with ref-based element selection
+ * Snapshot command - accessibility tree with ref-based element selection
  *
- * Architecture (Locator map — no DOM mutation):
+ * Architecture (Locator map - no DOM mutation):
  *   1. page.locator(scope).ariaSnapshot() → YAML-like accessibility tree
  *   2. Parse tree, assign refs @e1, @e2, ...
  *   3. Build Playwright Locator for each ref (getByRole + nth)
@@ -55,7 +55,7 @@ interface SnapshotOptions {
 }
 
 /**
- * Snapshot flag metadata — single source of truth for CLI parsing and doc generation.
+ * Snapshot flag metadata - single source of truth for CLI parsing and doc generation.
  *
  * Imported by:
  *   - gen-skill-docs.ts (generates {{SNAPSHOT_FLAGS}} tables)
@@ -124,7 +124,7 @@ export const SNAPSHOT_FLAGS: Array<{
     short: '-C',
     long: '--cursor-interactive',
     description:
-      'Cursor-interactive elements (@c refs — divs with pointer, onclick)',
+      'Cursor-interactive elements (@c refs - divs with pointer, onclick)',
     optionKey: 'cursorInteractive',
   },
 ]
@@ -139,7 +139,7 @@ interface ParsedNode {
 }
 
 /**
- * Parse CLI args into SnapshotOptions — driven by SNAPSHOT_FLAGS metadata.
+ * Parse CLI args into SnapshotOptions - driven by SNAPSHOT_FLAGS metadata.
  */
 export function parseSnapshotArgs(args: string[]): SnapshotOptions {
   const opts: SnapshotOptions = {}
@@ -386,7 +386,7 @@ export async function handleSnapshot(
       }
     } catch {
       output.push('')
-      output.push('(cursor scan failed — CSP restriction)')
+      output.push('(cursor scan failed - CSP restriction)')
     }
   }
 
@@ -421,7 +421,7 @@ export async function handleSnapshot(
             boxes.push({ ref: `@${ref}`, box })
           }
         } catch {
-          // Element may be offscreen or hidden — skip
+          // Element may be offscreen or hidden - skip
         }
       }
 
@@ -475,7 +475,7 @@ export async function handleSnapshot(
       bm.setLastSnapshot(snapshotText)
       return (
         snapshotText +
-        '\n\n(no previous snapshot to diff against — this snapshot stored as baseline)'
+        '\n\n(no previous snapshot to diff against - this snapshot stored as baseline)'
       )
     }
 
@@ -509,3 +509,4 @@ export async function handleSnapshot(
 
   return output.join('\n')
 }
+

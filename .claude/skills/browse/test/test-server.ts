@@ -3,8 +3,8 @@
  * Serves HTML files from test/fixtures/ on a random available port
  */
 
-import * as path from 'path'
 import * as fs from 'fs'
+import * as path from 'path'
 
 const FIXTURES_DIR = path.resolve(import.meta.dir, 'fixtures')
 
@@ -18,7 +18,7 @@ export function startTestServer(port: number = 0): {
     fetch(req) {
       const url = new URL(req.url)
 
-      // Echo endpoint — returns request headers as JSON
+      // Echo endpoint - returns request headers as JSON
       if (url.pathname === '/echo') {
         const headers: Record<string, string> = {}
         req.headers.forEach((value, key) => {
@@ -60,3 +60,4 @@ if (import.meta.main) {
   console.log(`Fixtures: ${FIXTURES_DIR}`)
   console.log('Press Ctrl+C to stop')
 }
+

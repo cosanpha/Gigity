@@ -1,6 +1,6 @@
 'use client'
 
-import { StepDefinition } from '@/lib/workflow-templates'
+import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { useState } from 'react'
 
 type StepState = {
@@ -20,7 +20,6 @@ interface LLMStepPanelProps {
   onSendFollowUp: () => void
   onApprove: (opts?: { outputAssetUrl?: string }) => void
   onReopen?: () => void
-  sunoEnabled?: boolean
 }
 
 interface ResponseBlock {
@@ -51,70 +50,12 @@ function parseBlocks(text: string): ResponseBlock[] {
   return blocks
 }
 
-function extractBlock(content: string, label: string): string {
+export function extractBlock(content: string, label: string): string {
   const blocks = parseBlocks(content)
   return blocks.find(b => b.label === label)?.content.trim() ?? ''
 }
 
-function SunoGenerateButton({
-  lyrics,
-  stylePrompt,
-  onGenerated,
-}: {
-  lyrics: string
-  stylePrompt: string
-  onGenerated: (url: string) => void
-}) {
-  const [status, setStatus] = useState<
-    'idle' | 'generating' | 'done' | 'error'
-  >('idle')
-  const [error, setError] = useState<string | null>(null)
-
-  async function generate() {
-    setStatus('generating')
-    setError(null)
-    const res = await fetch('/api/v1/workflow/suno/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lyrics, stylePrompt }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setStatus('done')
-      onGenerated(data.url)
-    } else {
-      const err = await res.json().catch(() => ({ error: 'Generation failed' }))
-      setStatus('error')
-      setError(err.error)
-    }
-  }
-
-  return (
-    <div>
-      <button
-        onClick={generate}
-        disabled={status === 'generating'}
-        className="rounded-[6px] bg-indigo-500 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50"
-      >
-        {status === 'generating' ? (
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            Generating…
-          </span>
-        ) : status === 'done' ? (
-          '✓ Generated'
-        ) : (
-          'Generate with SunoAI API'
-        )}
-      </button>
-      {status === 'error' && error && (
-        <p className="mt-1.5 text-[12px] text-red-500">{error}</p>
-      )}
-    </div>
-  )
-}
-
-function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -180,14 +121,15 @@ export function LLMStepPanel({
   onSendFollowUp,
   onApprove,
   onReopen,
-  sunoEnabled,
 }: LLMStepPanelProps) {
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
       {/* Step header */}
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step {stepDef.stepNumber} of 11</span>
+          <span>
+            Step {stepDef.stepNumber} of {WORKFLOW_TOTAL_STEPS}
+          </span>
           <span>·</span>
           <span>{stepDef.tool}</span>
         </div>
@@ -250,45 +192,17 @@ export function LLMStepPanel({
             {onReopen && (
               <button
                 onClick={onReopen}
-                className="text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
+                className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
               >
-                ↺ Re-open
+                Re-open
               </button>
             )}
           </div>
           <ResponseBlocks content={state.llmResponse!} />
-          {/* Step 4 — SunoAI action area */}
-          {stepDef?.stepNumber === 4 && (
-            <div className="mt-4 rounded-[6px] border border-zinc-200 bg-zinc-50 p-4">
-              <p className="mb-3 text-[13px] font-medium text-zinc-700">
-                Open SunoAI and paste both sections
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href="https://suno.com/create"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
-                >
-                  Open SunoAI ↗
-                </a>
-                {sunoEnabled && (
-                  <SunoGenerateButton
-                    lyrics={extractBlock(state.llmResponse!, 'Lyrics')}
-                    stylePrompt={extractBlock(
-                      state.llmResponse!,
-                      'Style Prompt'
-                    )}
-                    onGenerated={url => onApprove?.({ outputAssetUrl: url })}
-                  />
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
-      {/* State 4: Has result — actions available */}
+      {/* State 4: Has result - actions available */}
       {state.status === 'pending' && (state.llmResponse || state.error) && (
         <div className="flex flex-col gap-5">
           {/* Error message */}
@@ -304,7 +218,7 @@ export function LLMStepPanel({
             </div>
           )}
 
-          {/* Response — conversation thread or single response */}
+          {/* Response - conversation thread or single response */}
           {state.llmResponse &&
             (state.conversation.length > 1 ? (
               <ConversationThread messages={state.conversation} />
@@ -338,7 +252,7 @@ export function LLMStepPanel({
               onClick={onRetry}
               className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
             >
-              ↺ Start fresh
+              Start fresh
             </button>
             <button
               onClick={() => onApprove()}

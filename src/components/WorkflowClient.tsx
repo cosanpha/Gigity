@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { StepDefinition } from '@/lib/workflow-templates'
+import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { useEffect, useState } from 'react'
+import { CampaignBriefStepPanel } from './CampaignBriefStepPanel'
 import { CharacterStepPanel } from './CharacterStepPanel'
 import { ExternalStepPanel } from './ExternalStepPanel'
+import { KlingStepPanel } from './KlingStepPanel'
 import { LLMStepPanel } from './LLMStepPanel'
+import { MusicPromptStepPanel } from './MusicPromptStepPanel'
 import { SceneStepPanel } from './SceneStepPanel'
+import { SongLyricsStepPanel } from './SongLyricsStepPanel'
 import { StepSidebar } from './StepSidebar'
 import { StoryStepPanel } from './StoryStepPanel'
 
@@ -14,6 +18,8 @@ type StepState = {
   status: 'pending' | 'generating' | 'done'
   llmResponse: string | null
   outputAssetUrl: string | null
+  sunoTaskId: string | null
+  sunoSelectedTrackIndex: number | null
   conversation: Array<{ role: string; content: string }>
   error: string | null
 }
@@ -34,9 +40,9 @@ function parseUrls(raw: string | null): string[] {
 }
 
 function collectAssets(steps: StepState[]): ProjectAssets {
-  const characterImages = parseUrls(steps[5]?.outputAssetUrl)
-  const sceneImages = parseUrls(steps[6]?.outputAssetUrl)
-  const videoClips = parseUrls(steps[8]?.outputAssetUrl)
+  const characterImages = parseUrls(steps[4]?.outputAssetUrl)
+  const sceneImages = parseUrls(steps[5]?.outputAssetUrl)
+  const videoClips = parseUrls(steps[6]?.outputAssetUrl)
   const musicTrack = parseUrls(steps[3]?.outputAssetUrl)
   return { characterImages, sceneImages, videoClips, musicTrack }
 }
@@ -63,19 +69,19 @@ export function WorkflowClient({
       status: s.status,
       llmResponse: s.llmResponse ?? null,
       outputAssetUrl: s.outputAssetUrl ?? null,
+      sunoTaskId: s.sunoTaskId ?? null,
+      sunoSelectedTrackIndex:
+        typeof s.sunoSelectedTrackIndex === 'number'
+          ? s.sunoSelectedTrackIndex
+          : null,
       conversation: s.conversation ?? [],
       error: null,
     }))
   )
   const [followUp, setFollowUp] = useState('')
-  const [assetUrls, setAssetUrls] = useState<Record<number, string>>({})
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
-
-  function setAssetUrl(n: number, url: string) {
-    setAssetUrls(prev => ({ ...prev, [n]: url }))
-  }
 
   function updateStepContent(n: number, content: string) {
     setSteps(prev => patch(prev, n, { llmResponse: content }))
@@ -91,6 +97,8 @@ export function WorkflowClient({
           status: s.status,
           llmResponse: s.llmResponse,
           outputAssetUrl: s.outputAssetUrl,
+          sunoTaskId: s.sunoTaskId,
+          sunoSelectedTrackIndex: s.sunoSelectedTrackIndex,
           conversation: s.conversation,
         })),
       }),
@@ -188,96 +196,93 @@ export function WorkflowClient({
       { method: 'POST' }
     )
     if (!res.ok) return
-    setSteps(prev =>
-      patch(prev, n, {
-        status: 'pending',
-        llmResponse: null,
-        conversation: [],
-        error: null,
-      })
-    )
+    if (n === 1 || n === 2 || n === 3 || n === 4 || n === 7) {
+      setSteps(prev =>
+        patch(prev, n, {
+          status: 'pending',
+          ...(n === 4 ? { sunoTaskId: null } : {}),
+          ...(n === 7 ? { outputAssetUrl: null } : {}),
+        })
+      )
+    } else {
+      setSteps(prev =>
+        patch(prev, n, {
+          status: 'pending',
+          llmResponse: null,
+          conversation: [],
+          error: null,
+        })
+      )
+    }
     setActiveStep(n)
   }
 
-  // Combined approve for steps 5+6: approves LLM output then saves image URLs
   async function approveCharacterStep(imageUrls: string) {
-    const res5 = await fetch(
-      `/api/v1/projects/${project._id}/steps/5/approve`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      }
-    )
-    if (!res5.ok) return
-
-    const res6 = await fetch(
-      `/api/v1/projects/${project._id}/steps/6/approve`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputAssetUrl: imageUrls }),
-      }
-    )
-    if (!res6.ok) return
-
-    setSteps(prev => {
-      let next = patch(prev, 5, { status: 'done' })
-      next = patch(next, 6, { status: 'done', outputAssetUrl: imageUrls })
-      return next
-    })
-    setActiveStep(7)
-  }
-
-  // Re-opens both step 5 (LLM) and step 6 (images)
-  async function reopenCharacterStep() {
-    const [res5, res6] = await Promise.all([
-      fetch(`/api/v1/projects/${project._id}/steps/5/reopen`, {
-        method: 'POST',
-      }),
-      fetch(`/api/v1/projects/${project._id}/steps/6/reopen`, {
-        method: 'POST',
-      }),
-    ])
-    if (!res5.ok || !res6.ok) return
-    setSteps(prev => {
-      let next = patch(prev, 5, {
-        status: 'pending',
-        llmResponse: null,
-        conversation: [],
-        error: null,
-      })
-      next = patch(next, 6, {
-        status: 'pending',
-        outputAssetUrl: null,
-      })
-      return next
-    })
-    setActiveStep(5)
-  }
-
-  // Approve step 7 (LLM + images combined): saves outputAssetUrl for scene images
-  async function approveSceneStep(imageUrls: string) {
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
+    const res = await fetch(`/api/v1/projects/${project._id}/steps/5/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: imageUrls }),
     })
     if (!res.ok) return
     setSteps(prev =>
-      patch(prev, 7, { status: 'done', outputAssetUrl: imageUrls })
+      patch(prev, 5, {
+        status: 'done',
+        outputAssetUrl: imageUrls,
+      })
     )
-    setActiveStep(8)
+    setActiveStep(6)
   }
 
-  // Re-opens step 7 — clears both LLM output and scene image URLs
-  async function reopenSceneStep() {
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/7/reopen`, {
+  async function reopenCharacterStep() {
+    const res = await fetch(`/api/v1/projects/${project._id}/steps/5/reopen`, {
       method: 'POST',
     })
     if (!res.ok) return
     setSteps(prev =>
-      patch(prev, 7, {
+      patch(prev, 5, {
+        status: 'pending',
+        llmResponse: null,
+        outputAssetUrl: null,
+        conversation: [],
+        error: null,
+      })
+    )
+    setActiveStep(5)
+  }
+
+  async function approveSceneStep(imageUrls: string) {
+    const res = await fetch(`/api/v1/projects/${project._id}/steps/6/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outputAssetUrl: imageUrls }),
+    })
+    if (!res.ok) return
+    setSteps(prev =>
+      patch(prev, 6, { status: 'done', outputAssetUrl: imageUrls })
+    )
+    setActiveStep(7)
+  }
+
+  async function approveKlingStep(videoUrls: string) {
+    const res = await fetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outputAssetUrl: videoUrls }),
+    })
+    if (!res.ok) return
+    setSteps(prev =>
+      patch(prev, 7, { status: 'done', outputAssetUrl: videoUrls })
+    )
+    setActiveStep(8)
+  }
+
+  async function reopenSceneStep() {
+    const res = await fetch(`/api/v1/projects/${project._id}/steps/6/reopen`, {
+      method: 'POST',
+    })
+    if (!res.ok) return
+    setSteps(prev =>
+      patch(prev, 6, {
         status: 'pending',
         llmResponse: null,
         conversation: [],
@@ -285,7 +290,7 @@ export function WorkflowClient({
         outputAssetUrl: null,
       })
     )
-    setActiveStep(7)
+    setActiveStep(6)
   }
 
   async function approve(n: number, opts: { outputAssetUrl?: string } = {}) {
@@ -299,8 +304,14 @@ export function WorkflowClient({
     )
 
     if (res.ok) {
-      setSteps(prev => patch(prev, n, { status: 'done' }))
-      if (n < 11) setActiveStep(n + 1) // advance to next step
+      const url = opts.outputAssetUrl?.trim()
+      setSteps(prev =>
+        patch(prev, n, {
+          status: 'done',
+          ...(url ? { outputAssetUrl: url } : {}),
+        })
+      )
+      if (n < WORKFLOW_TOTAL_STEPS) setActiveStep(n + 1)
     }
   }
 
@@ -324,7 +335,7 @@ export function WorkflowClient({
 
   return (
     <div className="flex h-[calc(100vh-52px)] flex-col">
-      {/* Project title — editable */}
+      {/* Project title - editable */}
       <div className="flex h-[44px] items-center gap-2 border-b border-zinc-200 px-6">
         {editingTitle ? (
           <>
@@ -399,12 +410,25 @@ export function WorkflowClient({
           steps={steps}
           stepDefs={stepDefs}
           activeStep={activeStep}
-          onSelect={n => setActiveStep(n === 6 ? 5 : n)}
+          onSelect={setActiveStep}
         />
         <main className="flex-1 overflow-y-auto">
-          {activeStep === 2 ? (
+          {activeStep === 1 ? (
+            <CampaignBriefStepPanel
+              key={`brief-${steps[0].status}`}
+              state={steps[0]}
+              followUp={followUp}
+              onFollowUpChange={setFollowUp}
+              onGenerate={() => generate(1)}
+              onRetry={() => generate(1, { retry: true })}
+              onSendFollowUp={() => generate(1, { followUpMessage: followUp })}
+              onApprove={() => approve(1)}
+              onReopen={() => reopen(1)}
+              onContentChange={c => updateStepContent(1, c)}
+            />
+          ) : activeStep === 2 ? (
             <StoryStepPanel
-              key={`story-${steps[1].llmResponse?.length ?? 0}`}
+              key={`story-${steps[1].status}`}
               state={steps[1]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -415,11 +439,45 @@ export function WorkflowClient({
               onReopen={() => reopen(2)}
               onContentChange={c => updateStepContent(2, c)}
             />
+          ) : activeStep === 3 ? (
+            <SongLyricsStepPanel
+              key={`lyrics-${steps[2].status}`}
+              state={steps[2]}
+              followUp={followUp}
+              onFollowUpChange={setFollowUp}
+              onGenerate={() => generate(3)}
+              onRetry={() => generate(3, { retry: true })}
+              onSendFollowUp={() => generate(3, { followUpMessage: followUp })}
+              onApprove={() => approve(3)}
+              onReopen={() => reopen(3)}
+              onContentChange={c => updateStepContent(3, c)}
+            />
+          ) : activeStep === 4 ? (
+            <MusicPromptStepPanel
+              key={`music-${steps[3].status}`}
+              state={steps[3]}
+              trackTitle={title}
+              followUp={followUp}
+              onFollowUpChange={setFollowUp}
+              onGenerate={() => generate(4)}
+              onRetry={() => generate(4, { retry: true })}
+              onSendFollowUp={() => generate(4, { followUpMessage: followUp })}
+              onApprove={opts => approve(4, opts ?? {})}
+              onReopen={() => reopen(4)}
+              onContentChange={c => updateStepContent(4, c)}
+              onPersistSuno={updates =>
+                setSteps(prev => {
+                  const next = patch(prev, 4, updates)
+                  saveProgress(next)
+                  return next
+                })
+              }
+              sunoEnabled={sunoEnabled}
+            />
           ) : activeStep === 5 ? (
             <CharacterStepPanel
-              key={5}
-              step5State={steps[4]}
-              step6State={steps[5]}
+              key={`5-${steps[4].outputAssetUrl ?? ''}-${steps[4].status}-${steps[4].llmResponse?.length ?? 0}`}
+              stepState={steps[4]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
               onGenerate={() => generate(5)}
@@ -427,18 +485,35 @@ export function WorkflowClient({
               onSendFollowUp={() => generate(5, { followUpMessage: followUp })}
               onApprove={approveCharacterStep}
               onReopen={reopenCharacterStep}
+              onContentChange={c => updateStepContent(5, c)}
+            />
+          ) : activeStep === 6 ? (
+            <SceneStepPanel
+              key={6}
+              stepState={steps[5]}
+              characterImageUrls={collectAssets(steps).characterImages}
+              followUp={followUp}
+              onFollowUpChange={setFollowUp}
+              onGenerate={() => generate(6)}
+              onRetry={() => generate(6, { retry: true })}
+              onSendFollowUp={() => generate(6, { followUpMessage: followUp })}
+              onApprove={approveSceneStep}
+              onReopen={reopenSceneStep}
             />
           ) : activeStep === 7 ? (
-            <SceneStepPanel
-              key={7}
-              stepState={steps[6]}
+            <KlingStepPanel
+              key={`kling-7-${steps[6].status}-${steps[6].outputAssetUrl ?? ''}`}
+              stepDef={currentStepDef}
+              state={steps[6]}
+              sceneImageUrls={collectAssets(steps).sceneImages}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
               onGenerate={() => generate(7)}
               onRetry={() => generate(7, { retry: true })}
               onSendFollowUp={() => generate(7, { followUpMessage: followUp })}
-              onApprove={approveSceneStep}
-              onReopen={reopenSceneStep}
+              onApprove={approveKlingStep}
+              onReopen={() => reopen(7)}
+              onContentChange={c => updateStepContent(7, c)}
             />
           ) : currentStepDef.type === 'llm' ? (
             <LLMStepPanel
@@ -453,7 +528,6 @@ export function WorkflowClient({
               }
               onApprove={opts => approve(activeStep, opts)}
               onReopen={() => reopen(activeStep)}
-              sunoEnabled={sunoEnabled}
             />
           ) : (
             <ExternalStepPanel
@@ -463,27 +537,10 @@ export function WorkflowClient({
               state={currentStepState}
               priorStepOutput={getPriorOutput()}
               brandCtx={{ platform: brand.platforms.join(', ') }}
-              assetUrl={assetUrls[activeStep] ?? ''}
-              onAssetUrlChange={url => setAssetUrl(activeStep, url)}
-              onApprove={() =>
-                approve(activeStep, {
-                  outputAssetUrl: assetUrls[activeStep] ?? '',
-                })
-              }
+              onApprove={() => approve(activeStep, {})}
               onReopen={() => reopen(activeStep)}
               projectAssets={
-                activeStep === 10 ? collectAssets(steps) : undefined
-              }
-              step7Images={
-                activeStep === 9
-                  ? (steps[6]?.outputAssetUrl
-                      ?.split('\n')
-                      .map(u => u.trim())
-                      .filter(Boolean) ?? [])
-                  : undefined
-              }
-              step8Output={
-                activeStep === 9 ? (steps[7]?.llmResponse ?? '') : undefined
+                activeStep === 8 ? collectAssets(steps) : undefined
               }
             />
           )}

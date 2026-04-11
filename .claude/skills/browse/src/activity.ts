@@ -1,5 +1,5 @@
 /**
- * Activity streaming — real-time feed of browse commands for the Chrome extension Side Panel
+ * Activity streaming - real-time feed of browse commands for the Chrome extension Side Panel
  *
  * Architecture:
  *   handleCommand() ──► emitActivity(command_start)
@@ -138,13 +138,13 @@ export function emitActivity(
   }
   activityBuffer.push(full)
 
-  // Notify subscribers asynchronously — never block the command path
+  // Notify subscribers asynchronously - never block the command path
   for (const notify of subscribers) {
     queueMicrotask(() => {
       try {
         notify(full)
       } catch {
-        /* subscriber error — don't crash */
+        /* subscriber error - don't crash */
       }
     })
   }

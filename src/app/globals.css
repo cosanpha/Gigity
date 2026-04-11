@@ -111,6 +111,9 @@
     line-height: 1.5;
     @apply bg-white text-zinc-950;
   }
+  button {
+    @apply cursor-pointer;
+  }
 }
 
 .font-sans {
@@ -120,4 +123,3 @@
 .font-body {
   font-family: var(--font-body);
 }
-

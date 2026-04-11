@@ -7,16 +7,16 @@
  * Flow: generate board HTML → open in browser → verify DOM elements →
  *       simulate user interaction → verify structured JSON feedback.
  *
- * No LLM involved — this is a deterministic functional test.
+ * No LLM involved - this is a deterministic functional test.
  */
 
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
+import * as fs from 'fs'
+import * as path from 'path'
+import { generateCompareHtml } from '../../design/src/compare'
 import { BrowserManager } from '../src/browser-manager'
 import { handleReadCommand } from '../src/read-commands'
 import { handleWriteCommand } from '../src/write-commands'
-import { generateCompareHtml } from '../../design/src/compare'
-import * as fs from 'fs'
-import * as path from 'path'
 
 let bm: BrowserManager
 let boardUrl: string
@@ -372,7 +372,7 @@ describe('Regenerate flow', () => {
 
 describe('Agent polling pattern (simulates what $B eval does)', () => {
   test('status is empty before user action', async () => {
-    // Fresh page — simulates agent's first poll
+    // Fresh page - simulates agent's first poll
     await handleWriteCommand('goto', [boardUrl], bm)
 
     const status = await handleReadCommand(
@@ -426,3 +426,4 @@ describe('Agent polling pattern (simulates what $B eval does)', () => {
     expect(typeof feedback.comments).toBe('object')
   })
 })
+

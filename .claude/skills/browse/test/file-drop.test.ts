@@ -131,7 +131,7 @@ afterEach(() => {
 
 // ─── Empty Inbox ─────────────────────────────────────────────────
 
-describe('inbox — empty states', () => {
+describe('inbox - empty states', () => {
   test('no .context/sidebar-inbox directory returns empty', () => {
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox')
     const messages = readInbox(inboxDir)
@@ -158,7 +158,7 @@ describe('inbox — empty states', () => {
 
 // ─── Valid Messages ──────────────────────────────────────────────
 
-describe('inbox — valid messages', () => {
+describe('inbox - valid messages', () => {
   test('displays formatted output with timestamps and URLs', () => {
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox')
     writeTestInboxFile(
@@ -226,7 +226,7 @@ describe('inbox — valid messages', () => {
 
 // ─── Malformed Files ─────────────────────────────────────────────
 
-describe('inbox — malformed files', () => {
+describe('inbox - malformed files', () => {
   test('malformed JSON files are skipped gracefully', () => {
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox')
     fs.mkdirSync(inboxDir, { recursive: true })
@@ -270,7 +270,7 @@ describe('inbox — malformed files', () => {
 
 // ─── Clear Flag ──────────────────────────────────────────────────
 
-describe('inbox — --clear flag', () => {
+describe('inbox - --clear flag', () => {
   test('files deleted after clear', () => {
     const inboxDir = path.join(tmpDir, '.context', 'sidebar-inbox')
     writeTestInboxFile(

@@ -9,11 +9,11 @@ import { summarizeSunoError } from '@/lib/suno-http'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  if (!SUNO_API_KEY?.trim() || !SUNO_API_BASE_URL?.trim()) {
+  if (!SUNO_API_BASE_URL?.trim()) {
     return NextResponse.json(
       {
         error:
-          'Suno is not configured. Set SUNO_API_KEY and SUNO_API_BASE_URL.',
+          'Suno is not configured. Set SUNO_API_BASE_URL (and optionally SUNO_API_KEY or pass sunoApiKey from step 4).',
       },
       { status: 501 }
     )
@@ -21,16 +21,40 @@ export async function POST(req: Request) {
 
   const base = SUNO_API_BASE_URL.trim().replace(/\/$/, '')
   const app = PUBLIC_APP_URL.trim().replace(/\/$/, '')
-  const { lyrics, stylePrompt, title, model } = await req.json()
+  const body = await req.json()
+  const { lyrics, stylePrompt, title, model, sunoApiKey } = body as {
+    lyrics?: unknown
+    stylePrompt?: unknown
+    title?: unknown
+    model?: unknown
+    sunoApiKey?: unknown
+  }
 
-  if (!lyrics?.trim() || !stylePrompt?.trim()) {
+  const fromBody =
+    typeof sunoApiKey === 'string' && sunoApiKey.trim()
+      ? sunoApiKey.trim()
+      : ''
+  const apiKey = fromBody || SUNO_API_KEY?.trim() || ''
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error:
+          'Suno API key required. Set SUNO_API_KEY on the server or paste your key in step 4.',
+      },
+      { status: 400 }
+    )
+  }
+
+  const lyricsStr = typeof lyrics === 'string' ? lyrics : ''
+  const styleStr = typeof stylePrompt === 'string' ? stylePrompt : ''
+  if (!lyricsStr.trim() || !styleStr.trim()) {
     return NextResponse.json(
       { error: 'lyrics and stylePrompt are required' },
       { status: 400 }
     )
   }
 
-  const styleTrimmed = String(stylePrompt).trim()
+  const styleTrimmed = styleStr.trim()
   if (styleTrimmed.length > MAX_SUNO_STYLE_PROMPT_CHARS) {
     return NextResponse.json(
       {
@@ -45,14 +69,14 @@ export async function POST(req: Request) {
   const res = await fetch(`${base}/generate`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${SUNO_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       customMode: true,
       instrumental: false,
       model: typeof model === 'string' && model.trim() ? model.trim() : 'V4',
-      prompt: lyrics.trim(),
+      prompt: lyricsStr.trim(),
       title:
         typeof title === 'string' && title.trim() ? title.trim() : undefined,
       style: styleTrimmed,
@@ -88,3 +112,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ taskId })
 }
+

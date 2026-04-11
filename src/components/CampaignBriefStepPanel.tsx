@@ -184,7 +184,7 @@ export function CampaignBriefStepPanel({
               onClick={onRetry}
               className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
             >
-              ↺ Re-generate
+              Re-generate
             </button>
             {isLocked ? (
               <button

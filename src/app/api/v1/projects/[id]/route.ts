@@ -10,6 +10,7 @@ type StepPayload = {
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride: string | null
   conversation: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
@@ -38,6 +39,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
         typeof s.sunoSelectedTrackIndex === 'number'
           ? s.sunoSelectedTrackIndex
           : null
+      project.steps[i].sunoApiKeyOverride =
+        typeof s.sunoApiKeyOverride === 'string' && s.sunoApiKeyOverride.trim()
+          ? s.sunoApiKeyOverride.trim()
+          : null
       project.steps[i].conversation = s.conversation ?? []
     })
   }
@@ -53,3 +58,4 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   await VideoProject.findByIdAndDelete(id)
   return NextResponse.json({ ok: true })
 }
+

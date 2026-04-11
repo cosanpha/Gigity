@@ -10,6 +10,7 @@ export type SerializableStep = {
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride?: string | null
   status: 'pending' | 'generating' | 'done'
   completedAt: string | Date | null
 }

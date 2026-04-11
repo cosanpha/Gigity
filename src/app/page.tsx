@@ -28,37 +28,12 @@ export default async function DashboardPage({ searchParams }: Props) {
       <Navbar
         brandName={activeBrand.name}
         brandId={activeBrandId}
+        brandSwitcherBrands={brands.map(b => ({
+          id: String(b._id),
+          name: b.name,
+        }))}
       />
       <div className="mx-auto max-w-[780px] px-6 py-10 pb-20">
-        {/* Brand tabs (shown when multiple brands exist) */}
-        {brands.length > 1 && (
-          <div className="mb-8 flex items-center gap-2 overflow-x-auto">
-            {brands.map(b => {
-              const id = String(b._id)
-              const isActive = id === activeBrandId
-              return (
-                <a
-                  key={id}
-                  href={`/?brand=${id}`}
-                  className={`rounded-full border px-4 py-1.5 text-[13px] whitespace-nowrap transition-colors ${
-                    isActive
-                      ? 'border-indigo-500 bg-indigo-500 text-white'
-                      : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
-                  }`}
-                >
-                  {b.name}
-                </a>
-              )
-            })}
-            <a
-              href="/brand/new"
-              className="rounded-full border border-dashed border-zinc-300 px-4 py-1.5 text-[13px] whitespace-nowrap text-zinc-400 hover:border-zinc-400 hover:text-zinc-600"
-            >
-              + New brand
-            </a>
-          </div>
-        )}
-
         {/* Page header */}
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>

@@ -12,6 +12,7 @@ export interface IWorkflowStep {
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride: string | null
   status: 'pending' | 'generating' | 'done'
   completedAt: Date | null
 }
@@ -42,6 +43,7 @@ const WorkflowStepSchema = new Schema<IWorkflowStep>(
     outputAssetUrl: { type: String, default: null },
     sunoTaskId: { type: String, default: null },
     sunoSelectedTrackIndex: { type: Number, default: null },
+    sunoApiKeyOverride: { type: String, default: null },
     status: {
       type: String,
       enum: ['pending', 'generating', 'done'],
@@ -76,3 +78,4 @@ const VideoProject: Model<IVideoProject> =
   mongoose.model<IVideoProject>('VideoProject', VideoProjectSchema)
 
 export default VideoProject
+

@@ -51,8 +51,10 @@ export default async function ProjectPage({ params }: Props) {
         project={serializedProject}
         brand={serializedBrand}
         stepDefs={WORKFLOW_STEPS}
-        sunoEnabled={Boolean(SUNO_API_KEY?.trim() && SUNO_API_BASE_URL?.trim())}
+        sunoBaseUrlConfigured={Boolean(SUNO_API_BASE_URL?.trim())}
+        sunoEnvKeyConfigured={Boolean(SUNO_API_KEY?.trim())}
       />
     </>
   )
 }
+

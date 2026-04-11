@@ -5,9 +5,9 @@ import { parseSunoRecordInfo } from '@/lib/suno-record-info'
 import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
-  if (!SUNO_API_KEY?.trim() || !SUNO_API_BASE_URL?.trim()) {
+  if (!SUNO_API_BASE_URL?.trim()) {
     return NextResponse.json(
-      { error: 'Suno is not configured' },
+      { error: 'Suno is not configured. Set SUNO_API_BASE_URL.' },
       { status: 501 }
     )
   }
@@ -18,13 +18,25 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'taskId is required' }, { status: 400 })
   }
 
+  const headerKey = req.headers.get('x-suno-api-key')?.trim() || ''
+  const apiKey = headerKey || SUNO_API_KEY?.trim() || ''
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error:
+          'Suno API key required. Set SUNO_API_KEY on the server or send X-Suno-Api-Key (from step 4).',
+      },
+      { status: 400 }
+    )
+  }
+
   const base = SUNO_API_BASE_URL.trim().replace(/\/$/, '')
   const url = `${base}/generate/record-info?taskId=${encodeURIComponent(taskId)}`
 
   const res = await fetch(url, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${SUNO_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
   })

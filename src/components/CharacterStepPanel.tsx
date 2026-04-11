@@ -2,7 +2,7 @@
 
 import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { CopyButton } from './LLMStepPanel'
 
 type CharacterStepState = {
@@ -23,6 +23,12 @@ interface CharacterStepPanelProps {
   onApprove: (imageUrls: string) => void
   onReopen: () => void
   onContentChange: (content: string) => void
+  onPersistOutput: (outputAssetUrl: string | null) => void
+}
+
+function alignedCharacterSlots(raw: string | null, count: number): string[] {
+  const lines = (raw ?? '').split('\n')
+  return Array.from({ length: count }, (_, i) => lines[i] ?? '')
 }
 
 function extractCharacterPrompts(
@@ -58,6 +64,73 @@ function replaceCharacterMidjourneyPrompt(
   }
   parts[i] = next
   return parts.join(CHARACTER_BLOCK_SEP)
+}
+
+function CharacterImageFileUploadButton({
+  onUploaded,
+}: {
+  onUploaded: (url: string) => void
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  async function onFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Choose an image file (e.g. PNG, JPEG, WebP).')
+      return
+    }
+    setBusy(true)
+    setUploadError(null)
+    const fd = new FormData()
+    fd.append('image', file)
+    const res = await fetch('/api/v1/workflow/cloudinary/upload-image-file', {
+      method: 'POST',
+      body: fd,
+    })
+    const data = await res.json().catch(() => ({}))
+    setBusy(false)
+    if (res.ok && typeof data.url === 'string') {
+      onUploaded(data.url)
+    } else {
+      setUploadError(
+        typeof data.error === 'string' ? data.error : 'Upload failed'
+      )
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,.png,.jpg,.jpeg,.webp,.gif,.avif"
+        className="sr-only"
+        onChange={onFileChange}
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={busy}
+        className="w-fit rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? (
+          <span className="flex items-center gap-2">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+            Uploading…
+          </span>
+        ) : (
+          'Choose image file…'
+        )}
+      </button>
+      {uploadError ? (
+        <p className="text-[12px] text-red-500">{uploadError}</p>
+      ) : null}
+    </div>
+  )
 }
 
 function DalleGenerateButton({
@@ -126,6 +199,7 @@ export function CharacterStepPanel({
   onApprove,
   onReopen,
   onContentChange,
+  onPersistOutput,
 }: CharacterStepPanelProps) {
   const isFullyDone =
     stepState.status === 'done' && Boolean(stepState.outputAssetUrl?.trim())
@@ -134,17 +208,20 @@ export function CharacterStepPanel({
     ? extractCharacterPrompts(stepState.llmResponse)
     : []
 
-  const [characterUrls, setCharacterUrls] = useState<string[]>(() => {
-    const source = stepState.outputAssetUrl ?? ''
-    return source ? source.split('\n').map(u => u.trim()) : []
-  })
+  const characterUrls = useMemo(
+    () => alignedCharacterSlots(stepState.outputAssetUrl, characters.length),
+    [stepState.outputAssetUrl, characters.length]
+  )
 
   function updateCharacterUrl(i: number, url: string) {
-    setCharacterUrls(prev => {
-      const next = [...prev]
-      next[i] = url
-      return next
-    })
+    const slots = alignedCharacterSlots(
+      stepState.outputAssetUrl,
+      characters.length
+    )
+    const next = [...slots]
+    next[i] = url
+    const joined = next.join('\n')
+    onPersistOutput(/[^\s]/.test(joined) ? joined : null)
   }
 
   const allReady =
@@ -229,12 +306,11 @@ export function CharacterStepPanel({
                         </span>
                         <a
                           href={doneUrls[i]}
-                          download
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                         >
-                          ↓ Download
+                          Open
                         </a>
                       </div>
                     </>
@@ -350,21 +426,25 @@ export function CharacterStepPanel({
                       </span>
                       <a
                         href={characterUrls[i]}
-                        download
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                       >
-                        ↓ Download
+                        Open
                       </a>
                     </div>
                   </div>
                 )}
 
-                <DalleGenerateButton
-                  prompt={char.prompt}
-                  onGenerated={url => updateCharacterUrl(i, url)}
-                />
+                <div className="flex flex-wrap items-start gap-3">
+                  <CharacterImageFileUploadButton
+                    onUploaded={url => updateCharacterUrl(i, url)}
+                  />
+                  <DalleGenerateButton
+                    prompt={char.prompt}
+                    onGenerated={url => updateCharacterUrl(i, url)}
+                  />
+                </div>
 
                 <div className="mt-2">
                   <input

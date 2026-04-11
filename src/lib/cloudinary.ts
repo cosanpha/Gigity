@@ -63,3 +63,27 @@ export async function uploadVideoBuffer(
     Readable.from(buffer).pipe(uploadStream)
   })
 }
+
+export async function uploadImageBuffer(
+  buffer: Buffer,
+  folder = 'gigity/characters'
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: 'image' },
+      (error, result) => {
+        if (error) {
+          reject(error)
+          return
+        }
+        const secureUrl = result?.secure_url
+        if (!secureUrl) {
+          reject(new Error('Upload finished without URL'))
+          return
+        }
+        resolve(secureUrl)
+      }
+    )
+    Readable.from(buffer).pipe(uploadStream)
+  })
+}

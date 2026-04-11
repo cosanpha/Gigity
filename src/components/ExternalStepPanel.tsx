@@ -1,12 +1,15 @@
 'use client'
 
 import { interpolate } from '@/lib/interpolate'
+import { decodePublishLinks } from '@/lib/publish-links'
 import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { strToU8, zip } from 'fflate'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
+  llmResponse: string | null
   outputAssetUrl: string | null
 }
 
@@ -26,6 +29,14 @@ interface ExternalStepPanelProps {
   onApprove: () => void
   onReopen?: () => void
   projectAssets?: ProjectAssets // CapCut: all collected project assets
+  /** Used for zip download filename (project / video title). */
+  projectTitle?: string
+  /** Step 9 (Publish): AI descriptions + optional published URLs. */
+  publishStep?: {
+    onDescriptionChange: (content: string) => void
+    onGenerate: () => Promise<void>
+    onSaveLinks: (tiktok: string, youtube: string) => void
+  }
 }
 
 function AssetGroup({
@@ -81,12 +92,11 @@ function AssetGroup({
               </span>
               <a
                 href={url}
-                download
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0 rounded px-2 py-1 text-[11px] text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700"
               >
-                ↓
+                Open
               </a>
             </div>
           )
@@ -96,7 +106,69 @@ function AssetGroup({
   )
 }
 
-function DownloadAllButton({ assets }: { assets: ProjectAssets }) {
+function extFromUrl(url: string): string {
+  const seg = decodeURIComponent(url.split('/').pop()?.split('?')[0] ?? '')
+  const m = seg.match(/(\.[a-z0-9]{1,8})$/i)
+  return m ? m[1].toLowerCase() : '.bin'
+}
+
+function padIndex(i: number): string {
+  return String(i + 1).padStart(2, '0')
+}
+
+function zipDownloadFilename(projectTitle: string | undefined): string {
+  const raw = projectTitle?.trim() ?? ''
+  if (!raw) return 'gigity-assets.zip'
+  const base = raw
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120)
+  const safe = base.length > 0 ? base : 'gigity-assets'
+  return `${safe}.zip`
+}
+
+type ZipTask = { path: string; url: string }
+
+function buildZipTasks(assets: ProjectAssets): ZipTask[] {
+  const tasks: ZipTask[] = []
+  assets.characterImages.forEach((url, i) => {
+    tasks.push({
+      path: `character-images/${padIndex(i)}${extFromUrl(url)}`,
+      url,
+    })
+  })
+  assets.sceneImages.forEach((url, i) => {
+    tasks.push({
+      path: `scene-images/${padIndex(i)}${extFromUrl(url)}`,
+      url,
+    })
+  })
+  assets.videoClips.forEach((url, i) => {
+    tasks.push({
+      path: `video-clips/${padIndex(i)}${extFromUrl(url)}`,
+      url,
+    })
+  })
+  assets.musicTrack.forEach((url, i) => {
+    tasks.push({
+      path: `music/${padIndex(i)}${extFromUrl(url)}`,
+      url,
+    })
+  })
+  return tasks
+}
+
+function DownloadAllButton({
+  assets,
+  projectTitle,
+}: {
+  assets: ProjectAssets
+  projectTitle?: string
+}) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
   const total =
     assets.characterImages.length +
     assets.sceneImages.length +
@@ -105,46 +177,277 @@ function DownloadAllButton({ assets }: { assets: ProjectAssets }) {
 
   if (total === 0) return null
 
-  function downloadAll() {
-    const lines: string[] = []
+  async function downloadAllZip() {
+    setBusy(true)
+    setErr(null)
+    const tasks = buildZipTasks(assets)
+    const manifest: string[] = ['# Gigity asset manifest', '']
+    const entries: Record<string, Uint8Array> = {}
 
+    for (const { path, url } of tasks) {
+      try {
+        const res = await fetch(url, { mode: 'cors' })
+        if (!res.ok) {
+          manifest.push(`MISSING\t${path}\t${res.status}\t${url}`)
+          continue
+        }
+        const buf = new Uint8Array(await res.arrayBuffer())
+        entries[path] = buf
+        manifest.push(`OK\t${path}\t${url}`)
+      } catch {
+        manifest.push(`MISSING\t${path}\tcors_or_network\t${url}`)
+      }
+    }
+
+    manifest.push(
+      '',
+      '# All source URLs (for manual download if some files failed)',
+      ''
+    )
     if (assets.characterImages.length > 0) {
-      lines.push('# Character images')
-      lines.push(...assets.characterImages)
-      lines.push('')
+      manifest.push('## Character images')
+      assets.characterImages.forEach(u => manifest.push(u))
+      manifest.push('')
     }
     if (assets.sceneImages.length > 0) {
-      lines.push('# Scene images')
-      lines.push(...assets.sceneImages)
-      lines.push('')
+      manifest.push('## Scene images')
+      assets.sceneImages.forEach(u => manifest.push(u))
+      manifest.push('')
     }
     if (assets.videoClips.length > 0) {
-      lines.push('# Video clips')
-      lines.push(...assets.videoClips)
-      lines.push('')
+      manifest.push('## Video clips')
+      assets.videoClips.forEach(u => manifest.push(u))
+      manifest.push('')
     }
     if (assets.musicTrack.length > 0) {
-      lines.push('# Music track')
-      lines.push(...assets.musicTrack)
-      lines.push('')
+      manifest.push('## Music track')
+      assets.musicTrack.forEach(u => manifest.push(u))
     }
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'gigity-assets.txt'
-    a.click()
-    URL.revokeObjectURL(url)
+    entries['manifest.txt'] = strToU8(manifest.join('\n'))
+
+    zip(entries, (zipErr, out) => {
+      setBusy(false)
+      if (zipErr) {
+        setErr('Could not build zip file.')
+        return
+      }
+      const zipBytes = new Uint8Array(out.length)
+      zipBytes.set(out)
+      const blob = new Blob([zipBytes], { type: 'application/zip' })
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = zipDownloadFilename(projectTitle)
+      a.click()
+      URL.revokeObjectURL(href)
+    })
   }
 
   return (
-    <button
-      onClick={downloadAll}
-      className="rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-    >
-      ↓ Download all ({total})
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void downloadAllZip()}
+        className="rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[12px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? (
+          <span className="flex items-center gap-2">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+            Zipping…
+          </span>
+        ) : (
+          <>↓ Download all as zip ({total})</>
+        )}
+      </button>
+      {err ? (
+        <p className="max-w-[280px] text-right text-[11px] text-red-600">
+          {err}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function PublishStepSection({
+  description,
+  outputAssetUrl,
+  onDescriptionChange,
+  onGenerate,
+  onSaveLinks,
+}: {
+  description: string | null
+  outputAssetUrl: string | null
+  onDescriptionChange: (content: string) => void
+  onGenerate: () => Promise<void>
+  onSaveLinks: (tiktok: string, youtube: string) => void
+}) {
+  const [genBusy, setGenBusy] = useState(false)
+  const [genErr, setGenErr] = useState<string | null>(null)
+  const [tiktok, setTiktok] = useState('')
+  const [youtube, setYoutube] = useState('')
+  const [linksSaved, setLinksSaved] = useState(false)
+
+  useEffect(() => {
+    const d = decodePublishLinks(outputAssetUrl)
+    setTiktok(d.tiktok)
+    setYoutube(d.youtube)
+    setLinksSaved(false)
+  }, [outputAssetUrl])
+
+  async function handleGenerate() {
+    setGenErr(null)
+    setGenBusy(true)
+    try {
+      await onGenerate()
+    } catch (e) {
+      setGenErr(e instanceof Error ? e.message : 'Generation failed')
+    } finally {
+      setGenBusy(false)
+    }
+  }
+
+  function handleSaveLinks() {
+    onSaveLinks(tiktok, youtube)
+    setLinksSaved(true)
+    setTimeout(() => setLinksSaved(false), 2000)
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded-[6px] border border-zinc-200 bg-white px-4 py-4">
+      <div>
+        <p className="mb-1.5 text-[12px] font-medium text-zinc-700">
+          Video description (TikTok + YouTube)
+        </p>
+        <p className="mb-2 text-[11px] text-zinc-500">
+          Generated from your workflow and brand. Edit before posting.
+        </p>
+        <textarea
+          value={description ?? ''}
+          onChange={e => onDescriptionChange(e.target.value)}
+          rows={14}
+          spellCheck={false}
+          placeholder='Press "Generate video description" to create TikTok and YouTube copy from prior steps…'
+          className="w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-sans text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={genBusy}
+            onClick={() => void handleGenerate()}
+            className="rounded-[6px] bg-indigo-500 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {genBusy ? (
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Generating…
+              </span>
+            ) : (
+              'Generate video description'
+            )}
+          </button>
+          {genErr ? (
+            <span className="text-[12px] text-red-600">{genErr}</span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="border-t border-zinc-100 pt-4">
+        <p className="mb-1.5 text-[12px] font-medium text-zinc-700">
+          Published video links (optional)
+        </p>
+        <p className="mb-3 text-[11px] text-zinc-500">
+          After your video is live, paste URLs here and save to keep them on
+          this project.
+        </p>
+        <label className="mb-2 block">
+          <span className="mb-1 block text-[11px] font-medium text-zinc-600">
+            TikTok URL
+          </span>
+          <input
+            type="url"
+            value={tiktok}
+            onChange={e => setTiktok(e.target.value)}
+            placeholder="https://www.tiktok.com/@…"
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+          />
+        </label>
+        <label className="mb-3 block">
+          <span className="mb-1 block text-[11px] font-medium text-zinc-600">
+            YouTube URL
+          </span>
+          <input
+            type="url"
+            value={youtube}
+            onChange={e => setYoutube(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=…"
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={handleSaveLinks}
+          className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+        >
+          {linksSaved ? 'Saved ✓' : 'Save published links'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PublishStepDoneView({
+  llmResponse,
+  outputAssetUrl,
+}: {
+  llmResponse: string | null
+  outputAssetUrl: string | null
+}) {
+  const { tiktok, youtube } = decodePublishLinks(outputAssetUrl)
+
+  return (
+    <div className="flex flex-col gap-4">
+      {llmResponse?.trim() ? (
+        <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
+          <p className="mb-2 text-[12px] font-medium text-zinc-500">
+            Video description
+          </p>
+          <pre className="max-h-64 overflow-y-auto font-sans text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800">
+            {llmResponse}
+          </pre>
+        </div>
+      ) : null}
+      {(tiktok || youtube) && (
+        <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
+          <p className="mb-2 text-[12px] font-medium text-zinc-500">
+            Published links
+          </p>
+          <div className="flex flex-col gap-2">
+            {tiktok ? (
+              <a
+                href={tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] break-all text-indigo-600 hover:underline"
+              >
+                TikTok - {tiktok}
+              </a>
+            ) : null}
+            {youtube ? (
+              <a
+                href={youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] break-all text-indigo-600 hover:underline"
+              >
+                YouTube - {youtube}
+              </a>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -157,6 +460,8 @@ export function ExternalStepPanel({
   onApprove,
   onReopen,
   projectAssets,
+  projectTitle,
+  publishStep,
 }: ExternalStepPanelProps) {
   const [contextOpen, setContextOpen] = useState(true)
   const instruction = interpolate(stepDef.instruction ?? '', {
@@ -204,7 +509,12 @@ export function ExternalStepPanel({
             )}
           </div>
 
-          {state.outputAssetUrl ? (
+          {stepNumber === WORKFLOW_TOTAL_STEPS ? (
+            <PublishStepDoneView
+              llmResponse={state.llmResponse}
+              outputAssetUrl={state.outputAssetUrl}
+            />
+          ) : state.outputAssetUrl ? (
             <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
               <p className="mb-1 text-[12px] tracking-wide text-zinc-400 uppercase">
                 Asset URL
@@ -232,7 +542,10 @@ export function ExternalStepPanel({
                 <h3 className="text-[13px] font-medium text-zinc-700">
                   Project assets
                 </h3>
-                <DownloadAllButton assets={projectAssets} />
+                <DownloadAllButton
+                  assets={projectAssets}
+                  projectTitle={projectTitle}
+                />
               </div>
 
               <div className="flex flex-col gap-4">
@@ -299,6 +612,16 @@ export function ExternalStepPanel({
               </a>
             )}
           </div>
+
+          {stepNumber === WORKFLOW_TOTAL_STEPS && publishStep ? (
+            <PublishStepSection
+              description={state.llmResponse}
+              outputAssetUrl={state.outputAssetUrl}
+              onDescriptionChange={publishStep.onDescriptionChange}
+              onGenerate={publishStep.onGenerate}
+              onSaveLinks={publishStep.onSaveLinks}
+            />
+          ) : null}
 
           {/* Expiry warning */}
           {stepDef.expiryWarning && (

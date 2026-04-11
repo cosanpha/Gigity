@@ -29,6 +29,8 @@ export async function POST(_req: Request, { params }: Ctx) {
       stepNumber === 2 ||
       stepNumber === 3 ||
       stepNumber === 4 ||
+      stepNumber === 5 ||
+      stepNumber === 6 ||
       stepNumber === 7
     ) {
       step.status = 'pending'

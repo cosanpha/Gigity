@@ -8,13 +8,7 @@ import {
 import { isProbablyVideoHttpUrl } from '@/lib/video-url'
 import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
-import {
-  startTransition,
-  useEffect,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
@@ -38,10 +32,9 @@ function slotCountForLlm(llm: string | null): number {
   return llm?.trim() ? 1 : 0
 }
 
-function initVideoRows(llm: string | null, savedUrls: string | null): string[] {
-  const n = Math.max(1, slotCountForLlm(llm))
-  const lines = splitLines(savedUrls)
-  return Array.from({ length: n }, (_, i) => lines[i] ?? '')
+function alignedVideoSlots(raw: string | null, rowCount: number): string[] {
+  const lines = (raw ?? '').split('\n')
+  return Array.from({ length: rowCount }, (_, i) => lines[i] ?? '')
 }
 
 function step7RefUrl(
@@ -227,6 +220,7 @@ interface KlingStepPanelProps {
   onApprove: (videoUrlsJoined: string) => void
   onReopen: () => void
   onContentChange: (content: string) => void
+  onPersistOutput: (outputAssetUrl: string | null) => void
 }
 
 export function KlingStepPanel({
@@ -241,42 +235,26 @@ export function KlingStepPanel({
   onApprove,
   onReopen,
   onContentChange,
+  onPersistOutput,
 }: KlingStepPanelProps) {
-  const [sceneVideoUrls, setSceneVideoUrls] = useState<string[]>(() =>
-    initVideoRows(state.llmResponse, state.outputAssetUrl)
-  )
-  const prevStatusRef = useRef(state.status)
-
   const scenes = state.llmResponse
     ? extractKlingScenesForEdit(state.llmResponse)
     : []
   const unstructured = Boolean(state.llmResponse?.trim()) && scenes.length === 0
   const slotCount = unstructured ? 1 : Math.max(0, scenes.length)
+  const videoRowCount = Math.max(1, slotCountForLlm(state.llmResponse))
 
-  useEffect(() => {
-    if (prevStatusRef.current === 'generating' && state.status === 'pending') {
-      startTransition(() => {
-        const n = Math.max(1, slotCountForLlm(state.llmResponse))
-        setSceneVideoUrls(Array.from({ length: n }, () => ''))
-      })
-    }
-    prevStatusRef.current = state.status
-  }, [state.status, state.llmResponse])
-
-  useEffect(() => {
-    const n = Math.max(1, slotCountForLlm(state.llmResponse))
-    setSceneVideoUrls(prev => {
-      if (prev.length === n) return prev
-      return Array.from({ length: n }, (_, i) => prev[i] ?? '')
-    })
-  }, [state.llmResponse])
+  const sceneVideoUrls = useMemo(
+    () => alignedVideoSlots(state.outputAssetUrl, videoRowCount),
+    [state.outputAssetUrl, videoRowCount]
+  )
 
   function setSceneVideo(i: number, v: string) {
-    setSceneVideoUrls(prev => {
-      const next = [...prev]
-      next[i] = v
-      return next
-    })
+    const slots = alignedVideoSlots(state.outputAssetUrl, videoRowCount)
+    const next = [...slots]
+    next[i] = v
+    const joined = next.join('\n')
+    onPersistOutput(/[^\s]/.test(joined) ? joined : null)
   }
 
   const allVideosReady =
@@ -610,7 +588,7 @@ export function KlingStepPanel({
               onClick={onRetry}
               className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
             >
-              ↺ Re-generate
+              Re-generate
             </button>
             <button
               type="button"

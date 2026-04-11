@@ -268,12 +268,11 @@ When done, click "Mark as done" below.`,
 
 Target platforms: {{platform}}
 
-1. Upload to each platform
-2. Write captions optimized per platform (TikTok captions differ from YouTube)
-3. Add relevant hashtags
-4. Schedule or publish immediately
+1. Use "Generate video description" for TikTok + YouTube copy (edit the textarea as needed).
+2. Upload your video to TikTok and YouTube, then optionally paste the public URLs below and save - they are stored on this project.
+3. Schedule or publish when ready.
 
-When published, click "Mark as published" below to complete this project.`,
+When finished, click "Mark as published" below to complete this project.`,
   },
 ]
 

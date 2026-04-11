@@ -69,8 +69,10 @@ export async function POST(req: Request, { params }: Ctx) {
       if (fromBody) {
         step.outputAssetUrl = fromBody
       }
+      const overrideKey = step.sunoApiKeyOverride?.trim() || ''
       const sunoConfigured =
-        Boolean(SUNO_API_KEY?.trim()) && Boolean(SUNO_API_BASE_URL?.trim())
+        Boolean(SUNO_API_BASE_URL?.trim()) &&
+        (Boolean(SUNO_API_KEY?.trim()) || Boolean(overrideKey))
       if (sunoConfigured && !step.outputAssetUrl?.trim()) {
         return NextResponse.json(
           { error: 'Generate a song before approving this step' },
@@ -102,3 +104,4 @@ export async function POST(req: Request, { params }: Ctx) {
     )
   }
 }
+

@@ -6,7 +6,7 @@ import {
 } from '@/lib/cloudinary-client'
 import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 type StepState = {
   status: 'pending' | 'generating' | 'done'
@@ -27,6 +27,8 @@ interface SceneStepPanelProps {
   onSendFollowUp: () => void
   onApprove: (imageUrls: string) => void
   onReopen: () => void
+  onContentChange: (content: string) => void
+  onPersistOutput: (outputAssetUrl: string | null) => void
 }
 
 interface SceneParsed {
@@ -54,6 +56,33 @@ function extractScenePrompts(text: string): SceneParsed[] {
       return { sceneNumber, title, lyric, prompt }
     })
     .filter(s => s.sceneNumber > 0)
+}
+
+function replaceNthScenePrompt(
+  fullText: string,
+  sceneIndex: number,
+  newPrompt: string
+): string {
+  const blocks = fullText.split(/(?=\*\*Scene \d+)/)
+  const sceneBlockIndices: number[] = []
+  blocks.forEach((block, idx) => {
+    if (/^\*\*Scene \d+/.test(block.trim())) sceneBlockIndices.push(idx)
+  })
+  const bi = sceneBlockIndices[sceneIndex]
+  if (bi === undefined) return fullText
+  const old = blocks[bi]
+  const promptRe = /Prompt:\s*([\s\S]+?)(?=\n\n|\n\*\*|$)/
+  let replaced = old.replace(promptRe, `Prompt: ${newPrompt}`)
+  if (replaced === old) {
+    replaced = old.replace(/Prompt:\s*[^\n]*/, `Prompt: ${newPrompt}`)
+  }
+  blocks[bi] = replaced
+  return blocks.join('')
+}
+
+function alignedSceneSlots(raw: string | null, count: number): string[] {
+  const lines = (raw ?? '').split('\n')
+  return Array.from({ length: count }, (_, i) => lines[i] ?? '')
 }
 
 function DalleGenerateButton({
@@ -145,6 +174,8 @@ export function SceneStepPanel({
   onSendFollowUp,
   onApprove,
   onReopen,
+  onContentChange,
+  onPersistOutput,
 }: SceneStepPanelProps) {
   const isDone = stepState.status === 'done'
 
@@ -152,42 +183,23 @@ export function SceneStepPanel({
     ? extractScenePrompts(stepState.llmResponse)
     : []
 
-  // Editable prompts - initialised once when LLM output arrives
-  const [scenePrompts, setScenePrompts] = useState<string[]>(() =>
-    stepState.llmResponse
-      ? extractScenePrompts(stepState.llmResponse).map(s => s.prompt)
-      : []
+  const sceneUrls = useMemo(
+    () => alignedSceneSlots(stepState.outputAssetUrl, scenes.length),
+    [stepState.outputAssetUrl, scenes.length]
   )
 
-  // Generated / pasted image URLs per scene
-  const [sceneUrls, setSceneUrls] = useState<string[]>(() => {
-    const source = stepState.outputAssetUrl ?? ''
-    return source ? source.split('\n').map(u => u.trim()) : []
-  })
-
-  // Sync scenePrompts when LLM output first arrives (or after retry)
-  useEffect(() => {
-    if (stepState.llmResponse) {
-      setScenePrompts(
-        extractScenePrompts(stepState.llmResponse).map(s => s.prompt)
-      )
-    }
-  }, [stepState.llmResponse])
-
   function updateSceneUrl(i: number, url: string) {
-    setSceneUrls(prev => {
-      const next = [...prev]
-      next[i] = url
-      return next
-    })
+    const slots = alignedSceneSlots(stepState.outputAssetUrl, scenes.length)
+    const next = [...slots]
+    next[i] = url
+    const joined = next.join('\n')
+    onPersistOutput(/[^\s]/.test(joined) ? joined : null)
   }
 
   function updateScenePrompt(i: number, value: string) {
-    setScenePrompts(prev => {
-      const next = [...prev]
-      next[i] = value
-      return next
-    })
+    onContentChange(
+      replaceNthScenePrompt(stepState.llmResponse ?? '', i, value)
+    )
   }
 
   const allReady =
@@ -246,10 +258,10 @@ export function SceneStepPanel({
                     </p>
                   )}
                   <pre className="mb-2 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
-                    {scenePrompts[i] ?? scene.prompt}
+                    {scene.prompt}
                   </pre>
                   {(() => {
-                    const live = scenePrompts[i] ?? scene.prompt
+                    const live = scene.prompt
                     const { validCloudinaryImageRefs } =
                       partitionPromptUrlsForCloudinaryRefs(live)
                     if (validCloudinaryImageRefs.length === 0) return null
@@ -289,12 +301,11 @@ export function SceneStepPanel({
                         </span>
                         <a
                           href={doneUrls[i]}
-                          download
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                         >
-                          ↓ Download
+                          Open
                         </a>
                       </div>
                     </>
@@ -394,7 +405,7 @@ export function SceneStepPanel({
           {/* Scene cards */}
           {scenes.length > 0 ? (
             scenes.map((scene, i) => {
-              const livePrompt = scenePrompts[i] ?? scene.prompt
+              const livePrompt = scene.prompt
               const { validCloudinaryImageRefs, otherHttpUrls } =
                 partitionPromptUrlsForCloudinaryRefs(livePrompt)
               return (
@@ -472,12 +483,11 @@ export function SceneStepPanel({
                         </span>
                         <a
                           href={sceneUrls[i]}
-                          download
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                         >
-                          ↓ Download
+                          Open
                         </a>
                       </div>
                     </div>
@@ -486,7 +496,7 @@ export function SceneStepPanel({
                   {/* Generate + URL input row */}
                   <div className="flex flex-col gap-2">
                     <DalleGenerateButton
-                      getPrompt={() => scenePrompts[i] ?? scene.prompt}
+                      getPrompt={() => scene.prompt}
                       onGenerated={url => updateSceneUrl(i, url)}
                     />
                     <input

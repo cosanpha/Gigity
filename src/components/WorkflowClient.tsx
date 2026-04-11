@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
+import { encodePublishLinks } from '@/lib/publish-links'
 import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { CampaignBriefStepPanel } from './CampaignBriefStepPanel'
 import { CharacterStepPanel } from './CharacterStepPanel'
 import { ExternalStepPanel } from './ExternalStepPanel'
@@ -20,6 +21,7 @@ type StepState = {
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride: string | null
   conversation: Array<{ role: string; content: string }>
   error: string | null
 }
@@ -51,16 +53,41 @@ interface WorkflowClientProps {
   project: { _id: string; title: string; steps: any[] }
   brand: { name: string; platforms: string[] }
   stepDefs: StepDefinition[]
-  sunoEnabled?: boolean
+  sunoBaseUrlConfigured?: boolean
+  sunoEnvKeyConfigured?: boolean
 }
 
 export function WorkflowClient({
   project,
   brand,
   stepDefs,
-  sunoEnabled,
+  sunoBaseUrlConfigured,
+  sunoEnvKeyConfigured,
 }: WorkflowClientProps) {
+  const activeStepStorageKey = `gigity:activeWorkflowStep:${project._id}`
   const [activeStep, setActiveStep] = useState<number>(1)
+
+  useLayoutEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(activeStepStorageKey)
+      if (!raw) return
+      const n = parseInt(raw, 10)
+      if (Number.isFinite(n) && n >= 1 && n <= WORKFLOW_TOTAL_STEPS) {
+        setActiveStep(n)
+      }
+    } catch {
+      // sessionStorage may be unavailable (e.g. private mode)
+    }
+  }, [activeStepStorageKey])
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(activeStepStorageKey, String(activeStep))
+    } catch {
+      // ignore
+    }
+  }, [activeStep, activeStepStorageKey])
+
   const [title, setTitle] = useState(project.title)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState(project.title)
@@ -73,6 +100,10 @@ export function WorkflowClient({
       sunoSelectedTrackIndex:
         typeof s.sunoSelectedTrackIndex === 'number'
           ? s.sunoSelectedTrackIndex
+          : null,
+      sunoApiKeyOverride:
+        typeof s.sunoApiKeyOverride === 'string' && s.sunoApiKeyOverride.trim()
+          ? s.sunoApiKeyOverride.trim()
           : null,
       conversation: s.conversation ?? [],
       error: null,
@@ -87,6 +118,18 @@ export function WorkflowClient({
     setSteps(prev => patch(prev, n, { llmResponse: content }))
   }
 
+  function persistStepOutput(n: number, outputAssetUrl: string | null) {
+    setSteps(prev => {
+      const v =
+        outputAssetUrl != null && /[^\s]/.test(outputAssetUrl)
+          ? outputAssetUrl
+          : null
+      const next = patch(prev, n, { outputAssetUrl: v })
+      saveProgress(next)
+      return next
+    })
+  }
+
   async function saveProgress(currentSteps: StepState[]) {
     setSaveStatus('saving')
     const res = await fetch(`/api/v1/projects/${project._id}`, {
@@ -99,6 +142,7 @@ export function WorkflowClient({
           outputAssetUrl: s.outputAssetUrl,
           sunoTaskId: s.sunoTaskId,
           sunoSelectedTrackIndex: s.sunoSelectedTrackIndex,
+          sunoApiKeyOverride: s.sunoApiKeyOverride,
           conversation: s.conversation,
         })),
       }),
@@ -181,6 +225,7 @@ export function WorkflowClient({
           llmResponse: data.llmResponse,
           conversation: newConversation,
           error: null,
+          ...(n === 5 || n === 6 || n === 7 ? { outputAssetUrl: null } : {}),
         })
       })
       if (opts.followUpMessage) setFollowUp('')
@@ -196,7 +241,15 @@ export function WorkflowClient({
       { method: 'POST' }
     )
     if (!res.ok) return
-    if (n === 1 || n === 2 || n === 3 || n === 4 || n === 7) {
+    if (
+      n === 1 ||
+      n === 2 ||
+      n === 3 ||
+      n === 4 ||
+      n === 5 ||
+      n === 6 ||
+      n === 7
+    ) {
       setSteps(prev =>
         patch(prev, n, {
           status: 'pending',
@@ -238,15 +291,7 @@ export function WorkflowClient({
       method: 'POST',
     })
     if (!res.ok) return
-    setSteps(prev =>
-      patch(prev, 5, {
-        status: 'pending',
-        llmResponse: null,
-        outputAssetUrl: null,
-        conversation: [],
-        error: null,
-      })
-    )
+    setSteps(prev => patch(prev, 5, { status: 'pending' }))
     setActiveStep(5)
   }
 
@@ -281,15 +326,7 @@ export function WorkflowClient({
       method: 'POST',
     })
     if (!res.ok) return
-    setSteps(prev =>
-      patch(prev, 6, {
-        status: 'pending',
-        llmResponse: null,
-        conversation: [],
-        error: null,
-        outputAssetUrl: null,
-      })
-    )
+    setSteps(prev => patch(prev, 6, { status: 'pending' }))
     setActiveStep(6)
   }
 
@@ -472,11 +509,12 @@ export function WorkflowClient({
                   return next
                 })
               }
-              sunoEnabled={sunoEnabled}
+              sunoBaseUrlConfigured={sunoBaseUrlConfigured}
+              sunoEnvKeyConfigured={sunoEnvKeyConfigured}
             />
           ) : activeStep === 5 ? (
             <CharacterStepPanel
-              key={`5-${steps[4].outputAssetUrl ?? ''}-${steps[4].status}-${steps[4].llmResponse?.length ?? 0}`}
+              key={`char-${steps[4].status}-${steps[4].llmResponse?.length ?? 0}`}
               stepState={steps[4]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -486,10 +524,11 @@ export function WorkflowClient({
               onApprove={approveCharacterStep}
               onReopen={reopenCharacterStep}
               onContentChange={c => updateStepContent(5, c)}
+              onPersistOutput={v => persistStepOutput(5, v)}
             />
           ) : activeStep === 6 ? (
             <SceneStepPanel
-              key={6}
+              key={`scene-${steps[5].status}-${steps[5].llmResponse?.length ?? 0}`}
               stepState={steps[5]}
               characterImageUrls={collectAssets(steps).characterImages}
               followUp={followUp}
@@ -499,10 +538,12 @@ export function WorkflowClient({
               onSendFollowUp={() => generate(6, { followUpMessage: followUp })}
               onApprove={approveSceneStep}
               onReopen={reopenSceneStep}
+              onContentChange={c => updateStepContent(6, c)}
+              onPersistOutput={v => persistStepOutput(6, v)}
             />
           ) : activeStep === 7 ? (
             <KlingStepPanel
-              key={`kling-7-${steps[6].status}-${steps[6].outputAssetUrl ?? ''}`}
+              key={`kling-7-${steps[6].status}-${steps[6].llmResponse?.length ?? 0}`}
               stepDef={currentStepDef}
               state={steps[6]}
               sceneImageUrls={collectAssets(steps).sceneImages}
@@ -514,6 +555,7 @@ export function WorkflowClient({
               onApprove={approveKlingStep}
               onReopen={() => reopen(7)}
               onContentChange={c => updateStepContent(7, c)}
+              onPersistOutput={v => persistStepOutput(7, v)}
             />
           ) : currentStepDef.type === 'llm' ? (
             <LLMStepPanel
@@ -539,8 +581,46 @@ export function WorkflowClient({
               brandCtx={{ platform: brand.platforms.join(', ') }}
               onApprove={() => approve(activeStep, {})}
               onReopen={() => reopen(activeStep)}
+              projectTitle={title}
               projectAssets={
                 activeStep === 8 ? collectAssets(steps) : undefined
+              }
+              publishStep={
+                activeStep === 9
+                  ? {
+                      onDescriptionChange: c => updateStepContent(9, c),
+                      onGenerate: async () => {
+                        const res = await fetch(
+                          `/api/v1/projects/${project._id}/steps/9/generate-publish-description`,
+                          { method: 'POST' }
+                        )
+                        const data = await res.json().catch(() => ({}))
+                        if (!res.ok) {
+                          throw new Error(
+                            typeof data.error === 'string'
+                              ? data.error
+                              : 'Generation failed'
+                          )
+                        }
+                        setSteps(prev => {
+                          const next = patch(prev, 9, {
+                            llmResponse:
+                              typeof data.llmResponse === 'string'
+                                ? data.llmResponse
+                                : null,
+                          })
+                          saveProgress(next)
+                          return next
+                        })
+                      },
+                      onSaveLinks: (tiktok, youtube) => {
+                        persistStepOutput(
+                          9,
+                          encodePublishLinks(tiktok, youtube)
+                        )
+                      },
+                    }
+                  : undefined
               }
             />
           )}
@@ -549,3 +629,4 @@ export function WorkflowClient({
     </div>
   )
 }
+

@@ -1,6 +1,7 @@
 'use client'
 
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
+import { normalizeSunoPlayableUrl } from '@/lib/suno-record-info'
 import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { startTransition, useEffect, useRef, useState } from 'react'
 import { CopyButton, extractBlock } from './LLMStepPanel'
@@ -11,6 +12,7 @@ type StepState = {
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride: string | null
   conversation: Array<{ role: string; content: string }>
   error: string | null
 }
@@ -21,6 +23,7 @@ function splitStoredAudioUrls(raw: string | null | undefined): string[] {
     .split('\n')
     .map(u => u.trim())
     .filter(Boolean)
+    .map(normalizeSunoPlayableUrl)
 }
 
 function clampTrackIndex(idx: number | null | undefined, len: number): number {
@@ -35,7 +38,13 @@ function composeStep4Document(lyrics: string, stylePrompt: string): string {
 }
 
 type SunoPersist = Partial<
-  Pick<StepState, 'sunoTaskId' | 'outputAssetUrl' | 'sunoSelectedTrackIndex'>
+  Pick<
+    StepState,
+    | 'sunoTaskId'
+    | 'outputAssetUrl'
+    | 'sunoSelectedTrackIndex'
+    | 'sunoApiKeyOverride'
+  >
 >
 
 type SunoPollCtl = { cancelled: boolean }
@@ -100,9 +109,11 @@ function SunoMusicSection({
   sunoTaskId,
   sunoSelectedTrackIndex,
   outputAssetUrl,
+  sunoApiKeyOverride,
   canStart,
   isLocked,
-  apiConfigured,
+  sunoBaseUrlConfigured,
+  sunoEnvKeyConfigured,
   maxSunoStyleChars,
   onPersist,
 }: {
@@ -112,12 +123,25 @@ function SunoMusicSection({
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
   outputAssetUrl: string | null
+  sunoApiKeyOverride: string | null
   canStart: boolean
   isLocked: boolean
-  apiConfigured: boolean
+  sunoBaseUrlConfigured: boolean
+  sunoEnvKeyConfigured: boolean
   maxSunoStyleChars: number
   onPersist: (updates: SunoPersist) => void
 }) {
+  const [localSunoKey, setLocalSunoKey] = useState(sunoApiKeyOverride ?? '')
+  useEffect(() => {
+    setLocalSunoKey(sunoApiKeyOverride ?? '')
+  }, [sunoApiKeyOverride])
+
+  const overrideKey =
+    localSunoKey.trim() || (sunoApiKeyOverride ?? '').trim() || ''
+  const apiConfigured =
+    Boolean(sunoBaseUrlConfigured) &&
+    (Boolean(sunoEnvKeyConfigured) || Boolean(overrideKey))
+
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<string | null>(null)
   const [pollError, setPollError] = useState<string | null>(null)
@@ -139,8 +163,12 @@ function SunoMusicSection({
   runSunoStatusCheckRef.current = async (taskId: string, ctl?: SunoPollCtl) => {
     const tid = taskId.trim()
     if (!tid) return
+    const key = localSunoKey.trim() || (sunoApiKeyOverride ?? '').trim() || ''
     const res = await fetch(
-      `/api/v1/workflow/suno/status?taskId=${encodeURIComponent(tid)}`
+      `/api/v1/workflow/suno/status?taskId=${encodeURIComponent(tid)}`,
+      {
+        headers: key ? { 'X-Suno-Api-Key': key } : undefined,
+      }
     )
     if (ctl?.cancelled) return
     if (!res.ok) {
@@ -209,6 +237,8 @@ function SunoMusicSection({
     setStartError(null)
     setPollError(null)
     setOptimisticTaskId(null)
+    const keyForStart =
+      localSunoKey.trim() || (sunoApiKeyOverride ?? '').trim() || ''
     const res = await fetch('/api/v1/workflow/suno/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -217,6 +247,7 @@ function SunoMusicSection({
         stylePrompt: style,
         title: trackTitle.trim() || 'Gigity track',
         model: 'V4',
+        ...(keyForStart ? { sunoApiKey: keyForStart } : {}),
       }),
     })
     setStarting(false)
@@ -231,8 +262,15 @@ function SunoMusicSection({
       setStartError('No task id returned')
       return
     }
+    if (keyForStart) {
+      onPersistRef.current({
+        sunoApiKeyOverride: keyForStart,
+        sunoTaskId: taskId,
+      })
+    } else {
+      onPersistRef.current({ sunoTaskId: taskId })
+    }
     setOptimisticTaskId(taskId)
-    onPersistRef.current({ sunoTaskId: taskId })
   }
 
   function applyManualAudioUrl() {
@@ -321,7 +359,14 @@ function SunoMusicSection({
       ctl.cancelled = true
       clearInterval(id)
     }
-  }, [apiConfigured, sunoTaskId, optimisticTaskId, outputAssetUrl])
+  }, [
+    apiConfigured,
+    sunoTaskId,
+    optimisticTaskId,
+    outputAssetUrl,
+    localSunoKey,
+    sunoApiKeyOverride,
+  ])
 
   const storedAudioUrls = splitStoredAudioUrls(outputAssetUrl)
 
@@ -351,6 +396,41 @@ function SunoMusicSection({
           have, or open Suno in the browser.
         </p>
       )}
+      {canStart && sunoBaseUrlConfigured && !isLocked ? (
+        <div className="mb-3 rounded-[6px] border border-zinc-200 bg-white p-3">
+          <label
+            htmlFor="suno-api-key-override"
+            className="mb-1 block text-[12px] font-medium text-zinc-700"
+          >
+            Suno API key (optional)
+          </label>
+          <p className="mb-2 text-[12px] leading-relaxed text-zinc-500">
+            When set, Generate Song uses this key instead of the server{' '}
+            <span className="font-mono text-[11px]">SUNO_API_KEY</span>. It is
+            stored on this step when you leave the field or start generation.
+          </p>
+          <input
+            id="suno-api-key-override"
+            type="password"
+            autoComplete="off"
+            value={localSunoKey}
+            onChange={e => setLocalSunoKey(e.target.value)}
+            onBlur={() => {
+              const next = localSunoKey.trim() || null
+              const prev = sunoApiKeyOverride ?? null
+              if (next !== prev) {
+                onPersistRef.current({ sunoApiKeyOverride: next })
+              }
+            }}
+            placeholder={
+              sunoEnvKeyConfigured
+                ? 'Leave empty to use server SUNO_API_KEY'
+                : 'Paste your Suno API key'
+            }
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-indigo-400 focus:outline-none"
+          />
+        </div>
+      ) : null}
       {canStart && apiConfigured && styleTooLong && (
         <div className="mb-3 rounded-[6px] border border-red-200 bg-red-50 px-3 py-2">
           <p className="text-[12px] text-red-700">
@@ -427,7 +507,7 @@ function SunoMusicSection({
           ) : null}
         </>
       )}
-      {canStart && !apiConfigured && (
+      {canStart && !sunoBaseUrlConfigured && (
         <div className="mb-3 flex flex-col gap-2">
           <button
             type="button"
@@ -439,10 +519,6 @@ function SunoMusicSection({
           <p className="text-[12px] leading-relaxed text-amber-800">
             To enable this button, set{' '}
             <span className="rounded bg-amber-100 px-1 font-mono text-[11px] text-amber-950">
-              SUNO_API_KEY
-            </span>{' '}
-            and{' '}
-            <span className="rounded bg-amber-100 px-1 font-mono text-[11px] text-amber-950">
               SUNO_API_BASE_URL
             </span>{' '}
             in{' '}
@@ -450,7 +526,32 @@ function SunoMusicSection({
               .env.local
             </span>
             , then restart the dev server (
-            <span className="font-mono text-[11px]">bun dev</span>).
+            <span className="font-mono text-[11px]">bun dev</span>). You can
+            optionally set{' '}
+            <span className="rounded bg-amber-100 px-1 font-mono text-[11px] text-amber-950">
+              SUNO_API_KEY
+            </span>{' '}
+            there, or paste your key in the optional Suno API key field in step
+            4 once the base URL is configured.
+          </p>
+        </div>
+      )}
+      {canStart && sunoBaseUrlConfigured && !apiConfigured && (
+        <div className="mb-3 flex flex-col gap-2">
+          <button
+            type="button"
+            disabled
+            className="w-full cursor-not-allowed rounded-[6px] border border-zinc-200 bg-zinc-200 px-4 py-3 text-sm font-medium text-zinc-500"
+          >
+            Generate Song
+          </button>
+          <p className="text-[12px] leading-relaxed text-amber-800">
+            Set{' '}
+            <span className="rounded bg-amber-100 px-1 font-mono text-[11px] text-amber-950">
+              SUNO_API_KEY
+            </span>{' '}
+            on the server or enter your Suno API key in the optional field
+            above.
           </p>
         </div>
       )}
@@ -602,7 +703,8 @@ interface MusicPromptStepPanelProps {
   onReopen: () => void
   onContentChange: (content: string) => void
   onPersistSuno: (updates: SunoPersist) => void
-  sunoEnabled?: boolean
+  sunoBaseUrlConfigured?: boolean
+  sunoEnvKeyConfigured?: boolean
 }
 
 export function MusicPromptStepPanel({
@@ -617,7 +719,8 @@ export function MusicPromptStepPanel({
   onReopen,
   onContentChange,
   onPersistSuno,
-  sunoEnabled,
+  sunoBaseUrlConfigured,
+  sunoEnvKeyConfigured,
 }: MusicPromptStepPanelProps) {
   const full = state.llmResponse ?? ''
   const lyricsFromDoc = extractBlock(full, 'Lyrics')
@@ -660,7 +763,9 @@ export function MusicPromptStepPanel({
   const styleExceedsSunoLimit = styleCharCount > MAX_SUNO_STYLE_PROMPT_CHARS
 
   const hasSongUrl = splitStoredAudioUrls(state.outputAssetUrl).length > 0
-  const approveRequiresSong = Boolean(sunoEnabled)
+  const approveRequiresSong =
+    Boolean(sunoBaseUrlConfigured) &&
+    (Boolean(sunoEnvKeyConfigured) || Boolean(state.sunoApiKeyOverride?.trim()))
   const canApprove = !approveRequiresSong || hasSongUrl
 
   return (
@@ -796,9 +901,11 @@ export function MusicPromptStepPanel({
               sunoTaskId={state.sunoTaskId}
               sunoSelectedTrackIndex={state.sunoSelectedTrackIndex}
               outputAssetUrl={state.outputAssetUrl}
+              sunoApiKeyOverride={state.sunoApiKeyOverride}
               canStart={!isLocked}
               isLocked={isLocked}
-              apiConfigured={Boolean(sunoEnabled)}
+              sunoBaseUrlConfigured={Boolean(sunoBaseUrlConfigured)}
+              sunoEnvKeyConfigured={Boolean(sunoEnvKeyConfigured)}
               maxSunoStyleChars={MAX_SUNO_STYLE_PROMPT_CHARS}
               onPersist={onPersistSuno}
             />
@@ -826,7 +933,7 @@ export function MusicPromptStepPanel({
               onClick={onRetry}
               className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
             >
-              ↺ Re-generate
+              Re-generate
             </button>
             {isLocked ? (
               <button

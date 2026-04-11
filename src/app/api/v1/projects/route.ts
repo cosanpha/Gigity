@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       outputAssetUrl: null,
       sunoTaskId: null,
       sunoSelectedTrackIndex: null,
+      sunoApiKeyOverride: null,
       status: 'pending',
       completedAt: null,
     }))

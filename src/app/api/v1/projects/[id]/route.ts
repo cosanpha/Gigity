@@ -1,8 +1,7 @@
-import { connectDB } from '@/lib/db'
+import { apiHandler } from '@/lib/api-handler'
 import VideoProject from '@/models/VideoProject'
+import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
-
-type Ctx = { params: Promise<{ id: string }> }
 
 type StepPayload = {
   status: 'pending' | 'generating' | 'done'
@@ -15,9 +14,13 @@ type StepPayload = {
 }
 
 // PATCH /api/v1/projects/:id - update title and/or save steps progress
-export async function PATCH(req: Request, { params }: Ctx) {
-  await connectDB()
-  const { id } = await params
+export const PATCH = apiHandler(async (req, ctx) => {
+  const { id } = await ctx!.params
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
+  }
+
   const body = await req.json()
 
   const project = await VideoProject.findById(id)
@@ -39,23 +42,29 @@ export async function PATCH(req: Request, { params }: Ctx) {
         typeof s.sunoSelectedTrackIndex === 'number'
           ? s.sunoSelectedTrackIndex
           : null
-      project.steps[i].sunoApiKeyOverride =
-        typeof s.sunoApiKeyOverride === 'string' && s.sunoApiKeyOverride.trim()
-          ? s.sunoApiKeyOverride.trim()
-          : null
+      // Only update sunoApiKeyOverride when a non-null value is explicitly sent
+      if (
+        typeof s.sunoApiKeyOverride === 'string' &&
+        s.sunoApiKeyOverride.trim()
+      ) {
+        project.steps[i].sunoApiKeyOverride = s.sunoApiKeyOverride.trim()
+      }
       project.steps[i].conversation = s.conversation ?? []
     })
   }
 
   await project.save()
   return NextResponse.json({ ok: true })
-}
+}, { auth: true })
 
 // DELETE /api/v1/projects/:id
-export async function DELETE(_req: Request, { params }: Ctx) {
-  await connectDB()
-  const { id } = await params
+export const DELETE = apiHandler(async (_req, ctx) => {
+  const { id } = await ctx!.params
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
+  }
+
   await VideoProject.findByIdAndDelete(id)
   return NextResponse.json({ ok: true })
-}
-
+}, { auth: true })

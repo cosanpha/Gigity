@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SUNO_API_BASE_URL, SUNO_API_KEY } from '@/constants/env.server'
+import { requireAuth } from '@/lib/auth'
 import { summarizeSunoError } from '@/lib/suno-http'
 import { parseSunoRecordInfo } from '@/lib/suno-record-info'
 import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
+  const deny = requireAuth(req)
+  if (deny) return deny
   if (!SUNO_API_BASE_URL?.trim()) {
     return NextResponse.json(
       { error: 'Suno is not configured. Set SUNO_API_BASE_URL.' },

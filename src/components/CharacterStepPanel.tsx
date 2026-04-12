@@ -1,20 +1,15 @@
 'use client'
 
-import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useState } from 'react'
+import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
 import { CopyButton } from './LLMStepPanel'
-
-type CharacterStepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
 interface CharacterStepPanelProps {
-  stepState: CharacterStepState
+  stepState: StepState
   followUp: string
   onFollowUpChange: (v: string) => void
   onGenerate: () => void
@@ -40,7 +35,7 @@ function extractCharacterPrompts(
       .split('\n')[0]
       .replace(/\*\*.*/, '')
       .trim()
-    const promptMatch = block.match(/Midjourney prompt:\s*(.+)/)
+    const promptMatch = block.match(/DALL-E prompt:\s*(.+)/)
     const prompt = promptMatch?.[1]?.split('\n')[0]?.trim() ?? ''
     return { name, prompt }
   })
@@ -48,7 +43,7 @@ function extractCharacterPrompts(
 
 const CHARACTER_BLOCK_SEP = '**Character - '
 
-function replaceCharacterMidjourneyPrompt(
+function replaceCharacterDallePrompt(
   fullText: string,
   characterIndex: number,
   newPrompt: string
@@ -56,81 +51,14 @@ function replaceCharacterMidjourneyPrompt(
   const parts = fullText.split(CHARACTER_BLOCK_SEP)
   const i = characterIndex + 1
   if (i <= 0 || i >= parts.length) return fullText
-  const next = parts[i].replace(/Midjourney prompt:\s*[^\n]*/, () => {
-    return `Midjourney prompt: ${newPrompt}`
+  const next = parts[i].replace(/DALL-E prompt:\s*[^\n]*/, () => {
+    return `DALL-E prompt: ${newPrompt}`
   })
-  if (next === parts[i] && !/Midjourney prompt:/.test(parts[i])) {
+  if (next === parts[i] && !/DALL-E prompt:/.test(parts[i])) {
     return fullText
   }
   parts[i] = next
   return parts.join(CHARACTER_BLOCK_SEP)
-}
-
-function CharacterImageFileUploadButton({
-  onUploaded,
-}: {
-  onUploaded: (url: string) => void
-}) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [busy, setBusy] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-
-  async function onFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Choose an image file (e.g. PNG, JPEG, WebP).')
-      return
-    }
-    setBusy(true)
-    setUploadError(null)
-    const fd = new FormData()
-    fd.append('image', file)
-    const res = await fetch('/api/v1/workflow/cloudinary/upload-image-file', {
-      method: 'POST',
-      body: fd,
-    })
-    const data = await res.json().catch(() => ({}))
-    setBusy(false)
-    if (res.ok && typeof data.url === 'string') {
-      onUploaded(data.url)
-    } else {
-      setUploadError(
-        typeof data.error === 'string' ? data.error : 'Upload failed'
-      )
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,.png,.jpg,.jpeg,.webp,.gif,.avif"
-        className="sr-only"
-        onChange={onFileChange}
-      />
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={busy}
-        className="w-fit rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {busy ? (
-          <span className="flex items-center gap-2">
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-            Uploading…
-          </span>
-        ) : (
-          'Choose image file…'
-        )}
-      </button>
-      {uploadError ? (
-        <p className="text-[12px] text-red-500">{uploadError}</p>
-      ) : null}
-    </div>
-  )
 }
 
 function DalleGenerateButton({
@@ -169,7 +97,7 @@ function DalleGenerateButton({
       <button
         onClick={generate}
         disabled={status === 'generating'}
-        className="w-fit rounded-[6px] bg-indigo-500 px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50"
+        className="w-fit rounded-[6px] bg-orange-500 px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
       >
         {status === 'generating' ? (
           <span className="flex items-center gap-2">
@@ -235,7 +163,7 @@ export function CharacterStepPanel({
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
           <span>Step 5 of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
-          <span>Midjourney / DALL-E</span>
+          <span>DALL-E</span>
         </div>
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           Character Images
@@ -246,8 +174,8 @@ export function CharacterStepPanel({
       {isFullyDone && (
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-[11px] text-white">
-              ✓
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
+              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Approved
@@ -301,8 +229,9 @@ export function CharacterStepPanel({
                         />
                       </a>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[12px] text-green-600">
-                          ✓ Generated
+                        <span className="flex items-center gap-1 text-[12px] text-green-600">
+                          <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                          Generated
                         </span>
                         <a
                           href={doneUrls[i]}
@@ -333,7 +262,7 @@ export function CharacterStepPanel({
             </p>
             <button
               onClick={onGenerate}
-              className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+              className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
             >
               Generate
             </button>
@@ -343,25 +272,7 @@ export function CharacterStepPanel({
       {/* State: generating */}
       {!isFullyDone && stepState.status === 'generating' && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
+          <GenerateSpinner />
           <p className="text-[13px] text-zinc-500">Generating prompts…</p>
         </div>
       )}
@@ -392,7 +303,7 @@ export function CharacterStepPanel({
                 <textarea
                   value={char.prompt}
                   onChange={e => {
-                    const next = replaceCharacterMidjourneyPrompt(
+                    const next = replaceCharacterDallePrompt(
                       stepState.llmResponse ?? '',
                       i,
                       e.target.value
@@ -401,7 +312,7 @@ export function CharacterStepPanel({
                   }}
                   rows={5}
                   spellCheck={false}
-                  className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-800 outline-none focus:border-indigo-400"
+                  className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-800 outline-none focus:border-orange-400"
                 />
 
                 {/* Image preview */}
@@ -421,8 +332,9 @@ export function CharacterStepPanel({
                       />
                     </a>
                     <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[12px] text-green-600">
-                        ✓ Generated
+                      <span className="flex items-center gap-1 text-[12px] text-green-600">
+                        <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                        Generated
                       </span>
                       <a
                         href={characterUrls[i]}
@@ -437,7 +349,7 @@ export function CharacterStepPanel({
                 )}
 
                 <div className="flex flex-wrap items-start gap-3">
-                  <CharacterImageFileUploadButton
+                  <CloudinaryImageUploadButton
                     onUploaded={url => updateCharacterUrl(i, url)}
                   />
                   <DalleGenerateButton
@@ -452,7 +364,7 @@ export function CharacterStepPanel({
                     placeholder="Or paste image URL manually…"
                     value={characterUrls[i] ?? ''}
                     onChange={e => updateCharacterUrl(i, e.target.value)}
-                    className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                    className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
                 </div>
               </div>
@@ -467,7 +379,7 @@ export function CharacterStepPanel({
                 onChange={e => onContentChange(e.target.value)}
                 rows={18}
                 spellCheck={false}
-                className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none focus:border-indigo-400"
+                className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none focus:border-orange-400"
               />
             </div>
           )}
@@ -481,7 +393,7 @@ export function CharacterStepPanel({
                   onChange={e => onFollowUpChange(e.target.value)}
                   placeholder="Refine character prompts… e.g. add more characters, change style"
                   rows={2}
-                  className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
                 />
                 <button
                   onClick={onSendFollowUp}
@@ -513,9 +425,10 @@ export function CharacterStepPanel({
               )
             }
             disabled={!allReady}
-            className="self-start rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            ✓ Approve all images
+            <LucideCheck className="h-4 w-4" aria-hidden />
+            Approve all images
           </button>
         </div>
       )}

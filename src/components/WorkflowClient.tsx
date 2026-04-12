@@ -2,29 +2,22 @@
 'use client'
 
 import { encodePublishLinks } from '@/lib/publish-links'
-import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import {
+  StepDefinition,
+  StepState,
+  WORKFLOW_TOTAL_STEPS,
+} from '@/lib/workflow-templates'
+import { LucideAlertCircle, LucideArrowLeft, LucideCheck } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { CampaignBriefStepPanel } from './CampaignBriefStepPanel'
 import { CharacterStepPanel } from './CharacterStepPanel'
+import { EditableTextStepPanel } from './EditableTextStepPanel'
 import { ExternalStepPanel } from './ExternalStepPanel'
 import { KlingStepPanel } from './KlingStepPanel'
 import { LLMStepPanel } from './LLMStepPanel'
 import { MusicPromptStepPanel } from './MusicPromptStepPanel'
 import { SceneStepPanel } from './SceneStepPanel'
-import { SongLyricsStepPanel } from './SongLyricsStepPanel'
 import { StepSidebar } from './StepSidebar'
-import { StoryStepPanel } from './StoryStepPanel'
-
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-  sunoTaskId: string | null
-  sunoSelectedTrackIndex: number | null
-  sunoApiKeyOverride: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
 
 interface ProjectAssets {
   characterImages: string[]
@@ -52,6 +45,7 @@ function collectAssets(steps: StepState[]): ProjectAssets {
 interface WorkflowClientProps {
   project: { _id: string; title: string; steps: any[] }
   brand: { name: string; platforms: string[] }
+  brandProfileId: string
   stepDefs: StepDefinition[]
   sunoBaseUrlConfigured?: boolean
   sunoEnvKeyConfigured?: boolean
@@ -60,6 +54,7 @@ interface WorkflowClientProps {
 export function WorkflowClient({
   project,
   brand,
+  brandProfileId,
   stepDefs,
   sunoBaseUrlConfigured,
   sunoEnvKeyConfigured,
@@ -113,6 +108,7 @@ export function WorkflowClient({
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
+  const [approveError, setApproveError] = useState<string | null>(null)
 
   function updateStepContent(n: number, content: string) {
     setSteps(prev => patch(prev, n, { llmResponse: content }))
@@ -130,10 +126,11 @@ export function WorkflowClient({
     })
   }
 
-  async function saveProgress(currentSteps: StepState[]) {
+  async function saveProgress(currentSteps: StepState[], signal?: AbortSignal) {
     setSaveStatus('saving')
     const res = await fetch(`/api/v1/projects/${project._id}`, {
       method: 'PATCH',
+      signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         steps: currentSteps.map(s => ({
@@ -142,7 +139,11 @@ export function WorkflowClient({
           outputAssetUrl: s.outputAssetUrl,
           sunoTaskId: s.sunoTaskId,
           sunoSelectedTrackIndex: s.sunoSelectedTrackIndex,
-          sunoApiKeyOverride: s.sunoApiKeyOverride,
+          // Only send sunoApiKeyOverride when the user has set a new key;
+          // null means "don't change the stored key" (ISSUE-004/019)
+          ...(s.sunoApiKeyOverride
+            ? { sunoApiKeyOverride: s.sunoApiKeyOverride }
+            : {}),
           conversation: s.conversation,
         })),
       }),
@@ -156,15 +157,34 @@ export function WorkflowClient({
     }
   }
 
-  // Auto-save every 30 seconds
+  async function saveProgressSafe(
+    currentSteps: StepState[],
+    signal?: AbortSignal
+  ) {
+    try {
+      await saveProgress(currentSteps, signal)
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus('idle'), 3000)
+    }
+  }
+
+  // Auto-save every 30 seconds (ISSUE-014: abort in-flight fetch on unmount)
   useEffect(() => {
+    let controller = new AbortController()
     const id = setInterval(() => {
+      controller.abort()
+      controller = new AbortController()
       setSteps(current => {
-        saveProgress(current)
+        saveProgressSafe(current, controller.signal)
         return current
       })
     }, 30_000)
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(id)
+      controller.abort()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -173,13 +193,18 @@ export function WorkflowClient({
       setEditingTitle(false)
       return
     }
-    await fetch(`/api/v1/projects/${project._id}`, {
+    const res = await fetch(`/api/v1/projects/${project._id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: titleInput.trim() }),
     })
-    setTitle(titleInput.trim())
-    setEditingTitle(false)
+    if (res.ok) {
+      setTitle(titleInput.trim())
+      setEditingTitle(false)
+    } else {
+      setTitleInput(title)
+      setEditingTitle(false)
+    }
   }
 
   // Auto-start step 1 when landing on a brand-new project
@@ -271,12 +296,17 @@ export function WorkflowClient({
   }
 
   async function approveCharacterStep(imageUrls: string) {
+    setApproveError(null)
     const res = await fetch(`/api/v1/projects/${project._id}/steps/5/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: imageUrls }),
     })
-    if (!res.ok) return
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
+      setApproveError(err.error ?? 'Approve failed')
+      return
+    }
     setSteps(prev =>
       patch(prev, 5, {
         status: 'done',
@@ -296,12 +326,17 @@ export function WorkflowClient({
   }
 
   async function approveSceneStep(imageUrls: string) {
+    setApproveError(null)
     const res = await fetch(`/api/v1/projects/${project._id}/steps/6/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: imageUrls }),
     })
-    if (!res.ok) return
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
+      setApproveError(err.error ?? 'Approve failed')
+      return
+    }
     setSteps(prev =>
       patch(prev, 6, { status: 'done', outputAssetUrl: imageUrls })
     )
@@ -309,12 +344,17 @@ export function WorkflowClient({
   }
 
   async function approveKlingStep(videoUrls: string) {
+    setApproveError(null)
     const res = await fetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: videoUrls }),
     })
-    if (!res.ok) return
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
+      setApproveError(err.error ?? 'Approve failed')
+      return
+    }
     setSteps(prev =>
       patch(prev, 7, { status: 'done', outputAssetUrl: videoUrls })
     )
@@ -372,8 +412,18 @@ export function WorkflowClient({
 
   return (
     <div className="flex h-[calc(100vh-52px)] flex-col">
-      {/* Project title - editable */}
-      <div className="flex h-[44px] items-center gap-2 border-b border-zinc-200 px-6">
+      {/* Project title bar */}
+      <div className="flex h-[44px] items-center gap-2 border-b border-zinc-200 px-5">
+        {/* Back link */}
+        <Link
+          href={`/?brand=${encodeURIComponent(brandProfileId)}`}
+          className="inline-flex shrink-0 items-center gap-1 rounded-[4px] px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+        >
+          <LucideArrowLeft className="h-3.5 w-3.5" aria-hidden />
+          Videos
+        </Link>
+        <span className="h-4 w-px shrink-0 bg-zinc-200" />
+
         {editingTitle ? (
           <>
             <input
@@ -384,24 +434,24 @@ export function WorkflowClient({
                 if (e.key === 'Escape') setEditingTitle(false)
               }}
               autoFocus
-              className="flex-1 rounded border border-indigo-500 px-2 py-1 text-sm outline-none"
+              className="flex-1 rounded-[4px] border border-orange-400 px-2 py-1 text-[13px] ring-2 ring-orange-100 outline-none"
             />
             <button
               onClick={saveTitle}
-              className="text-[13px] text-indigo-500 hover:text-indigo-600"
+              className="shrink-0 text-[13px] text-orange-500 hover:text-orange-600"
             >
               Save
             </button>
             <button
               onClick={() => setEditingTitle(false)}
-              className="text-[13px] text-zinc-400 hover:text-zinc-600"
+              className="shrink-0 text-[13px] text-zinc-400 hover:text-zinc-600"
             >
               Cancel
             </button>
           </>
         ) : (
           <>
-            <span className="truncate text-[14px] font-medium text-zinc-950">
+            <span className="min-w-0 truncate text-[14px] font-medium text-zinc-950">
               {title}
             </span>
             <button
@@ -409,7 +459,7 @@ export function WorkflowClient({
                 setTitleInput(title)
                 setEditingTitle(true)
               }}
-              className="text-[12px] text-zinc-400 hover:text-zinc-600"
+              className="shrink-0 rounded-[4px] px-2 py-1 text-[12px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
             >
               Edit
             </button>
@@ -417,19 +467,21 @@ export function WorkflowClient({
         )}
 
         {/* Save progress button */}
-        <div className="ml-auto">
+        <div className="ml-auto shrink-0">
           <button
             onClick={() => saveProgress(steps)}
             disabled={saveStatus === 'saving'}
             className="flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-3 py-1 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saveStatus === 'saving' && (
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-500" />
             )}
             {saveStatus === 'saved' && (
-              <span className="text-green-500">✓</span>
+              <LucideCheck className="h-3.5 w-3.5 text-green-500" aria-hidden />
             )}
-            {saveStatus === 'error' && <span className="text-red-500">!</span>}
+            {saveStatus === 'error' && (
+              <LucideAlertCircle className="h-3.5 w-3.5 text-red-500" aria-hidden />
+            )}
             <span>
               {saveStatus === 'saving'
                 ? 'Saving…'
@@ -442,6 +494,11 @@ export function WorkflowClient({
           </button>
         </div>
       </div>
+      {approveError && (
+        <div className="border-b border-red-200 bg-red-50 px-6 py-2 text-[13px] text-red-600">
+          {approveError}
+        </div>
+      )}
       <div className="flex flex-1 overflow-hidden">
         <StepSidebar
           steps={steps}
@@ -451,8 +508,16 @@ export function WorkflowClient({
         />
         <main className="flex-1 overflow-y-auto">
           {activeStep === 1 ? (
-            <CampaignBriefStepPanel
+            <EditableTextStepPanel
               key={`brief-${steps[0].status}`}
+              stepNumber={1}
+              title="Campaign Brief"
+              tool="Gigity"
+              textareaRows={18}
+              generateLabel="campaign brief"
+              generatingLabel="campaign brief…"
+              approvedLabel="brief"
+              followUpPlaceholder="Refine the brief… e.g. stronger hook, clearer CTA, different tone"
               state={steps[0]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -461,11 +526,19 @@ export function WorkflowClient({
               onSendFollowUp={() => generate(1, { followUpMessage: followUp })}
               onApprove={() => approve(1)}
               onReopen={() => reopen(1)}
-              onContentChange={c => updateStepContent(1, c)}
+              onContentChange={content => updateStepContent(1, content)}
             />
           ) : activeStep === 2 ? (
-            <StoryStepPanel
+            <EditableTextStepPanel
               key={`story-${steps[1].status}`}
+              stepNumber={2}
+              title="Story Script"
+              tool="Gigity"
+              textareaRows={24}
+              generateLabel="story script"
+              generatingLabel="story script…"
+              approvedLabel="script"
+              followUpPlaceholder="Refine the script… e.g. make it more emotional, shorter, change the ending"
               state={steps[1]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -474,11 +547,19 @@ export function WorkflowClient({
               onSendFollowUp={() => generate(2, { followUpMessage: followUp })}
               onApprove={() => approve(2)}
               onReopen={() => reopen(2)}
-              onContentChange={c => updateStepContent(2, c)}
+              onContentChange={content => updateStepContent(2, content)}
             />
           ) : activeStep === 3 ? (
-            <SongLyricsStepPanel
+            <EditableTextStepPanel
               key={`lyrics-${steps[2].status}`}
+              stepNumber={3}
+              title="Song Lyrics"
+              tool="SunoAI"
+              textareaRows={24}
+              generateLabel="song lyrics"
+              generatingLabel="song lyrics…"
+              approvedLabel="lyrics"
+              followUpPlaceholder="Refine the lyrics… e.g. shorter chorus, different rhyme, clearer hook"
               state={steps[2]}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -487,7 +568,7 @@ export function WorkflowClient({
               onSendFollowUp={() => generate(3, { followUpMessage: followUp })}
               onApprove={() => approve(3)}
               onReopen={() => reopen(3)}
-              onContentChange={c => updateStepContent(3, c)}
+              onContentChange={content => updateStepContent(3, content)}
             />
           ) : activeStep === 4 ? (
             <MusicPromptStepPanel

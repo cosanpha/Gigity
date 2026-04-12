@@ -58,8 +58,11 @@
   --ds-text: #09090b; /* zinc-950 */
   --ds-text-2: #71717a; /* zinc-500 */
   --ds-text-3: #a1a1aa; /* zinc-400 */
-  --ds-accent: #6366f1; /* indigo-500 */
-  --ds-accent-h: #4f46e5; /* indigo-600 */
+  --ds-accent: #f97316; /* orange-500 */
+  --ds-accent-h: #ea580c; /* orange-600 */
+  --ds-accent-light: #fff7ed; /* orange-50 */
+  --ds-accent-border: #fed7aa; /* orange-200 */
+  --ds-ink: #111111; /* primary text */
   --ds-success: #16a34a; /* green-600 */
   --ds-warning: #d97706; /* amber-600 */
   --ds-radius: 6px;

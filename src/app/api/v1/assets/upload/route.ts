@@ -1,8 +1,9 @@
 import { CLOUDINARY_CLOUD_NAME } from '@/constants/env.server'
+import { apiHandler } from '@/lib/api-handler'
 import { isCloudinaryUrl, uploadFromUrl } from '@/lib/cloudinary'
 import { NextResponse } from 'next/server'
 
-export async function POST(req: Request) {
+export const POST = apiHandler(async (req: Request) => {
   if (!CLOUDINARY_CLOUD_NAME) {
     return NextResponse.json(
       { error: 'Cloudinary not configured' },
@@ -17,7 +18,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'url is required' }, { status: 400 })
   }
 
-  // Validate it looks like a URL
   if (!/^https?:\/\//.test(url)) {
     return NextResponse.json(
       { error: 'url must start with http:// or https://' },
@@ -25,11 +25,15 @@ export async function POST(req: Request) {
     )
   }
 
-  // Already on Cloudinary - return as-is
   if (isCloudinaryUrl(url)) {
     return NextResponse.json({ url })
   }
 
-  const cloudUrl = await uploadFromUrl(url)
-  return NextResponse.json({ url: cloudUrl })
-}
+  try {
+    const cloudUrl = await uploadFromUrl(url)
+    return NextResponse.json({ url: cloudUrl })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Upload failed'
+    return NextResponse.json({ error: message }, { status: 502 })
+  }
+}, { auth: true })

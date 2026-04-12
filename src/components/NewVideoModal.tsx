@@ -1,5 +1,6 @@
 'use client'
 
+import { LucideArrowRight, LucidePlus, LucideX } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -77,9 +78,10 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
     <>
       <button
         onClick={openModal}
-        className="flex items-center gap-2 rounded-[6px] bg-indigo-500 px-[18px] py-[9px] text-[14px] font-medium text-white transition-colors hover:bg-indigo-600"
+        className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-[18px] py-[9px] text-[14px] font-medium text-white transition-colors hover:bg-orange-600"
       >
-        + New video
+        <LucidePlus className="h-4 w-4" aria-hidden />
+        New video
       </button>
 
       {open && (
@@ -96,9 +98,10 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                 type="button"
                 onClick={closeModal}
                 disabled={creating || suggesting}
-                className="text-xl leading-none text-zinc-400 hover:text-zinc-600 disabled:opacity-40"
+                aria-label="Close"
+                className="rounded-[4px] p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-40"
               >
-                ×
+                <LucideX className="h-5 w-5" aria-hidden />
               </button>
             </div>
 
@@ -124,7 +127,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                 onChange={e => setHint(e.target.value)}
                 rows={2}
                 disabled={suggesting || creating}
-                className="resize-y rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none disabled:bg-zinc-50"
+                className="resize-y rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none disabled:bg-zinc-50"
               />
             </div>
 
@@ -140,7 +143,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                   type="button"
                   onClick={handleSuggestTitle}
                   disabled={suggesting || creating}
-                  className="shrink-0 rounded-[6px] border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[12px] font-medium text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="shrink-0 rounded-[6px] border border-orange-200 bg-orange-50 px-2.5 py-1 text-[12px] font-medium text-orange-700 transition-colors hover:border-orange-300 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {suggesting ? 'Suggesting…' : 'Suggest with AI'}
                 </button>
@@ -154,7 +157,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
                 autoFocus
                 disabled={suggesting || creating}
-                className="h-9 rounded-[6px] border border-zinc-200 px-3 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none disabled:bg-zinc-50"
+                className="h-9 rounded-[6px] border border-zinc-200 px-3 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none disabled:bg-zinc-50"
               />
             </div>
 
@@ -170,9 +173,16 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                 type="button"
                 onClick={handleCreate}
                 disabled={!title.trim() || creating || suggesting}
-                className="flex-1 rounded-[6px] bg-indigo-500 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] bg-orange-500 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {creating ? 'Creating...' : 'Create & start →'}
+                {creating ? (
+                  'Creating...'
+                ) : (
+                  <>
+                    Create & start
+                    <LucideArrowRight className="h-4 w-4" aria-hidden />
+                  </>
+                )}
               </button>
               <button
                 type="button"

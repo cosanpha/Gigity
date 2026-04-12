@@ -1,32 +1,20 @@
+import { apiHandler } from '@/lib/api-handler'
 import { validateUrls } from '@/lib/brand-validation'
-import { connectDB } from '@/lib/db'
 import BrandProfile from '@/models/BrandProfile'
 import VideoProject from '@/models/VideoProject'
 import { NextResponse } from 'next/server'
 
-type Ctx = { params: Promise<{ id: string }> }
+export const GET = apiHandler(async (_req, ctx) => {
+  const { id } = await ctx!.params
+  const profile = await BrandProfile.findById(id).lean()
+  if (!profile)
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(profile, { status: 200 })
+})
 
-export async function GET(_req: Request, { params }: Ctx) {
-  try {
-    await connectDB()
-    const { id } = await params
-    const profile = await BrandProfile.findById(id).lean()
-    if (!profile)
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    return NextResponse.json(profile, { status: 200 })
-  } catch (error) {
-    console.error('ERROR: Failed to get brand profile', error)
-    return NextResponse.json(
-      { error: 'ERROR: Failed to get brand profile' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PUT(req: Request, { params }: Ctx) {
-  try {
-    await connectDB()
-    const { id } = await params
+export const PUT = apiHandler(
+  async (req, ctx) => {
+    const { id } = await ctx!.params
     const body = await req.json()
 
     const urlError = validateUrls(body)
@@ -39,20 +27,14 @@ export async function PUT(req: Request, { params }: Ctx) {
     if (!profile)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(profile, { status: 200 })
-  } catch (error) {
-    console.error('ERROR: Failed to update brand profile', error)
-    return NextResponse.json(
-      { error: 'ERROR: Failed to update brand profile' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { auth: true }
+)
 
 // DELETE - blocked if any VideoProject references this brand
-export async function DELETE(_req: Request, { params }: Ctx) {
-  try {
-    await connectDB()
-    const { id } = await params
+export const DELETE = apiHandler(
+  async (_req, ctx) => {
+    const { id } = await ctx!.params
 
     const inUse = await VideoProject.exists({ brandProfileId: id })
     if (inUse) {
@@ -64,11 +46,6 @@ export async function DELETE(_req: Request, { params }: Ctx) {
 
     await BrandProfile.findByIdAndDelete(id)
     return NextResponse.json({ ok: true }, { status: 200 })
-  } catch (error) {
-    console.error('ERROR: Failed to delete brand profile', error)
-    return NextResponse.json(
-      { error: 'ERROR: Failed to delete brand profile' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { auth: true }
+)

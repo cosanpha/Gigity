@@ -1,8 +1,11 @@
 import { OPENAI_API_KEY } from '@/constants/env.server'
+import { apiHandler } from '@/lib/api-handler'
 import { isCloudinaryUrl, uploadFromUrl } from '@/lib/cloudinary'
 import { NextResponse } from 'next/server'
 
-export async function POST(req: Request) {
+const DALLE_BASE_URL = 'https://api.openai.com/v1'
+
+export const POST = apiHandler(async (req: Request) => {
   if (!OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'OpenAI API key not configured' },
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
   }
 
   // Call DALL-E 3
-  const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+  const dalleRes = await fetch(`${DALLE_BASE_URL}/images/generations`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -57,4 +60,4 @@ export async function POST(req: Request) {
     : await uploadFromUrl(tempUrl, 'gigity/images')
 
   return NextResponse.json({ url: cloudUrl, tempUrl })
-}
+}, { auth: true })

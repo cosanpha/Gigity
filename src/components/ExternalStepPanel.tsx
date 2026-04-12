@@ -2,16 +2,27 @@
 
 import { interpolate } from '@/lib/interpolate'
 import { decodePublishLinks } from '@/lib/publish-links'
-import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import {
+  StepDefinition,
+  StepState,
+  WORKFLOW_TOTAL_STEPS,
+} from '@/lib/workflow-templates'
 import { strToU8, zip } from 'fflate'
+import {
+  LucideAlertTriangle,
+  LucideArrowUpRight,
+  LucideCheck,
+  LucideChevronDown,
+  LucideChevronRight,
+  LucideDownload,
+  LucideImages,
+  LucideMusic,
+  LucideUser,
+  LucideVideo,
+} from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
-
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-}
+import type { ReactNode } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 
 interface ProjectAssets {
   characterImages: string[]
@@ -46,14 +57,15 @@ function AssetGroup({
 }: {
   title: string
   urls: string[]
-  icon: string
+  icon: ReactNode
 }) {
   if (urls.length === 0) return null
 
   return (
     <div>
-      <p className="mb-2 text-[12px] font-medium text-zinc-500">
-        {icon} {title} ({urls.length})
+      <p className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+        <span className="inline-flex shrink-0 text-zinc-400">{icon}</span>
+        {title} ({urls.length})
       </p>
       <div className="flex flex-col gap-1">
         {urls.map((url, i) => {
@@ -232,9 +244,9 @@ function DownloadAllButton({
         setErr('Could not build zip file.')
         return
       }
-      const zipBytes = new Uint8Array(out.length)
-      zipBytes.set(out)
-      const blob = new Blob([zipBytes], { type: 'application/zip' })
+      const blob = new Blob([out as unknown as BlobPart], {
+        type: 'application/zip',
+      })
       const href = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = href
@@ -258,7 +270,10 @@ function DownloadAllButton({
             Zipping…
           </span>
         ) : (
-          <>↓ Download all as zip ({total})</>
+          <span className="inline-flex items-center gap-1.5">
+            <LucideDownload className="h-3.5 w-3.5" aria-hidden />
+            Download all as zip ({total})
+          </span>
         )}
       </button>
       {err ? (
@@ -287,13 +302,11 @@ function PublishStepSection({
   const [genErr, setGenErr] = useState<string | null>(null)
   const [tiktok, setTiktok] = useState('')
   const [youtube, setYoutube] = useState('')
-  const [linksSaved, setLinksSaved] = useState(false)
 
   useEffect(() => {
     const d = decodePublishLinks(outputAssetUrl)
     setTiktok(d.tiktok)
     setYoutube(d.youtube)
-    setLinksSaved(false)
   }, [outputAssetUrl])
 
   async function handleGenerate() {
@@ -308,10 +321,27 @@ function PublishStepSection({
     }
   }
 
-  function handleSaveLinks() {
+  function maybeAutoSaveAfterPaste(
+    e: ChangeEvent<HTMLInputElement>,
+    field: 'tiktok' | 'youtube',
+    value: string
+  ) {
+    const ne = e.nativeEvent
+    if (
+      ne instanceof InputEvent &&
+      ne.inputType === 'insertFromPaste' &&
+      value.trim()
+    ) {
+      if (field === 'tiktok') {
+        onSaveLinks(value, youtube)
+      } else {
+        onSaveLinks(tiktok, value)
+      }
+    }
+  }
+
+  function persistLinksFromBlur() {
     onSaveLinks(tiktok, youtube)
-    setLinksSaved(true)
-    setTimeout(() => setLinksSaved(false), 2000)
   }
 
   return (
@@ -329,14 +359,14 @@ function PublishStepSection({
           rows={14}
           spellCheck={false}
           placeholder='Press "Generate video description" to create TikTok and YouTube copy from prior steps…'
-          className="w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-sans text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+          className="w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-sans text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={genBusy}
             onClick={() => void handleGenerate()}
-            className="rounded-[6px] bg-indigo-500 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-[6px] bg-orange-500 px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {genBusy ? (
               <span className="flex items-center gap-2">
@@ -358,8 +388,8 @@ function PublishStepSection({
           Published video links (optional)
         </p>
         <p className="mb-3 text-[11px] text-zinc-500">
-          After your video is live, paste URLs here and save to keep them on
-          this project.
+          After your video is live, add URLs here — they save when you paste or
+          when you leave a field.
         </p>
         <label className="mb-2 block">
           <span className="mb-1 block text-[11px] font-medium text-zinc-600">
@@ -368,30 +398,33 @@ function PublishStepSection({
           <input
             type="url"
             value={tiktok}
-            onChange={e => setTiktok(e.target.value)}
+            onChange={e => {
+              const v = e.target.value
+              setTiktok(v)
+              maybeAutoSaveAfterPaste(e, 'tiktok', v)
+            }}
+            onBlur={persistLinksFromBlur}
             placeholder="https://www.tiktok.com/@…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
           />
         </label>
-        <label className="mb-3 block">
+        <label className="block">
           <span className="mb-1 block text-[11px] font-medium text-zinc-600">
             YouTube URL
           </span>
           <input
             type="url"
             value={youtube}
-            onChange={e => setYoutube(e.target.value)}
+            onChange={e => {
+              const v = e.target.value
+              setYoutube(v)
+              maybeAutoSaveAfterPaste(e, 'youtube', v)
+            }}
+            onBlur={persistLinksFromBlur}
             placeholder="https://www.youtube.com/watch?v=…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
           />
         </label>
-        <button
-          type="button"
-          onClick={handleSaveLinks}
-          className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
-        >
-          {linksSaved ? 'Saved ✓' : 'Save published links'}
-        </button>
       </div>
     </div>
   )
@@ -405,9 +438,15 @@ function PublishStepDoneView({
   outputAssetUrl: string | null
 }) {
   const { tiktok, youtube } = decodePublishLinks(outputAssetUrl)
+  const hasContent = llmResponse?.trim() || tiktok || youtube
 
   return (
     <div className="flex flex-col gap-4">
+      {!hasContent && (
+        <p className="text-[13px] text-zinc-500">
+          No description or publish links saved. Re-open this step to add them.
+        </p>
+      )}
       {llmResponse?.trim() ? (
         <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
           <p className="mb-2 text-[12px] font-medium text-zinc-500">
@@ -429,7 +468,7 @@ function PublishStepDoneView({
                 href={tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[13px] break-all text-indigo-600 hover:underline"
+                className="text-[13px] break-all text-orange-600 hover:underline"
               >
                 TikTok - {tiktok}
               </a>
@@ -439,7 +478,7 @@ function PublishStepDoneView({
                 href={youtube}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[13px] break-all text-indigo-600 hover:underline"
+                className="text-[13px] break-all text-orange-600 hover:underline"
               >
                 YouTube - {youtube}
               </a>
@@ -478,8 +517,8 @@ export function ExternalStepPanel({
           </span>
           <span>·</span>
           <span className="flex items-center gap-1">
-            <span className="rounded border border-zinc-300 px-1.5 py-0.5 text-[11px]">
-              ↗
+            <span className="flex items-center rounded border border-zinc-300 px-1 py-0.5 text-zinc-500">
+              <LucideArrowUpRight className="h-3 w-3" aria-hidden />
             </span>
             {stepDef.tool}
           </span>
@@ -493,8 +532,8 @@ export function ExternalStepPanel({
       {state.status === 'done' && (
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-[11px] text-white">
-              ✓
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
+              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Completed
@@ -523,7 +562,7 @@ export function ExternalStepPanel({
                 href={state.outputAssetUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm break-all text-indigo-600 hover:underline"
+                className="text-sm break-all text-orange-600 hover:underline"
               >
                 {state.outputAssetUrl}
               </a>
@@ -552,22 +591,22 @@ export function ExternalStepPanel({
                 <AssetGroup
                   title="Character images"
                   urls={projectAssets.characterImages}
-                  icon="🧑"
+                  icon={<LucideUser className="h-3.5 w-3.5" aria-hidden />}
                 />
                 <AssetGroup
                   title="Scene images"
                   urls={projectAssets.sceneImages}
-                  icon="🎬"
+                  icon={<LucideImages className="h-3.5 w-3.5" aria-hidden />}
                 />
                 <AssetGroup
                   title="Video clips"
                   urls={projectAssets.videoClips}
-                  icon="📹"
+                  icon={<LucideVideo className="h-3.5 w-3.5" aria-hidden />}
                 />
                 <AssetGroup
                   title="Music track"
                   urls={projectAssets.musicTrack}
-                  icon="🎵"
+                  icon={<LucideMusic className="h-3.5 w-3.5" aria-hidden />}
                 />
               </div>
             </div>
@@ -581,8 +620,12 @@ export function ExternalStepPanel({
                 className="flex w-full items-center justify-between bg-zinc-50 px-4 py-2.5 text-[13px] text-zinc-600 transition-colors hover:bg-zinc-100"
               >
                 <span>Context from previous step</span>
-                <span className="text-[11px] text-zinc-400">
-                  {contextOpen ? '▼' : '▶'}
+                <span className="text-zinc-400">
+                  {contextOpen ? (
+                    <LucideChevronDown className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <LucideChevronRight className="h-4 w-4" aria-hidden />
+                  )}
                 </span>
               </button>
               {contextOpen && (
@@ -608,7 +651,7 @@ export function ExternalStepPanel({
                 className="mt-4 inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
               >
                 Open {stepDef.tool}
-                <span className="text-zinc-400">↗</span>
+                <LucideArrowUpRight className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
               </a>
             )}
           </div>
@@ -626,7 +669,7 @@ export function ExternalStepPanel({
           {/* Expiry warning */}
           {stepDef.expiryWarning && (
             <div className="flex items-start gap-2 rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
-              <span className="shrink-0">⚠</span>
+              <LucideAlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
               <span>{stepDef.expiryWarning}</span>
             </div>
           )}
@@ -634,11 +677,12 @@ export function ExternalStepPanel({
           {/* Approve button */}
           <button
             onClick={onApprove}
-            className="self-start rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            <LucideCheck className="h-4 w-4" aria-hidden />
             {stepNumber === WORKFLOW_TOTAL_STEPS
-              ? 'Mark as published ✓'
-              : 'Mark as done ✓'}
+              ? 'Mark as published'
+              : 'Mark as done'}
           </button>
         </div>
       )}

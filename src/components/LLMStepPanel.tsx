@@ -1,14 +1,15 @@
 'use client'
 
-import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
-import { useState } from 'react'
+import {
+  StepDefinition,
+  StepState,
+  WORKFLOW_TOTAL_STEPS,
+} from '@/lib/workflow-templates'
+import { LucideCheck, LucideSparkles } from 'lucide-react'
+import { CopyButton } from './ui/CopyButton'
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
+export { CopyButton } from './ui/CopyButton'
 
 interface LLMStepPanelProps {
   stepDef: StepDefinition
@@ -53,26 +54,6 @@ function parseBlocks(text: string): ResponseBlock[] {
 export function extractBlock(content: string, label: string): string {
   const blocks = parseBlocks(content)
   return blocks.find(b => b.label === label)?.content.trim() ?? ''
-}
-
-export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-
-  function handleCopy() {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="text-[12px] text-zinc-400 transition-colors hover:text-zinc-700"
-      title="Copy to clipboard"
-    >
-      {copied ? '✓ Copied' : 'Copy'}
-    </button>
-  )
 }
 
 function ResponseBlocks({ content }: { content: string }) {
@@ -146,7 +127,7 @@ export function LLMStepPanel({
           </p>
           <button
             onClick={onGenerate}
-            className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+            className="rounded-[6px] bg-orange-500 px-7 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-orange-600"
           >
             Generate
           </button>
@@ -156,25 +137,7 @@ export function LLMStepPanel({
       {/* State 2: Generating */}
       {state.status === 'generating' && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
+          <GenerateSpinner />
           <p className="text-[13px] text-zinc-500">Generating…</p>
         </div>
       )}
@@ -182,21 +145,25 @@ export function LLMStepPanel({
       {/* State 3: Approved / done */}
       {state.status === 'done' && (
         <div>
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[13px] font-medium text-green-600">
-              <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-[11px] text-white">
-                ✓
-              </span>
+          <div className="mb-4 flex items-center gap-2 rounded-[6px] border border-green-200 bg-green-50 px-4 py-2">
+            <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
+              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
+            </span>
+            <span className="text-[13px] font-medium text-green-600">
               Approved
-            </div>
+            </span>
             {onReopen && (
               <button
                 onClick={onReopen}
-                className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
+                className="ml-auto rounded-[4px] px-2 py-0.5 text-[12px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
               >
                 Re-open
               </button>
             )}
+          </div>
+          <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-orange-600 uppercase">
+            <LucideSparkles className="h-3 w-3" aria-hidden />
+            AI Output
           </div>
           <ResponseBlocks content={state.llmResponse!} />
         </div>
@@ -219,12 +186,19 @@ export function LLMStepPanel({
           )}
 
           {/* Response - conversation thread or single response */}
-          {state.llmResponse &&
-            (state.conversation.length > 1 ? (
-              <ConversationThread messages={state.conversation} />
-            ) : (
-              <ResponseBlocks content={state.llmResponse} />
-            ))}
+          {state.llmResponse && (
+            <>
+              <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-orange-600 uppercase">
+                <LucideSparkles className="h-3 w-3" aria-hidden />
+                AI Output
+              </div>
+              {state.conversation.length > 1 ? (
+                <ConversationThread messages={state.conversation} />
+              ) : (
+                <ResponseBlocks content={state.llmResponse} />
+              )}
+            </>
+          )}
 
           {/* Follow-up input */}
           <div className="flex flex-col gap-2">
@@ -234,7 +208,7 @@ export function LLMStepPanel({
                 onChange={e => onFollowUpChange(e.target.value)}
                 placeholder="Refine this output… e.g. make it shorter, change the tone"
                 rows={2}
-                className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+                className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
               />
               <button
                 onClick={onSendFollowUp}
@@ -256,9 +230,10 @@ export function LLMStepPanel({
             </button>
             <button
               onClick={() => onApprove()}
-              className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+              className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
             >
-              ✓ Approve
+              <LucideCheck className="h-4 w-4" aria-hidden />
+              Approve
             </button>
           </div>
         </div>
@@ -290,7 +265,7 @@ function ConversationThread({
           className={m.role === 'user' ? 'flex justify-end' : ''}
         >
           {m.role === 'user' ? (
-            <div className="max-w-[80%] rounded-[6px] border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm text-indigo-800">
+            <div className="max-w-[80%] rounded-[6px] border border-orange-100 bg-orange-50 px-4 py-2.5 text-sm text-orange-900">
               {m.content}
             </div>
           ) : (

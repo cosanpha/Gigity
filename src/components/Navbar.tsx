@@ -1,3 +1,4 @@
+import { LucidePlus } from 'lucide-react'
 import Link from 'next/link'
 import { BrandSwitcher } from './BrandSwitcher'
 
@@ -22,17 +23,21 @@ export function Navbar({
     brandSwitcherBrands && brandSwitcherBrands.length > 1 && brandId
 
   return (
-    <nav className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-zinc-200 bg-white px-6">
-      <div className="flex min-w-0 items-center gap-3">
+    <nav className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-zinc-200 bg-white px-5">
+      <div className="flex min-w-0 items-center gap-2.5">
         <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight"
+          href={brandId ? `/?brand=${encodeURIComponent(brandId)}` : '/'}
+          className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-zinc-950"
         >
-          <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] bg-indigo-500 text-[13px] font-bold text-white">
+          <div className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-orange-500 text-[13px] font-bold text-white">
             G
           </div>
           Gigity
         </Link>
+        {/* Divider */}
+        {(showSwitcher || brandName) && (
+          <span className="h-4 w-px bg-zinc-200" />
+        )}
         {showSwitcher ? (
           <BrandSwitcher
             brands={brandSwitcherBrands}
@@ -40,17 +45,17 @@ export function Navbar({
           />
         ) : (
           brandName && (
-            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-[10px] py-[3px] text-[13px] text-zinc-500">
+            <span className="rounded-full border border-zinc-200 bg-zinc-100 px-[10px] py-[3px] text-[12px] font-medium text-zinc-600">
               {brandName}
             </span>
           )
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {brandId && (
           <Link
             href={`/brand/${brandId}/edit`}
-            className="rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-950"
+            className="rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
           >
             Edit brand
           </Link>
@@ -58,9 +63,10 @@ export function Navbar({
         {!showSwitcher && (
           <Link
             href="/brand/new"
-            className="rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-950"
+            className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
           >
-            + New brand
+            <LucidePlus className="h-3.5 w-3.5" aria-hidden />
+            New brand
           </Link>
         )}
       </div>

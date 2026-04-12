@@ -6,17 +6,16 @@ import {
   replaceKlingScenePrompt,
 } from '@/lib/kling-scenes'
 import { isProbablyVideoHttpUrl } from '@/lib/video-url'
-import { StepDefinition, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import {
+  StepDefinition,
+  StepState,
+  WORKFLOW_TOTAL_STEPS,
+} from '@/lib/workflow-templates'
+import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
-
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
+import { CopyButton } from './ui/CopyButton'
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
 function splitLines(raw: string | null): string[] {
   if (!raw?.trim()) return []
@@ -68,24 +67,6 @@ function SceneReferenceThumb({ url, label }: { url: string; label: string }) {
         className="h-[96px] w-[56px] object-cover"
       />
     </a>
-  )
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      }}
-      className="shrink-0 rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-      title="Copy to clipboard"
-    >
-      {copied ? '✓ Copied' : 'Copy'}
-    </button>
   )
 }
 
@@ -177,7 +158,7 @@ function SceneVideoSlot({
           type="button"
           onClick={uploadPastedUrlToCloudinary}
           disabled={!canUploadPastedUrl || busy}
-          className="rounded-[6px] bg-indigo-500 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-[6px] bg-orange-500 px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {urlBusy ? 'Uploading…' : 'Upload pasted URL to Cloudinary'}
         </button>
@@ -301,7 +282,7 @@ export function KlingStepPanel({
           <button
             type="button"
             onClick={onGenerate}
-            className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+            className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Generate
           </button>
@@ -310,25 +291,7 @@ export function KlingStepPanel({
 
       {isGenerating && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
+          <GenerateSpinner />
           <p className="text-[13px] text-zinc-500">Generating…</p>
         </div>
       )}
@@ -470,7 +433,7 @@ export function KlingStepPanel({
                     onChange={e => onContentChange(e.target.value)}
                     rows={14}
                     spellCheck={false}
-                    className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-zinc-800 outline-none focus:border-indigo-400"
+                    className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[12px] leading-relaxed text-zinc-800 outline-none focus:border-orange-400"
                   />
                   <p className="mb-1.5 text-[12px] font-medium text-zinc-600">
                     Video clip
@@ -480,7 +443,7 @@ export function KlingStepPanel({
                     value={sceneVideoUrls[0] ?? ''}
                     onChange={e => setSceneVideo(0, e.target.value)}
                     placeholder="Paste video URL (.mp4 / .webm / .mov or Cloudinary /video/upload/…)"
-                    className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                    className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
                   <SceneVideoSlot
                     url={sceneVideoUrls[0] ?? ''}
@@ -541,7 +504,7 @@ export function KlingStepPanel({
                         }}
                         rows={4}
                         spellCheck={false}
-                        className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none focus:border-indigo-400"
+                        className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none focus:border-orange-400"
                       />
                       <p className="mb-1.5 text-[12px] font-medium text-zinc-600">
                         Video clip URL
@@ -551,7 +514,7 @@ export function KlingStepPanel({
                         value={sceneVideoUrls[i] ?? ''}
                         onChange={e => setSceneVideo(i, e.target.value)}
                         placeholder="Paste video URL (.mp4 / .webm / .mov or Cloudinary /video/upload/…)"
-                        className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                        className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                       />
                       <SceneVideoSlot
                         url={sceneVideoUrls[i] ?? ''}
@@ -570,7 +533,7 @@ export function KlingStepPanel({
               onChange={e => onFollowUpChange(e.target.value)}
               placeholder="Refine Kling prompts… e.g. slower camera, more dramatic lighting"
               rows={2}
-              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
             />
             <button
               type="button"
@@ -600,9 +563,10 @@ export function KlingStepPanel({
                 )
               }
               disabled={!allVideosReady}
-              className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ✓ Approve
+              <LucideCheck className="h-4 w-4" aria-hidden />
+              Approve
             </button>
           </div>
         </div>

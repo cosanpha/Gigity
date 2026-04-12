@@ -1,14 +1,11 @@
-import { connectDB } from '@/lib/db'
+import { apiHandler } from '@/lib/api-handler'
 import VideoProject from '@/models/VideoProject'
+import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
 
-type Ctx = { params: Promise<{ id: string; n: string }> }
-
-export async function POST(_req: Request, { params }: Ctx) {
-  try {
-    await connectDB()
-
-    const { id, n } = await params
+export const POST = apiHandler(
+  async (_req, ctx) => {
+    const { id, n } = await ctx!.params
     const stepNumber = parseInt(n, 10)
 
     if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 9) {
@@ -16,6 +13,10 @@ export async function POST(_req: Request, { params }: Ctx) {
         { error: 'Invalid step number' },
         { status: 400 }
       )
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
     }
 
     const project = await VideoProject.findById(id)
@@ -35,6 +36,8 @@ export async function POST(_req: Request, { params }: Ctx) {
     ) {
       step.status = 'pending'
       step.completedAt = null
+      step.llmResponse = null
+      step.conversation = []
       if (stepNumber === 4) {
         step.sunoTaskId = null
       }
@@ -49,13 +52,10 @@ export async function POST(_req: Request, { params }: Ctx) {
       step.completedAt = null
     }
 
+    project.status = 'in_progress'
+
     await project.save()
     return NextResponse.json({ ok: true })
-  } catch (error) {
-    console.error('ERROR: Failed to reopen step', error)
-    return NextResponse.json(
-      { error: 'ERROR: Failed to reopen step' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { auth: true }
+)

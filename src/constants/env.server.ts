@@ -14,3 +14,4 @@ export const SUNO_API_KEY = process.env.SUNO_API_KEY
 export const SUNO_API_BASE_URL = process.env.SUNO_API_BASE_URL ?? ''
 export const PUBLIC_APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+export const API_SECRET = process.env.API_SECRET ?? ''

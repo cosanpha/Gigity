@@ -4,17 +4,12 @@ import {
   CLOUDINARY_CLOUD_NAME_PUBLIC,
   partitionPromptUrlsForCloudinaryRefs,
 } from '@/lib/cloudinary-client'
-import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
-
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
+import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
 interface SceneStepPanelProps {
   stepState: StepState
@@ -121,7 +116,7 @@ function DalleGenerateButton({
       <button
         onClick={generate}
         disabled={status === 'generating'}
-        className="w-fit rounded-[6px] bg-indigo-500 px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-600 disabled:opacity-50"
+        className="w-fit rounded-[6px] bg-orange-500 px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
       >
         {status === 'generating' ? (
           <span className="flex items-center gap-2">
@@ -212,7 +207,7 @@ export function SceneStepPanel({
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
           <span>Step 6 of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
-          <span>DALL-E / Midjourney</span>
+          <span>DALL-E</span>
         </div>
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           Scene Images
@@ -223,8 +218,8 @@ export function SceneStepPanel({
       {isDone && (
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-[11px] text-white">
-              ✓
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
+              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Approved
@@ -296,8 +291,9 @@ export function SceneStepPanel({
                         />
                       </a>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[12px] text-green-600">
-                          ✓ Generated
+                        <span className="flex items-center gap-1 text-[12px] text-green-600">
+                          <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                          Generated
                         </span>
                         <a
                           href={doneUrls[i]}
@@ -328,7 +324,7 @@ export function SceneStepPanel({
             </p>
             <button
               onClick={onGenerate}
-              className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+              className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
             >
               Generate
             </button>
@@ -338,25 +334,7 @@ export function SceneStepPanel({
       {/* State: generating */}
       {!isDone && stepState.status === 'generating' && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
+          <GenerateSpinner />
           <p className="text-[13px] text-zinc-500">Generating scene prompts…</p>
         </div>
       )}
@@ -430,7 +408,7 @@ export function SceneStepPanel({
                     onChange={e => updateScenePrompt(i, e.target.value)}
                     rows={3}
                     placeholder="Scene prompt - paste a Cloudinary image URL (…/image/upload/…) to preview it below."
-                    className="mb-2 w-full resize-none rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                    className="mb-2 w-full resize-none rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
 
                   {validCloudinaryImageRefs.length > 0 && (
@@ -478,8 +456,9 @@ export function SceneStepPanel({
                         />
                       </a>
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="text-[12px] text-green-600">
-                          ✓ Generated
+                        <span className="flex items-center gap-1 text-[12px] text-green-600">
+                          <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                          Generated
                         </span>
                         <a
                           href={sceneUrls[i]}
@@ -493,18 +472,22 @@ export function SceneStepPanel({
                     </div>
                   )}
 
-                  {/* Generate + URL input row */}
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-start gap-3">
+                    <CloudinaryImageUploadButton
+                      onUploaded={url => updateSceneUrl(i, url)}
+                    />
                     <DalleGenerateButton
                       getPrompt={() => scene.prompt}
                       onGenerated={url => updateSceneUrl(i, url)}
                     />
+                  </div>
+                  <div className="mt-2">
                     <input
                       type="text"
                       placeholder="Or paste image URL manually…"
                       value={sceneUrls[i] ?? ''}
                       onChange={e => updateSceneUrl(i, e.target.value)}
-                      className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                      className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                     />
                   </div>
                 </div>
@@ -527,7 +510,7 @@ export function SceneStepPanel({
                   onChange={e => onFollowUpChange(e.target.value)}
                   placeholder="Refine scene prompts… e.g. more close-up shots, darker mood"
                   rows={2}
-                  className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
                 />
                 <button
                   onClick={onSendFollowUp}
@@ -559,9 +542,10 @@ export function SceneStepPanel({
               )
             }
             disabled={!allReady}
-            className="self-start rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            ✓ Approve all scenes
+            <LucideCheck className="h-4 w-4" aria-hidden />
+            Approve all scenes
           </button>
         </div>
       )}

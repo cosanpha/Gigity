@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    '.claude/**',
+    '.cursor/**',
+    '.vscode/**',
+    'docs/**',
   ]),
   {
     rules: {
@@ -21,4 +25,3 @@ const eslintConfig = defineConfig([
 ])
 
 export default eslintConfig
-

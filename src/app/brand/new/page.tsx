@@ -2,6 +2,7 @@
 
 import { BrandForm, BrandFormData } from '@/components/BrandForm'
 import { Navbar } from '@/components/Navbar'
+import { LucideArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -20,7 +21,11 @@ export default function BrandNewPage() {
       body: JSON.stringify(data),
     })
     if (res.ok) {
-      router.push('/')
+      const profile = (await res.json()) as { _id?: string }
+      const newId = profile._id?.trim()
+      router.push(
+        newId ? `/?brand=${encodeURIComponent(newId)}` : '/'
+      )
     } else {
       const body = await res.json()
       setError(body.error ?? 'Something went wrong')
@@ -31,13 +36,17 @@ export default function BrandNewPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-[780px] px-6 py-10">
+      <main className="mx-auto min-h-screen max-w-[640px] bg-zinc-50 px-6 py-10">
         <div className="mb-6 flex items-center gap-3">
           <Link
             href="/"
-            className="text-[13px] text-zinc-400 hover:text-zinc-600"
+            className="inline-flex items-center gap-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-700"
           >
-            ← Back
+            <LucideArrowLeft
+              className="h-3.5 w-3.5"
+              aria-hidden
+            />
+            Back
           </Link>
         </div>
         <h1 className="mb-1 text-xl font-semibold tracking-tight">

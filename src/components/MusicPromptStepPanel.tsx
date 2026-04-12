@@ -2,20 +2,12 @@
 
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 import { normalizeSunoPlayableUrl } from '@/lib/suno-record-info'
-import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
 import { startTransition, useEffect, useRef, useState } from 'react'
-import { CopyButton, extractBlock } from './LLMStepPanel'
-
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  outputAssetUrl: string | null
-  sunoTaskId: string | null
-  sunoSelectedTrackIndex: number | null
-  sunoApiKeyOverride: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
+import { extractBlock } from './LLMStepPanel'
+import { CopyButton } from './ui/CopyButton'
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
 function splitStoredAudioUrls(raw: string | null | undefined): string[] {
   if (!raw?.trim()) return []
@@ -427,7 +419,7 @@ function SunoMusicSection({
                 ? 'Leave empty to use server SUNO_API_KEY'
                 : 'Paste your Suno API key'
             }
-            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-indigo-400 focus:outline-none"
+            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
           />
         </div>
       ) : null}
@@ -455,7 +447,7 @@ function SunoMusicSection({
                     ? `Shorten style prompt to ${maxSunoStyleChars} characters or fewer`
                     : undefined
               }
-              className="w-full rounded-[6px] bg-indigo-500 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-0 sm:flex-1"
+              className="w-full rounded-[6px] bg-orange-500 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-0 sm:flex-1"
             >
               {starting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -560,9 +552,10 @@ function SunoMusicSection({
           href="https://suno.com/create"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
+          className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
         >
-          Open Suno ↗
+          Open Suno
+          <LucideArrowUpRight className="h-3.5 w-3.5" aria-hidden />
         </a>
       )}
       {canStart && (
@@ -583,7 +576,7 @@ function SunoMusicSection({
                 setManualUrlError(null)
               }}
               placeholder="https://cdn.example.com/song.mp3"
-              className="min-w-0 flex-1 rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-indigo-400 focus:outline-none"
+              className="min-w-0 flex-1 rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">
               <button
@@ -650,7 +643,7 @@ function SunoMusicSection({
                       onChange={() =>
                         onPersistRef.current({ sunoSelectedTrackIndex: i })
                       }
-                      className="h-4 w-4 accent-indigo-500"
+                      className="h-4 w-4 accent-orange-500"
                     />
                     Variant {i + 1}
                   </label>
@@ -788,7 +781,7 @@ export function MusicPromptStepPanel({
           </p>
           <button
             onClick={onGenerate}
-            className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+            className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Generate
           </button>
@@ -797,25 +790,7 @@ export function MusicPromptStepPanel({
 
       {isGenerating && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
+          <GenerateSpinner />
           <p className="text-[13px] text-zinc-500">Generating music prompt…</p>
         </div>
       )}
@@ -863,7 +838,7 @@ export function MusicPromptStepPanel({
                   readOnly={isLocked}
                   rows={7}
                   spellCheck={false}
-                  className={`w-full resize-y rounded-[6px] border bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-indigo-400 ${
+                  className={`w-full resize-y rounded-[6px] border bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-orange-400 ${
                     !isLocked && styleExceedsSunoLimit
                       ? 'border-red-300 focus:border-red-400'
                       : 'border-zinc-200'
@@ -917,7 +892,7 @@ export function MusicPromptStepPanel({
               onChange={e => onFollowUpChange(e.target.value)}
               placeholder="Refine the package… e.g. adjust BPM, genre, or style descriptors"
               rows={2}
-              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
             />
             <button
               onClick={onSendFollowUp}
@@ -951,9 +926,10 @@ export function MusicPromptStepPanel({
                     })
                   }
                   disabled={!canApprove}
-                  className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  ✓ Approve
+                  <LucideCheck className="h-4 w-4" aria-hidden />
+                  Approve
                 </button>
                 {approveRequiresSong && !hasSongUrl ? (
                   <p className="text-[12px] text-zinc-500">

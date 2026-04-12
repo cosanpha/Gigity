@@ -1,4 +1,4 @@
-import { connectDB } from '@/lib/db'
+import { apiHandler } from '@/lib/api-handler'
 import { callLLM } from '@/lib/llm'
 import BrandProfile from '@/models/BrandProfile'
 import { NextResponse } from 'next/server'
@@ -12,11 +12,8 @@ function sanitizeTitle(raw: string): string {
   return t
 }
 
-// POST /api/v1/projects/suggest-title - LLM suggests a video project title (creative topic)
-export async function POST(req: Request) {
-  try {
-    await connectDB()
-
+export const POST = apiHandler(
+  async (req: Request) => {
     const body = await req.json().catch(() => ({}))
     const brandProfileId = body.brandProfileId as string | undefined
     const hint =
@@ -73,7 +70,18 @@ Rules:
       { role: 'user' as const, content: userBlock },
     ]
 
-    const raw = await callLLM(messages)
+    let raw: string
+    try {
+      raw = await callLLM(messages)
+    } catch {
+      return NextResponse.json(
+        {
+          error: 'Could not generate a title - try again or type one manually',
+        },
+        { status: 502 }
+      )
+    }
+
     const title = sanitizeTitle(raw)
     if (!title) {
       return NextResponse.json(
@@ -85,14 +93,6 @@ Rules:
     }
 
     return NextResponse.json({ title })
-  } catch (error) {
-    console.error('ERROR: suggest-title', error)
-    const message =
-      error instanceof Error ? error.message : 'Failed to suggest title'
-    const isConfig = message.includes('OPENAI_API_KEY')
-    return NextResponse.json(
-      { error: isConfig ? 'AI is not configured on the server' : message },
-      { status: isConfig ? 503 : 502 }
-    )
-  }
-}
+  },
+  { auth: true }
+)

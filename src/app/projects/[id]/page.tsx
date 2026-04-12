@@ -26,6 +26,11 @@ export default async function ProjectPage({ params }: Props) {
   const serializedProject = JSON.parse(JSON.stringify(project))
   const serializedBrand = JSON.parse(JSON.stringify(brand))
 
+  // Redact Suno API keys - never send them to the client (ISSUE-004)
+  for (const step of serializedProject.steps) {
+    step.sunoApiKeyOverride = null
+  }
+
   let steps = serializedProject.steps
   let migrated = false
   const m11 = migrateLegacyElevenSteps(steps)
@@ -50,6 +55,7 @@ export default async function ProjectPage({ params }: Props) {
       <WorkflowClient
         project={serializedProject}
         brand={serializedBrand}
+        brandProfileId={String(project.brandProfileId)}
         stepDefs={WORKFLOW_STEPS}
         sunoBaseUrlConfigured={Boolean(SUNO_API_BASE_URL?.trim())}
         sunoEnvKeyConfigured={Boolean(SUNO_API_KEY?.trim())}
@@ -57,4 +63,3 @@ export default async function ProjectPage({ params }: Props) {
     </>
   )
 }
-

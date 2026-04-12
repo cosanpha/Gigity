@@ -1,9 +1,10 @@
 import { CLOUDINARY_CLOUD_NAME } from '@/constants/env.server'
+import { apiHandler } from '@/lib/api-handler'
 import { isCloudinaryUrl, uploadVideoFromUrl } from '@/lib/cloudinary'
 import { isProbablyVideoHttpUrl } from '@/lib/video-url'
 import { NextResponse } from 'next/server'
 
-export async function POST(req: Request) {
+export const POST = apiHandler(async (req: Request) => {
   if (!CLOUDINARY_CLOUD_NAME) {
     return NextResponse.json(
       { error: 'Cloudinary not configured' },
@@ -33,6 +34,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: trimmed })
   }
 
-  const cloudUrl = await uploadVideoFromUrl(trimmed)
-  return NextResponse.json({ url: cloudUrl })
-}
+  try {
+    const cloudUrl = await uploadVideoFromUrl(trimmed)
+    return NextResponse.json({ url: cloudUrl })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Upload failed'
+    return NextResponse.json({ error: message }, { status: 502 })
+  }
+}, { auth: true })

@@ -1,9 +1,8 @@
-import { connectDB } from '@/lib/db'
+import { apiHandler } from '@/lib/api-handler'
 import { buildMessages, buildSystemMessage, callLLM } from '@/lib/llm'
 import VideoProject from '@/models/VideoProject'
+import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
-
-type Ctx = { params: Promise<{ id: string }> }
 
 const USER_PROMPT = `Write publish-ready video copy for TikTok and YouTube for the short-form ad described in your context (campaign, story, lyrics, and prior steps).
 
@@ -23,44 +22,63 @@ Rules:
 - Do not use placeholders like "[insert]" or "TBD" - write final copy the creator can paste as-is.
 - TikTok should feel native to short-form (direct, energetic where appropriate). YouTube title and description can be slightly more descriptive for search.`
 
-export async function POST(_req: Request, { params }: Ctx) {
-  await connectDB()
-  const { id } = await params
+export const POST = apiHandler(
+  async (_req, ctx) => {
+    const { id } = await ctx!.params
 
-  const project = await VideoProject.findById(id).populate('brandProfileId')
-  if (!project)
-    return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 })
+    }
 
-  const storyStep = project.steps[1]
-  if (!storyStep?.llmResponse?.trim()) {
-    return NextResponse.json(
-      { error: 'Add a story script (step 2) before generating publish copy.' },
-      { status: 400 }
-    )
-  }
+    const project = await VideoProject.findById(id).populate('brandProfileId')
+    if (!project)
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
-  const brand =
-    project.brandProfileId as unknown as import('@/models/BrandProfile').IBrandProfile
+    const storyStep = project.steps[1]
+    if (!storyStep?.llmResponse?.trim()) {
+      return NextResponse.json(
+        {
+          error: 'Add a story script (step 2) before generating publish copy.',
+        },
+        { status: 400 }
+      )
+    }
 
-  const systemMessage = buildSystemMessage(brand, project.steps as any[])
-  const messages = buildMessages(systemMessage, USER_PROMPT, [])
+    const brand =
+      project.brandProfileId as unknown as import('@/models/BrandProfile').IBrandProfile
 
-  const step9 = project.steps[8]
-  if (!step9) {
-    return NextResponse.json(
-      { error: 'Invalid project steps' },
-      { status: 500 }
-    )
-  }
+    const systemMessage = buildSystemMessage(brand, project.steps)
+    const messages = buildMessages(systemMessage, USER_PROMPT, [])
 
-  try {
-    const response = await callLLM(messages)
-    step9.llmResponse = response
+    const step9 = project.steps[8]
+    if (!step9) {
+      return NextResponse.json(
+        { error: 'Invalid project steps' },
+        { status: 500 }
+      )
+    }
+
+    // Guard against concurrent generate requests
+    if (step9.status === 'generating') {
+      return NextResponse.json({ error: 'Already generating' }, { status: 409 })
+    }
+
+    step9.status = 'generating'
     await project.save()
-    return NextResponse.json({ llmResponse: response })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'LLM request failed'
-    return NextResponse.json({ error: message }, { status: 502 })
-  }
-}
+
+    try {
+      const response = await callLLM(messages)
+      step9.llmResponse = response
+      step9.status = 'pending'
+      await project.save()
+      return NextResponse.json({ llmResponse: response })
+    } catch (err: unknown) {
+      step9.status = 'pending'
+      await project.save().catch(() => {})
+      const message = err instanceof Error ? err.message : 'LLM request failed'
+      return NextResponse.json({ error: message }, { status: 502 })
+    }
+  },
+  { auth: true }
+)
 

@@ -1,735 +1,655 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gigity — Workflow View</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gigity — Workflow View Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:        #ffffff;
-    --surface:   #ffffff;
-    --surface-2: #f4f4f5;
-    --border:    #e4e4e7;
-    --border-2:  #d4d4d8;
-    --text:      #09090b;
-    --text-2:    #71717a;
-    --text-3:    #a1a1aa;
-    --accent:    #6366f1;
-    --accent-h:  #4f46e5;
-    --success:   #16a34a;
-    --success-bg:rgba(22,163,74,0.07);
-    --warning:   #d97706;
-    --warn-bg:   rgba(217,119,6,0.07);
-    --external:  #0284c7;
-    --ext-bg:    rgba(2,132,199,0.06);
-    --r:         6px;
-  }
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 14px;
-    line-height: 1.5;
-    display: flex;
-    flex-direction: column;
-  }
+:root {
+  --orange-50:  #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --ink:        #111111;
+  --zinc-50:  #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --white:    #ffffff;
+  --accent:       var(--orange-500);
+  --accent-hover: var(--orange-600);
+  --accent-light: var(--orange-50);
+  --accent-border:var(--orange-200);
+  --border:       var(--zinc-200);
+  --border-2:     var(--zinc-300);
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-50:  #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --amber-400: #fbbf24;
+  --red-50:    #fef2f2;
+  --red-500:   #ef4444;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --font: 'Geist', system-ui, -apple-system, sans-serif;
+  --sidebar-w: 228px;
+  --navbar-h: 52px;
+  --titlebar-h: 44px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font); background: var(--white); color: var(--ink); font-size: 14px; line-height: 1.5; }
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
 
-  /* ── NAV ── */
-  nav {
-    height: 52px; flex-shrink: 0;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 20px;
-    background: var(--bg); z-index: 20;
-  }
-  .nav-left { display: flex; align-items: center; gap: 10px; }
-  .logo {
-    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .logo-mark {
-    width: 26px; height: 26px; background: var(--accent);
-    border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #fff;
-  }
-  .sep { width: 1px; height: 18px; background: var(--border); }
-  .nav-project { font-size: 13px; color: var(--text-2); }
-  .nav-right { display: flex; align-items: center; gap: 6px; }
-  .badge-done-sm {
-    font-size: 11.5px; font-weight: 500; padding: 3px 9px; border-radius: 20px;
-    background: var(--success-bg); color: var(--success);
-    border: 1px solid rgba(22,163,74,0.2);
-  }
-  .btn-back {
-    font-size: 13px; color: var(--text-2); padding: 5px 10px;
-    border: 1px solid var(--border); border-radius: var(--r);
-    background: none; font-family: inherit; cursor: pointer; transition: all 0.15s;
-  }
-  .btn-back:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
+/* ─── FULL PAGE LAYOUT ─── */
+.page { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-  /* ── LAYOUT ── */
-  .layout {
-    display: flex; flex: 1; overflow: hidden; height: calc(100vh - 52px);
-  }
+/* ─── NAVBAR ─── */
+.navbar {
+  height: var(--navbar-h); flex-shrink: 0;
+  background: var(--white); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; z-index: 20;
+}
+.navbar-left { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 26px; height: 26px; border-radius: var(--r-md);
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--white); letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+.logo-text { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.nav-sep { width: 1px; height: 14px; background: var(--border-2); }
+.brand-chip {
+  padding: 2px 10px; border-radius: 99px;
+  border: 1px solid var(--border); background: var(--zinc-50);
+  font-size: 12px; color: var(--zinc-500);
+}
+.navbar-right { display: flex; align-items: center; gap: 6px; }
+.btn-ghost {
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--r-md);
+  font-size: 13px; color: var(--zinc-600); background: var(--white); transition: all 0.12s;
+}
+.btn-ghost:hover { border-color: var(--border-2); background: var(--zinc-50); color: var(--ink); }
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: 240px; flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    overflow-y: auto; padding: 16px 0;
-    background: var(--surface-2);
-  }
-  .sidebar-label {
-    font-size: 10px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.8px; color: var(--text-3);
-    padding: 0 16px; margin-bottom: 10px;
-  }
-  .step-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px; cursor: pointer;
-    transition: background 0.12s; position: relative;
-  }
-  .step-item:hover { background: var(--border); }
-  .step-item.active { background: rgba(99,102,241,0.07); }
-  .step-item.active::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 2px; background: var(--accent); border-radius: 0 2px 2px 0;
-  }
+/* ─── WORKSPACE (below navbar) ─── */
+.workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* step icon */
-  .step-icon {
-    width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600;
-  }
-  .si-pending {
-    background: var(--surface); border: 1px solid var(--border-2);
-    color: var(--text-3);
-  }
-  .si-done {
-    background: var(--success-bg); border: 1px solid rgba(22,163,74,0.25);
-    color: var(--success); font-size: 13px;
-  }
-  .si-active {
-    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.35);
-    color: var(--accent);
-  }
-  .si-generating {
-    background: var(--warn-bg); border: 1px solid rgba(217,119,6,0.3);
-    color: var(--warning);
-  }
-  .si-external {
-    background: var(--ext-bg); border: 1px solid rgba(2,132,199,0.25);
-    color: var(--external); font-size: 10px;
-  }
+/* ─── TITLE BAR ─── */
+.title-bar {
+  height: var(--titlebar-h); flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; background: var(--white);
+}
+.title-text { font-size: 14px; font-weight: 500; color: var(--ink); }
+.title-edit-btn {
+  font-size: 12px; color: var(--zinc-400); padding: 2px 6px;
+  border-radius: var(--r-sm); transition: all 0.12s;
+}
+.title-edit-btn:hover { color: var(--zinc-700); background: var(--zinc-100); }
+.title-bar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.save-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--r-md);
+  font-size: 13px; color: var(--zinc-600); background: var(--white); transition: all 0.12s;
+}
+.save-btn:hover { border-color: var(--border-2); background: var(--zinc-50); }
+.back-link {
+  font-size: 13px; color: var(--zinc-400);
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: var(--r-sm); transition: all 0.12s;
+}
+.back-link:hover { color: var(--ink); background: var(--zinc-100); }
 
-  .step-info { min-width: 0; flex: 1; }
-  .step-name {
-    font-size: 12.5px; font-weight: 500; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-  }
-  .step-item.active .step-name { color: var(--accent); }
-  .step-item.done .step-name { color: var(--text-2); }
-  .step-item.locked .step-name { color: var(--text-3); }
-  .step-tool {
-    font-size: 10.5px; color: var(--text-3); margin-top: 1px;
-  }
-  .step-tool.llm-tag { color: rgba(99,102,241,0.7); }
-  .step-tool.ext-tag { color: rgba(2,132,199,0.6); }
+/* ─── BODY (sidebar + main) ─── */
+.workspace-body { flex: 1; display: flex; overflow: hidden; }
 
-  /* spin animation */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner { animation: spin 1s linear infinite; display: inline-block; }
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--white);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header-label {
+  font-size: 11px; font-weight: 600; color: var(--zinc-400);
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.sidebar-steps { padding: 8px 0; flex: 1; }
+.step-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer; transition: all 0.1s;
+  border-left: 2px solid transparent;
+}
+.step-item:hover:not(.locked) { background: var(--zinc-50); }
+.step-item.active {
+  background: var(--orange-50);
+  border-left-color: var(--accent);
+}
+.step-item.locked { cursor: not-allowed; opacity: 0.4; }
 
-  /* ── MAIN ── */
-  main {
-    flex: 1; overflow-y: auto; padding: 32px;
-  }
+.step-icon {
+  width: 22px; height: 22px; flex-shrink: 0;
+  border-radius: 50%; border: 1.5px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--zinc-500);
+  background: var(--white);
+}
+.step-item.active .step-icon {
+  border-color: var(--accent); color: var(--accent);
+  background: var(--white);
+}
+.step-item.done .step-icon {
+  border-color: var(--green-500); background: var(--green-500); color: var(--white);
+}
+.step-item.generating .step-icon {
+  border-color: var(--amber-400); color: var(--amber-400);
+}
+.step-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.step-label {
+  font-size: 13px; font-weight: 500; color: var(--zinc-700);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.step-item.active .step-label { color: var(--orange-700); font-weight: 600; }
+.step-item.done .step-label { color: var(--zinc-600); }
+.step-item.locked .step-label { color: var(--zinc-400); }
+.step-tool {
+  font-size: 11px; color: var(--zinc-400);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.step-item.active .step-tool { color: var(--orange-400); }
 
-  .step-header { margin-bottom: 24px; }
-  .step-num { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-3); margin-bottom: 6px; }
-  .step-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; }
-  .step-desc { font-size: 13px; color: var(--text-2); line-height: 1.65; max-width: 560px; }
+/* Progress summary at sidebar bottom */
+.sidebar-footer {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  background: var(--zinc-50);
+}
+.sidebar-progress-label { font-size: 11px; color: var(--zinc-500); margin-bottom: 6px; }
+.sidebar-progress-bar {
+  height: 4px; background: var(--zinc-200); border-radius: 2px; overflow: hidden;
+}
+.sidebar-progress-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  width: 44%; /* step 4 of 9 = ~44% */
+  transition: width 0.3s;
+}
 
-  /* ═══════════════════════════════════════════════
-     LLM STEP — HAS RESULT STATE (current active)
-  ═══════════════════════════════════════════════ */
-  .result-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--r); margin-bottom: 16px;
-  }
-  .result-card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    background: var(--surface-2); border-radius: var(--r) var(--r) 0 0;
-  }
-  .result-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.7px; color: var(--text-3);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .ai-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
-  }
-  .result-body {
-    padding: 16px; font-size: 13.5px; line-height: 1.75;
-    color: var(--text); white-space: pre-wrap;
-  }
-  .result-body strong { font-weight: 600; color: var(--text); }
+/* ─── MAIN PANEL ─── */
+.main-panel { flex: 1; overflow-y: auto; background: var(--white); }
+.step-panel { max-width: 720px; margin: 0 auto; padding: 36px 32px 80px; }
 
-  /* follow-up area */
-  .followup-area { margin-bottom: 16px; }
-  .followup-label {
-    font-size: 12px; color: var(--text-3); margin-bottom: 8px;
-  }
-  .followup-input-row { display: flex; gap: 8px; align-items: flex-end; }
-  .followup-input {
-    flex: 1; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--r); color: var(--text); font-family: inherit;
-    font-size: 13.5px; padding: 9px 12px; outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s; resize: none; min-height: 40px;
-  }
-  .followup-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-  }
-  .followup-input::placeholder { color: var(--text-3); }
-  .btn-send {
-    padding: 9px 16px; background: var(--surface-2);
-    border: 1px solid var(--border); border-radius: var(--r);
-    color: var(--text-2); font-family: inherit; font-size: 13px;
-    cursor: pointer; transition: all 0.15s; white-space: nowrap;
-  }
-  .btn-send:hover { border-color: var(--accent); color: var(--accent); }
+/* Step header */
+.step-header { margin-bottom: 28px; }
+.step-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--zinc-400); margin-bottom: 8px;
+}
+.step-breadcrumb-sep { color: var(--zinc-300); }
+.step-title { font-size: 20px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.step-desc { font-size: 13px; color: var(--zinc-500); margin-top: 6px; line-height: 1.6; }
 
-  /* action row */
-  .action-row { display: flex; align-items: center; gap: 10px; }
-  .btn-retry {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px; background: transparent; color: var(--text-2);
-    font-family: inherit; font-size: 13px; font-weight: 500;
-    border: 1px solid var(--border); border-radius: var(--r);
-    cursor: pointer; transition: all 0.15s;
-  }
-  .btn-retry:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
-  .btn-approve {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 18px; background: var(--accent); color: #fff;
-    font-family: inherit; font-size: 13px; font-weight: 500;
-    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
-    margin-left: auto;
-  }
-  .btn-approve:hover { background: var(--accent-h); }
+/* Response card */
+.response-card {
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  overflow: hidden; margin-bottom: 20px;
+  background: var(--white);
+}
+.response-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--zinc-50);
+}
+.response-card-label { font-size: 12px; font-weight: 600; color: var(--zinc-600); }
+.copy-btn {
+  font-size: 12px; color: var(--zinc-400); padding: 2px 8px; border-radius: var(--r-sm);
+  transition: all 0.1s;
+}
+.copy-btn:hover { color: var(--ink); background: var(--zinc-200); }
+.response-card-body {
+  padding: 16px;
+  font-size: 13px; line-height: 1.7; color: var(--zinc-800);
+  white-space: pre-wrap;
+  background: var(--white);
+}
 
-  /* ═══════════════════════════════════════════════
-     LLM STEP — GENERATING STATE
-  ═══════════════════════════════════════════════ */
-  .generating-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--r); padding: 32px 24px;
-    display: flex; align-items: center; gap: 14px;
-    color: var(--text-2); font-size: 13.5px;
-  }
-  .gen-spinner {
-    width: 20px; height: 20px; border: 2px solid var(--border-2);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.8s linear infinite; flex-shrink: 0;
-  }
+/* Approved state */
+.approved-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  background: var(--green-50); border: 1px solid var(--green-200);
+  border-radius: var(--r-md);
+  font-size: 13px; font-weight: 500; color: var(--green-600);
+  margin-bottom: 16px;
+}
+.approved-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--green-500); color: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; flex-shrink: 0;
+}
+.reopen-btn {
+  margin-left: auto; font-size: 12px; color: var(--zinc-400); padding: 2px 8px;
+  border-radius: var(--r-sm); transition: all 0.1s;
+}
+.reopen-btn:hover { color: var(--zinc-700); background: var(--zinc-100); }
 
-  /* ═══════════════════════════════════════════════
-     LLM STEP — DONE (approved)
-  ═══════════════════════════════════════════════ */
-  .done-card {
-    background: var(--success-bg); border: 1px solid rgba(22,163,74,0.2);
-    border-radius: var(--r); padding: 12px 16px;
-    display: flex; align-items: center; gap: 10px;
-    font-size: 13px; color: var(--success); margin-bottom: 8px;
-  }
+/* Follow-up input */
+.followup-area { margin-bottom: 20px; }
+.followup-row { display: flex; gap: 8px; align-items: flex-end; }
+.followup-input {
+  flex: 1; resize: none; border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: 10px 12px; font-family: var(--font); font-size: 13px; color: var(--ink);
+  outline: none; transition: border-color 0.12s;
+  line-height: 1.5;
+}
+.followup-input::placeholder { color: var(--zinc-400); }
+.followup-input:focus { border-color: var(--orange-400); }
+.send-btn {
+  padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--r-md);
+  font-size: 13px; font-weight: 500; color: var(--zinc-600); background: var(--zinc-100);
+  transition: all 0.12s;
+}
+.send-btn:hover { background: var(--zinc-200); border-color: var(--border-2); color: var(--ink); }
 
-  /* ═══════════════════════════════════════════════
-     EXTERNAL STEP
-  ═══════════════════════════════════════════════ */
-  .context-card {
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--r); margin-bottom: 16px;
-  }
-  .context-head {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px; border-bottom: 1px solid var(--border);
-  }
-  .context-tag {
-    font-size: 10.5px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--text-3);
-  }
-  .context-toggle {
-    margin-left: auto; font-size: 12px; color: var(--text-3); cursor: pointer;
-  }
-  .context-body {
-    padding: 14px 16px; font-size: 13px; line-height: 1.75; color: var(--text-2);
-    white-space: pre-wrap;
-  }
+/* Action buttons */
+.action-row { display: flex; align-items: center; gap: 10px; }
+.btn-secondary {
+  padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--r-md);
+  font-size: 13px; color: var(--zinc-600); background: var(--white); transition: all 0.12s;
+}
+.btn-secondary:hover { border-color: var(--border-2); background: var(--zinc-50); color: var(--ink); }
+.btn-approve {
+  padding: 8px 20px; border-radius: var(--r-md);
+  background: var(--accent); border: 1px solid var(--accent);
+  font-size: 13px; font-weight: 500; color: var(--white); transition: all 0.12s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-approve:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-  .ext-card {
-    background: var(--ext-bg); border: 1px solid rgba(2,132,199,0.18);
-    border-radius: var(--r); padding: 16px; margin-bottom: 16px;
-  }
-  .ext-head {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 10px;
-  }
-  .ext-badge {
-    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px;
-    color: var(--external); background: rgba(2,132,199,0.08);
-    border: 1px solid rgba(2,132,199,0.18); padding: 2px 7px; border-radius: 4px;
-  }
-  .ext-tool { font-size: 13px; font-weight: 500; color: var(--text); }
-  .ext-instructions {
-    font-size: 13.5px; line-height: 1.7; color: var(--text);
-    margin-bottom: 14px;
-  }
-  .ext-link {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px; background: var(--surface);
-    border: 1px solid rgba(2,132,199,0.25); border-radius: var(--r);
-    color: var(--external); font-size: 13px; text-decoration: none;
-    transition: all 0.15s; margin-bottom: 16px;
-  }
-  .ext-link:hover { background: rgba(2,132,199,0.06); border-color: rgba(2,132,199,0.4); }
-  .ext-input-label {
-    font-size: 12.5px; font-weight: 500; color: var(--text); margin-bottom: 7px;
-  }
-  .ext-input-hint { font-size: 11.5px; color: var(--text-3); margin-bottom: 8px; }
-  .ext-url-area { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-  .ext-url-row { display: flex; gap: 8px; align-items: center; }
-  .ext-url-row input {
-    flex: 1; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--r); color: var(--text); font-family: inherit;
-    font-size: 13.5px; padding: 8px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .ext-url-row input:focus {
-    border-color: var(--external);
-    box-shadow: 0 0 0 3px rgba(2,132,199,0.1);
-  }
-  .ext-url-row input::placeholder { color: var(--text-3); }
-  .btn-add-url {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12px; color: var(--text-3); background: none; border: none;
-    cursor: pointer; font-family: inherit; transition: color 0.15s; padding: 2px 0;
-  }
-  .btn-add-url:hover { color: var(--external); }
-  .expiry-warn {
-    display: flex; align-items: flex-start; gap: 8px;
-    font-size: 12px; color: var(--warning);
-    background: var(--warn-bg); border: 1px solid rgba(217,119,6,0.18);
-    border-radius: 6px; padding: 9px 12px; margin-bottom: 14px;
-    line-height: 1.5;
-  }
-  .ext-approve {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 9px 20px; background: var(--external); color: #fff;
-    font-family: inherit; font-size: 13px; font-weight: 500;
-    border: none; border-radius: var(--r); cursor: pointer; transition: background 0.15s;
-  }
-  .ext-approve:hover { background: #0369a1; }
+/* Empty / generate state */
+.generate-state {
+  text-align: center; padding: 64px 24px;
+}
+.generate-state p { font-size: 13px; color: var(--zinc-500); margin-bottom: 16px; }
+.btn-generate {
+  padding: 10px 28px; background: var(--accent); border: 1px solid var(--accent);
+  border-radius: var(--r-md); font-size: 14px; font-weight: 500; color: var(--white);
+  display: inline-flex; align-items: center; gap: 8px; transition: all 0.12s;
+}
+.btn-generate:hover { background: var(--accent-hover); }
 
-  /* ── TABS (toggle between states for demo) ── */
-  .demo-tabs {
-    display: flex; gap: 6px; margin-bottom: 28px; flex-wrap: wrap;
-  }
-  .demo-tab {
-    padding: 5px 12px; font-size: 12px; font-weight: 500;
-    border: 1px solid var(--border); border-radius: 20px;
-    cursor: pointer; color: var(--text-2); background: none;
-    font-family: inherit; transition: all 0.15s;
-  }
-  .demo-tab:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
-  .demo-tab.on { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,0.07); }
-  .demo-tab.ext { border-color: rgba(2,132,199,0.3); color: var(--external); background: var(--ext-bg); }
+/* Spinner */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--zinc-200); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .state-panel { display: none; }
-  .state-panel.visible { display: block; }
+/* Section label */
+.section-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 99px;
+  background: var(--orange-50); border: 1px solid var(--orange-200);
+  font-size: 11px; font-weight: 600; color: var(--orange-600);
+  letter-spacing: 0.03em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
 
-  /* conversation history */
-  .conv-history { margin-bottom: 12px; }
-  .conv-msg {
-    display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start;
-  }
-  .conv-role {
-    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-    padding: 2px 7px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
-  }
-  .role-user { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
-  .role-ai { background: rgba(99,102,241,0.08); color: var(--accent); border: 1px solid rgba(99,102,241,0.2); }
-  .conv-text { font-size: 13.5px; line-height: 1.7; color: var(--text-2); flex: 1; }
-  .conv-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+/* ─── ANNOTATION PANEL ─── */
+.annotation-panel {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 280px;
+  background: #0f172a; color: #e2e8f0; overflow-y: auto;
+  padding: 24px 18px; font-family: var(--font); font-size: 13px; line-height: 1.6;
+  border-left: 1px solid #1e293b;
+}
+.annotation-panel h2 { font-size: 14px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
+.annotation-panel .ver { font-size: 11px; color: #64748b; margin-bottom: 20px; }
+.annotation-section { margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 16px; }
+.annotation-section:last-child { border-bottom: none; }
+.annotation-section h3 { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.token { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #1e293b; flex-shrink: 0; }
+.token-name { color: #cbd5e1; font-size: 12px; }
+.token-value { color: #64748b; font-size: 11px; margin-left: auto; }
+.note { background: #1e293b; border-radius: 4px; padding: 8px 10px; font-size: 12px; color: #94a3b8; margin-top: 6px; }
+.note strong { color: #e2e8f0; }
+.change { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; font-size: 12px; color: #94a3b8; }
+.change-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
+.body-container { margin-right: 280px; height: 100vh; overflow: hidden; }
 </style>
 </head>
 <body>
+<div class="body-container">
+<div class="page">
 
-<nav>
-  <div class="nav-left">
-    <div class="logo">
-      <div class="logo-mark">G</div>
-      Gigity
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <a href="/" style="display:flex;align-items:center;gap:8px;">
+        <div class="logo-mark">G</div>
+        <span class="logo-text">Gigity</span>
+      </a>
+      <div class="nav-sep"></div>
+      <span class="brand-chip">TechBrand Co</span>
     </div>
-    <div class="sep"></div>
-    <span class="nav-project">April payday campaign</span>
-  </div>
-  <div class="nav-right">
-    <button class="btn-back" onclick="window.location='dashboard.html'">← All videos</button>
-  </div>
-</nav>
-
-<div class="layout">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-label">Steps</div>
-
-    <!-- Step 1 — done -->
-    <div class="step-item done" data-step="1">
-      <div class="step-icon si-done">✓</div>
-      <div class="step-info">
-        <div class="step-name">Campaign brief</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
+    <div class="navbar-right">
+      <button class="btn-ghost">Edit brand</button>
     </div>
+  </nav>
 
-    <!-- Step 2 — done -->
-    <div class="step-item done" data-step="2">
-      <div class="step-icon si-done">✓</div>
-      <div class="step-info">
-        <div class="step-name">Story script</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
+  <!-- WORKSPACE -->
+  <div class="workspace">
+
+    <!-- TITLE BAR -->
+    <div class="title-bar">
+      <a href="/" class="back-link">← Videos</a>
+      <div class="nav-sep" style="margin:0 2px"></div>
+      <span class="title-text">Summer Launch Campaign — Product Reveal</span>
+      <button class="title-edit-btn">Edit</button>
+      <div class="title-bar-right">
+        <button class="save-btn">
+          <span style="color:var(--zinc-400);font-size:12px">◎</span>
+          Save
+        </button>
       </div>
     </div>
 
-    <!-- Step 3 — ACTIVE (has result) -->
-    <div class="step-item active" data-step="3" id="sb-3">
-      <div class="step-icon si-active">3</div>
-      <div class="step-info">
-        <div class="step-name">SunoAI lyrics</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
-    </div>
+    <!-- WORKSPACE BODY -->
+    <div class="workspace-body">
 
-    <!-- Steps 4-8 locked -->
-    <div class="step-item locked" data-step="4">
-      <div class="step-icon si-pending">4</div>
-      <div class="step-info">
-        <div class="step-name">Music prompt</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="5">
-      <div class="step-icon si-pending">5</div>
-      <div class="step-info">
-        <div class="step-name">Character prompts</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="6">
-      <div class="step-icon si-external">↗</div>
-      <div class="step-info">
-        <div class="step-name">Character images</div>
-        <div class="step-tool ext-tag">Manual · Midjourney</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="7">
-      <div class="step-icon si-pending">7</div>
-      <div class="step-info">
-        <div class="step-name">Scene image prompts</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="8">
-      <div class="step-icon si-pending">8</div>
-      <div class="step-info">
-        <div class="step-name">KlingAI prompts</div>
-        <div class="step-tool llm-tag">AI · Gigity</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="9">
-      <div class="step-icon si-external">↗</div>
-      <div class="step-info">
-        <div class="step-name">Video clips</div>
-        <div class="step-tool ext-tag">Manual · KlingAI</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="10">
-      <div class="step-icon si-external">↗</div>
-      <div class="step-info">
-        <div class="step-name">Assemble video</div>
-        <div class="step-tool ext-tag">Manual · CapCut</div>
-      </div>
-    </div>
-    <div class="step-item locked" data-step="11">
-      <div class="step-icon si-external">↗</div>
-      <div class="step-info">
-        <div class="step-name">Publish</div>
-        <div class="step-tool ext-tag">Manual · TikTok / YT / IG</div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN PANEL -->
-  <main>
-
-    <!-- DEMO STATE SWITCHER -->
-    <div class="demo-tabs">
-      <button class="demo-tab on" onclick="showState('result')">LLM step — has result</button>
-      <button class="demo-tab" onclick="showState('generating')">LLM step — generating</button>
-      <button class="demo-tab" onclick="showState('done')">LLM step — approved</button>
-      <button class="demo-tab" onclick="showState('followup')">LLM step — follow-up thread</button>
-      <button class="demo-tab ext" onclick="showState('external')">External step (step 6)</button>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STATE: HAS RESULT
-    ══════════════════════════════════════ -->
-    <div class="state-panel visible" id="state-result">
-      <div class="step-header">
-        <div class="step-num">Step 3 · AI</div>
-        <h1 class="step-title">SunoAI Lyrics</h1>
-        <p class="step-desc">Review the generated song lyrics. Approve to continue to Step 4, or refine with a follow-up message.</p>
-      </div>
-
-      <div class="result-card">
-        <div class="result-card-head">
-          <div class="result-label"><div class="ai-dot"></div> AI output</div>
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-header-label">Steps</div>
         </div>
-        <div class="result-body">[Verse 1]
-Bắt đầu tháng mới, lương về tay rồi
-Mở Deewas ra, theo dõi mọi thứ thôi
-Cà phê sáng nay, đã được lưu lại
-Tiền dư cuối tháng — dành cho ước mơ
+        <div class="sidebar-steps">
 
-[Pre-chorus]
-Không cần lo lắng, không cần phức tạp
-Deewas hiểu bạn, từng đồng từng bước
-
-[Chorus]
-Deewas — tiền của bạn, bạn làm chủ
-Deewas — cân bằng chi tiêu mỗi ngày
-Deewas — không còn thắc mắc đi đâu hết
-Tiền bạn xứng đáng được trân trọng</div>
-      </div>
-
-      <div class="followup-area">
-        <div class="followup-label">Refine this result — or approve to continue →</div>
-        <div class="followup-input-row">
-          <textarea class="followup-input" placeholder="Make it more energetic, shorter chorus..." rows="2"></textarea>
-          <button class="btn-send">Send</button>
-        </div>
-      </div>
-
-      <div class="action-row">
-        <button class="btn-retry">↺ Retry</button>
-        <button class="btn-approve">Approve →</button>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STATE: GENERATING
-    ══════════════════════════════════════ -->
-    <div class="state-panel" id="state-generating">
-      <div class="step-header">
-        <div class="step-num">Step 3 · AI</div>
-        <h1 class="step-title">SunoAI Lyrics</h1>
-        <p class="step-desc">Generating lyrics based on your story script and brand tone...</p>
-      </div>
-
-      <div class="generating-card">
-        <div class="gen-spinner"></div>
-        <span>Generating lyrics — this usually takes 5–10 seconds...</span>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STATE: APPROVED (done)
-    ══════════════════════════════════════ -->
-    <div class="state-panel" id="state-done">
-      <div class="step-header">
-        <div class="step-num">Step 3 · AI</div>
-        <h1 class="step-title">SunoAI Lyrics</h1>
-      </div>
-
-      <div class="done-card">
-        <span>✓</span> Approved — Step 4 unlocked
-      </div>
-
-      <div class="result-card">
-        <div class="result-card-head">
-          <div class="result-label" style="color:var(--success)"><div class="ai-dot" style="background:var(--success)"></div> Approved output</div>
-        </div>
-        <div class="result-body" style="color:var(--text-2)">[Verse 1]
-Bắt đầu tháng mới, lương về tay rồi
-Mở Deewas ra, theo dõi mọi thứ thôi
-Cà phê sáng nay, đã được lưu lại
-Tiền dư cuối tháng — dành cho ước mơ
-
-[Chorus]
-Deewas — tiền của bạn, bạn làm chủ
-Deewas — cân bằng chi tiêu mỗi ngày</div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STATE: FOLLOW-UP THREAD
-    ══════════════════════════════════════ -->
-    <div class="state-panel" id="state-followup">
-      <div class="step-header">
-        <div class="step-num">Step 3 · AI</div>
-        <h1 class="step-title">SunoAI Lyrics</h1>
-        <p class="step-desc">Conversation thread — refined with follow-up messages.</p>
-      </div>
-
-      <div class="conv-history">
-        <div class="conv-msg">
-          <div class="conv-role role-ai">AI</div>
-          <div class="conv-text">[Verse 1]
-Bắt đầu tháng mới, lương về tay rồi
-Mở Deewas ra, theo dõi mọi thứ thôi...
-
-[Chorus]
-Deewas — tiền của bạn, bạn làm chủ
-Deewas — cân bằng chi tiêu mỗi ngày</div>
-        </div>
-        <div class="conv-msg">
-          <div class="conv-role role-user">You</div>
-          <div class="conv-text">Make the chorus shorter and punchier. 2 lines max.</div>
-        </div>
-        <hr class="conv-divider">
-        <div class="conv-msg">
-          <div class="conv-role role-ai">AI</div>
-          <div class="conv-text">[Verse 1]
-Bắt đầu tháng mới, lương về tay rồi
-Mở Deewas ra, theo dõi mọi thứ thôi
-Cà phê sáng nay, đã được lưu lại
-Tiền dư cuối tháng — dành cho ước mơ
-
-[Chorus]
-Deewas — bạn làm chủ
-Tiền của bạn, mỗi ngày</div>
-        </div>
-      </div>
-
-      <div class="followup-area">
-        <div class="followup-label">Continue refining — or approve</div>
-        <div class="followup-input-row">
-          <textarea class="followup-input" placeholder="Now make the verse rhyme better..." rows="2"></textarea>
-          <button class="btn-send">Send</button>
-        </div>
-      </div>
-
-      <div class="action-row">
-        <button class="btn-retry">↺ Start fresh</button>
-        <button class="btn-approve">Approve →</button>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STATE: EXTERNAL STEP (step 6)
-    ══════════════════════════════════════ -->
-    <div class="state-panel" id="state-external">
-      <div class="step-header">
-        <div class="step-num">Step 6 · External</div>
-        <h1 class="step-title">Generate Character Images</h1>
-        <p class="step-desc">Use the character prompts from Step 5 to generate images in Midjourney or DALL-E. Paste the image URLs below to continue.</p>
-      </div>
-
-      <!-- Step 5 output shown inline (critical — user needs prompts in front of them) -->
-      <div class="context-card">
-        <div class="context-head">
-          <div class="step-icon si-done" style="width:18px;height:18px;font-size:10px;flex-shrink:0">✓</div>
-          <span class="context-tag">Step 5 output — Character prompts</span>
-          <span class="context-toggle" id="toggleCtx">hide ↑</span>
-        </div>
-        <div class="context-body" id="ctxBody">Character 1 — Minh (lead)
-Portrait of a Vietnamese man, 26 years old, short dark hair, wearing a light blue button-down shirt, friendly confident expression, clean minimalist background, soft studio lighting, digital illustration style, 8k
-
-Character 2 — Lan (friend)
-Portrait of a Vietnamese woman, 25 years old, shoulder-length hair with highlights, casual white top, laughing warmly, clean background, same illustration style as Character 1, consistent lighting</div>
-      </div>
-
-      <div class="ext-card">
-        <div class="ext-head">
-          <span class="ext-badge">External step</span>
-          <span class="ext-tool">Midjourney or DALL-E</span>
-        </div>
-
-        <div class="ext-instructions">
-          Copy each character prompt above and generate images in <strong>Midjourney</strong> or <strong>DALL-E</strong>.
-          Use the same style modifiers on every character to keep them consistent.
-          When done, upload each image somewhere accessible (Google Drive, Imgur, etc.) and paste the URLs below.
-        </div>
-
-        <a class="ext-link" href="https://www.midjourney.com" target="_blank">
-          ↗ Open Midjourney
-        </a>
-
-        <div class="expiry-warn">
-          ⚠️ AI-generated image URLs from Midjourney and DALL-E expire in 24–72 hours. Upload to a permanent host (Google Drive, Imgur, Cloudinary) before pasting here.
-        </div>
-
-        <div class="ext-input-label">Character image URLs</div>
-        <div class="ext-input-hint">One URL per character. These will be used in Step 7 to generate scene images.</div>
-        <div class="ext-url-area" id="extUrls">
-          <div class="ext-url-row">
-            <input type="url" placeholder="Minh — https://drive.google.com/...">
+          <!-- Step 1: done -->
+          <div class="step-item done">
+            <div class="step-icon">✓</div>
+            <div class="step-meta">
+              <div class="step-label">Campaign Brief</div>
+              <div class="step-tool">Gigity AI</div>
+            </div>
           </div>
-          <div class="ext-url-row">
-            <input type="url" placeholder="Lan — https://drive.google.com/...">
+
+          <!-- Step 2: done -->
+          <div class="step-item done">
+            <div class="step-icon">✓</div>
+            <div class="step-meta">
+              <div class="step-label">Story Script</div>
+              <div class="step-tool">Gigity AI</div>
+            </div>
+          </div>
+
+          <!-- Step 3: done -->
+          <div class="step-item done">
+            <div class="step-icon">✓</div>
+            <div class="step-meta">
+              <div class="step-label">Song Lyrics</div>
+              <div class="step-tool">Gigity AI</div>
+            </div>
+          </div>
+
+          <!-- Step 4: ACTIVE -->
+          <div class="step-item active">
+            <div class="step-icon">4</div>
+            <div class="step-meta">
+              <div class="step-label">Music Generation</div>
+              <div class="step-tool">Suno AI</div>
+            </div>
+          </div>
+
+          <!-- Step 5: pending -->
+          <div class="step-item">
+            <div class="step-icon" style="border-color:var(--border);color:var(--zinc-400)">5</div>
+            <div class="step-meta">
+              <div class="step-label" style="color:var(--zinc-400)">Character Images</div>
+              <div class="step-tool">DALL·E 3</div>
+            </div>
+          </div>
+
+          <!-- Step 6: locked -->
+          <div class="step-item locked">
+            <div class="step-icon">6</div>
+            <div class="step-meta">
+              <div class="step-label">Scene Images</div>
+              <div class="step-tool">DALL·E 3</div>
+            </div>
+          </div>
+
+          <!-- Step 7: locked -->
+          <div class="step-item locked">
+            <div class="step-icon">7</div>
+            <div class="step-meta">
+              <div class="step-label">Video Clips</div>
+              <div class="step-tool">Kling AI</div>
+            </div>
+          </div>
+
+          <!-- Step 8: locked -->
+          <div class="step-item locked">
+            <div class="step-icon">↗</div>
+            <div class="step-meta">
+              <div class="step-label">Video Editing</div>
+              <div class="step-tool">Manual</div>
+            </div>
+          </div>
+
+          <!-- Step 9: locked -->
+          <div class="step-item locked">
+            <div class="step-icon">↗</div>
+            <div class="step-meta">
+              <div class="step-label">Publish</div>
+              <div class="step-tool">Manual</div>
+            </div>
+          </div>
+
+        </div><!-- /sidebar-steps -->
+
+        <!-- Sidebar footer: overall progress -->
+        <div class="sidebar-footer">
+          <div class="sidebar-progress-label">3 of 9 steps done</div>
+          <div class="sidebar-progress-bar">
+            <div class="sidebar-progress-fill"></div>
           </div>
         </div>
-        <button class="btn-add-url" id="addExtUrl">+ Add another character image</button>
+      </aside>
 
-        <div style="margin-top: 16px;">
-          <button class="ext-approve">Mark as done →</button>
-        </div>
-      </div>
+      <!-- MAIN PANEL -->
+      <main class="main-panel">
+        <div class="step-panel">
+
+          <!-- Step header -->
+          <div class="step-header">
+            <div class="step-breadcrumb">
+              <span>Step 4 of 9</span>
+              <span class="step-breadcrumb-sep">·</span>
+              <span>Suno AI</span>
+            </div>
+            <h2 class="step-title">Music Generation</h2>
+            <p class="step-desc">Generate a music track for your video using Suno AI. The prompt has been prepared based on your song lyrics.</p>
+          </div>
+
+          <!-- EXAMPLE: HAS RESPONSE (review state) -->
+          <div class="section-tag">✦ AI Output</div>
+
+          <div class="response-card">
+            <div class="response-card-header">
+              <span class="response-card-label">Music Prompt</span>
+              <button class="copy-btn">Copy</button>
+            </div>
+            <div class="response-card-body">Upbeat corporate pop with cinematic strings, driving percussion, and inspirational piano. BPM: 128. Key: C major. Mood: energetic and optimistic. Suitable for product reveal video. Duration: 60 seconds. Fade out at end.</div>
+          </div>
+
+          <div class="response-card">
+            <div class="response-card-header">
+              <span class="response-card-label">Track Title</span>
+              <button class="copy-btn">Copy</button>
+            </div>
+            <div class="response-card-body">Summer Launch 2024 — Reveal</div>
+          </div>
+
+          <!-- Follow-up -->
+          <div class="followup-area">
+            <div class="followup-row">
+              <textarea class="followup-input" rows="2" placeholder="Refine this output… e.g. make it more dramatic, slower tempo"></textarea>
+              <button class="send-btn" disabled style="opacity:0.4">Send</button>
+            </div>
+          </div>
+
+          <!-- Action row -->
+          <div class="action-row">
+            <button class="btn-secondary">Start fresh</button>
+            <button class="btn-approve">
+              <span style="font-size:12px">✓</span>
+              Approve
+            </button>
+          </div>
+
+          <!-- EXAMPLE (annotation only): APPROVED STATE (step 1 would look like this) -->
+          <div style="margin-top:40px;padding-top:32px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:600;color:var(--zinc-400);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px">Example — Approved step</div>
+            <div class="approved-banner">
+              <div class="approved-check">✓</div>
+              Approved
+              <button class="reopen-btn">Re-open</button>
+            </div>
+            <div class="response-card">
+              <div class="response-card-header">
+                <span class="response-card-label">Campaign Brief</span>
+                <button class="copy-btn">Copy</button>
+              </div>
+              <div class="response-card-body">Brand: TechBrand Co
+Target audience: B2B SaaS decision-makers, 30-50
+Tone: Confident, aspirational, technically credible
+Platform: LinkedIn + YouTube
+Hook: "What if your entire onboarding took 5 minutes?"
+Key message: TechBrand reduces customer time-to-value by 80%</div>
+            </div>
+          </div>
+
+          <!-- EXAMPLE (annotation only): GENERATE STATE (pending, no response) -->
+          <div style="margin-top:40px;padding-top:32px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:600;color:var(--zinc-400);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px">Example — Generate state (no output yet)</div>
+            <div class="generate-state">
+              <p>Ready to generate your music prompt.</p>
+              <button class="btn-generate">
+                Generate
+              </button>
+            </div>
+          </div>
+
+          <!-- EXAMPLE: GENERATING STATE -->
+          <div style="margin-top:40px;padding-top:32px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:600;color:var(--zinc-400);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px">Example — Generating state</div>
+            <div class="generate-state">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+                <div class="spinner"></div>
+                <p style="margin:0">Generating music prompt…</p>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /step-panel -->
+      </main>
+
+    </div><!-- /workspace-body -->
+  </div><!-- /workspace -->
+
+</div><!-- /page -->
+</div><!-- /body-container -->
+
+<!-- ANNOTATION PANEL -->
+<div class="annotation-panel">
+  <h2>Workflow View — Design Spec</h2>
+  <div class="ver">v2.0 · Orange + #111 + shadcn neutral</div>
+
+  <div class="annotation-section">
+    <h3>Layout Dimensions</h3>
+    <div class="token"><span class="token-name">Navbar height</span><span class="token-value">52px</span></div>
+    <div class="token"><span class="token-name">Title bar height</span><span class="token-value">44px</span></div>
+    <div class="token"><span class="token-name">Sidebar width</span><span class="token-value">228px</span></div>
+    <div class="token"><span class="token-name">Step panel max-w</span><span class="token-value">720px</span></div>
+    <div class="token"><span class="token-name">Step panel padding</span><span class="token-value">36px 32px</span></div>
+  </div>
+
+  <div class="annotation-section">
+    <h3>Sidebar Step States</h3>
+    <div class="token">
+      <div class="swatch" style="background:#f0fdf4;border-color:#22c55e"></div>
+      <span class="token-name">done</span>
+      <span class="token-value">green check</span>
     </div>
+    <div class="token">
+      <div class="swatch" style="background:#fff7ed;border-color:#f97316"></div>
+      <span class="token-name">active</span>
+      <span class="token-value">orange border-l</span>
+    </div>
+    <div class="token">
+      <div class="swatch" style="background:#ffffff;border-color:#e4e4e7"></div>
+      <span class="token-name">pending (open)</span>
+      <span class="token-value">zinc border</span>
+    </div>
+    <div class="token">
+      <div class="swatch" style="background:#fafafa;border-color:#d4d4d8;opacity:0.4"></div>
+      <span class="token-name">locked</span>
+      <span class="token-value">40% opacity</span>
+    </div>
+    <div class="note"><strong>Key change:</strong> Active step has orange left border (2px) + orange-50 background. This is the primary visual anchor.</div>
+  </div>
 
-  </main>
+  <div class="annotation-section">
+    <h3>Title Bar Changes</h3>
+    <div class="change"><div class="change-dot"></div>"← Videos" back link added (replaces nothing — new)</div>
+    <div class="change"><div class="change-dot"></div>Save button moves to far right of title bar</div>
+    <div class="change"><div class="change-dot"></div>Title is editable inline (same as before)</div>
+    <div class="change"><div class="change-dot"></div>Save state feedback: spinning indicator, ✓ Saved, ! Error</div>
+  </div>
+
+  <div class="annotation-section">
+    <h3>Step Panel</h3>
+    <div class="change"><div class="change-dot"></div>Step breadcrumb: "Step 4 of 9 · Suno AI" above h2</div>
+    <div class="change"><div class="change-dot"></div>Response blocks get a "✦ AI Output" orange section tag</div>
+    <div class="change"><div class="change-dot"></div>Response card header: zinc-50 bg, label + copy button</div>
+    <div class="change"><div class="change-dot"></div>Follow-up textarea: orange focus border (not indigo)</div>
+    <div class="change"><div class="change-dot"></div>Approve button: solid orange (was indigo)</div>
+    <div class="change"><div class="change-dot"></div>Approved state: green banner (same color, was already green)</div>
+  </div>
+
+  <div class="annotation-section">
+    <h3>Sidebar Footer</h3>
+    <div class="note"><strong>New:</strong> Thin progress bar at bottom of sidebar. "3 of 9 steps done" label + orange fill bar. Gives a sense of overall progress without cluttering the step list.</div>
+  </div>
+
+  <div class="annotation-section">
+    <h3>What Was Kept</h3>
+    <div class="note">The two-column layout (sidebar + main) is correct. The title bar is correct. The step panel max-width is correct. The response card pattern is correct. None of these change structurally.</div>
+  </div>
 </div>
 
-<script>
-  // Demo tab switcher
-  function showState(name) {
-    document.querySelectorAll('.state-panel').forEach(p => p.classList.remove('visible'))
-    document.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('on'))
-    document.getElementById('state-' + name).classList.add('visible')
-    event.target.classList.add('on')
-  }
-
-  // Context toggle
-  document.getElementById('toggleCtx').addEventListener('click', function() {
-    const body = document.getElementById('ctxBody')
-    const hidden = body.style.display === 'none'
-    body.style.display = hidden ? '' : 'none'
-    this.textContent = hidden ? 'hide ↑' : 'show ↓'
-  })
-
-  // Add ext URL
-  document.getElementById('addExtUrl').addEventListener('click', () => {
-    const row = document.createElement('div')
-    row.className = 'ext-url-row'
-    row.innerHTML = `<input type="url" placeholder="Character image URL...">`
-    document.getElementById('extUrls').appendChild(row)
-    row.querySelector('input').focus()
-  })
-
-  // Sidebar click — show done step result
-  document.querySelectorAll('.step-item.done').forEach(item => {
-    item.addEventListener('click', () => showStateForDone(item))
-  })
-  function showStateForDone(item) {
-    // In real app: shows the approved output for that step read-only
-  }
-</script>
 </body>
 </html>

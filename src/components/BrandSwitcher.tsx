@@ -1,6 +1,6 @@
 'use client'
 
-import { LucideChevronDown } from 'lucide-react'
+import { LucideChevronDown, LucidePlus } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
@@ -45,20 +45,21 @@ export function BrandSwitcher({ brands, activeBrandId }: BrandSwitcherProps) {
         type="button"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
-        aria-haspopup="listbox"
-        className="flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-[5px] text-left text-[13px] text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
+        aria-haspopup="menu"
+        className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-100 px-[10px] py-[3px] text-left text-[12px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-200"
       >
-        <span className="max-w-[200px] truncate">{active?.name}</span>
+        <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-orange-500" />
+        <span className="max-w-[180px] truncate">{active?.name}</span>
         <LucideChevronDown
-          size={14}
-          className={`shrink-0 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`}
+          size={12}
+          className={`shrink-0 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`}
           aria-hidden
         />
       </button>
       {open && (
         <div
           className="absolute top-[calc(100%+4px)] left-0 z-20 min-w-[200px] rounded-[6px] border border-zinc-200 bg-white py-1 shadow-lg"
-          role="listbox"
+          role="menu"
         >
           {brands.map(b => {
             const isActive = b.id === activeBrandId
@@ -66,12 +67,12 @@ export function BrandSwitcher({ brands, activeBrandId }: BrandSwitcherProps) {
               <Link
                 key={b.id}
                 href={`/?brand=${b.id}`}
-                role="option"
-                aria-selected={isActive}
+                role="menuitem"
+                aria-current={isActive ? 'true' : undefined}
                 onClick={() => setOpen(false)}
                 className={`block px-3 py-2 text-[13px] transition-colors ${
                   isActive
-                    ? 'bg-indigo-50 font-medium text-indigo-700'
+                    ? 'bg-orange-50 font-medium text-orange-700'
                     : 'text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
@@ -83,9 +84,10 @@ export function BrandSwitcher({ brands, activeBrandId }: BrandSwitcherProps) {
           <Link
             href="/brand/new"
             onClick={() => setOpen(false)}
-            className="block px-3 py-2 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+            className="flex items-center gap-2 px-3 py-2 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
           >
-            + New brand
+            <LucidePlus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            New brand
           </Link>
         </div>
       )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { LucideCheck, LucideX } from 'lucide-react'
 import { useState } from 'react'
 
 interface UrlStatus {
@@ -91,7 +92,7 @@ export function AssetUrlInput({
         onBlur={handleBlur}
         placeholder={placeholder}
         rows={rows}
-        className="resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+        className="resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
       />
 
       {/* Per-URL status indicators */}
@@ -104,7 +105,7 @@ export function AssetUrlInput({
             >
               {s.status === 'uploading' && (
                 <>
-                  <span className="mt-0.5 h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-zinc-300 border-t-indigo-500" />
+                  <span className="mt-0.5 h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-zinc-300 border-t-orange-500" />
                   <span className="truncate text-zinc-400">{s.original}</span>
                   <span className="shrink-0 text-zinc-400">
                     Uploading to Cloudinary…
@@ -113,12 +114,15 @@ export function AssetUrlInput({
               )}
               {s.status === 'done' && (
                 <>
-                  <span className="shrink-0 text-green-500">✓</span>
+                  <LucideCheck
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500"
+                    aria-hidden
+                  />
                   <a
                     href={s.cloudUrl!}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate text-indigo-500 hover:underline"
+                    className="truncate text-orange-500 hover:underline"
                   >
                     {s.cloudUrl}
                   </a>
@@ -126,7 +130,10 @@ export function AssetUrlInput({
               )}
               {s.status === 'error' && (
                 <>
-                  <span className="shrink-0 text-red-500">✕</span>
+                  <LucideX
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500"
+                    aria-hidden
+                  />
                   <span className="truncate text-red-500">
                     {s.error ?? 'Upload failed'}
                   </span>

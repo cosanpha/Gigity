@@ -1,5 +1,18 @@
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 
+export type StepState = {
+  status: 'pending' | 'generating' | 'done'
+  llmResponse: string | null
+  outputAssetUrl: string | null
+  sunoTaskId: string | null
+  sunoSelectedTrackIndex: number | null
+  sunoApiKeyOverride: string | null
+  conversation: Array<{ role: string; content: string }>
+  error: string | null
+}
+
+export type StepStatusState = Pick<StepState, 'status'>
+
 export type StepType = 'llm' | 'external_instruction'
 
 export interface StepDefinition {
@@ -138,10 +151,10 @@ The descriptors must still reflect:
   {
     stepNumber: 5,
     title: 'Character Images',
-    tool: 'DALL-E / Midjourney',
+    tool: 'DALL-E',
     type: 'llm',
     promptTemplate: `Based on this story script, identify all on-screen characters and write
-Midjourney image prompts for each one.
+DALL-E image prompts for each one.
 
 Story script:
 {{step_2_output}}
@@ -149,21 +162,21 @@ Story script:
 For each character:
 1. Name and role in the story (1 sentence)
 2. Visual description (age, ethnicity, style, expression, body language)
-3. Midjourney prompt
+3. DALL-E prompt
 
 Format:
 **Character - [Name] ([role])**
 Description: ...
-Midjourney prompt: Portrait of [description], soft studio lighting, clean background, cinematic --ar 9:16 --style raw
+DALL-E prompt: Portrait of [description], soft studio lighting, clean background, cinematic --ar 9:16 --style raw
 
 Be specific: "Vietnamese woman, 26, office casual, warm smile" beats "young professional woman".`,
   },
   {
     stepNumber: 6,
     title: 'Scene Images',
-    tool: 'DALL-E / Midjourney',
+    tool: 'DALL-E',
     type: 'llm',
-    promptTemplate: `Write Midjourney image generation prompts for a 30–60 second video.
+    promptTemplate: `Write DALL-E image generation prompts for a 30–60 second video.
 
 Story:
 {{step_2_output}}
@@ -278,6 +291,18 @@ When finished, click "Mark as published" below to complete this project.`,
 
 /** Total steps in the workflow (sidebar + progress UI). */
 export const WORKFLOW_TOTAL_STEPS = WORKFLOW_STEPS.length
+
+/** True when every workflow step is approved (`done`). Ignores extra array slots. */
+export function isWorkflowFullyComplete(
+  steps: Array<{ status: StepStatusState['status'] }>
+): boolean {
+  if (steps.length < WORKFLOW_TOTAL_STEPS) return false
+  return steps.slice(0, WORKFLOW_TOTAL_STEPS).every(s => s.status === 'done')
+}
+
+export function getStepTitle(stepNumber: number): string {
+  return WORKFLOW_STEPS.find(s => s.stepNumber === stepNumber)?.title ?? ''
+}
 
 export function getStepDefinition(
   stepNumber: number

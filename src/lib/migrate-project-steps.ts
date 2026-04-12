@@ -56,8 +56,13 @@ export function migrateLegacyTenSteps(
     return { steps: steps ?? [], migrated: false }
   }
 
+  // Verify this looks like a legacy project by checking expected step numbers
+  // at the positions we're about to merge (old steps 5 and 6 → new step 5)
   const old5 = steps[4]
   const old6 = steps[5]
+  if (old5?.stepNumber !== 5 || old6?.stepNumber !== 6) {
+    return { steps, migrated: false }
+  }
 
   let mergedStatus: SerializableStep['status'] = 'pending'
   let completedAt: string | Date | null = null

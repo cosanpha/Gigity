@@ -4,11 +4,14 @@ import {
   SUNO_API_BASE_URL,
   SUNO_API_KEY,
 } from '@/constants/env.server'
+import { requireAuth } from '@/lib/auth'
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 import { summarizeSunoError } from '@/lib/suno-http'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
+  const deny = requireAuth(req)
+  if (deny) return deny
   if (!SUNO_API_BASE_URL?.trim()) {
     return NextResponse.json(
       {

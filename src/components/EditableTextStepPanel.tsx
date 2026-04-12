@@ -1,37 +1,20 @@
 'use client'
 
+import { GenerateSpinner } from './ui/GenerateSpinner'
 import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
+import type { StepState } from '@/lib/workflow-templates'
+import { LucideCheck } from 'lucide-react'
 import { startTransition, useEffect, useRef, useState } from 'react'
 
-type StepState = {
-  status: 'pending' | 'generating' | 'done'
-  llmResponse: string | null
-  conversation: Array<{ role: string; content: string }>
-  error: string | null
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-
-  function handleCopy() {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="shrink-0 rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-      title="Copy to clipboard"
-    >
-      {copied ? '✓ Copied' : 'Copy'}
-    </button>
-  )
-}
-
-interface SongLyricsStepPanelProps {
+interface EditableTextStepPanelProps {
+  stepNumber: number
+  title: string
+  tool: string
+  textareaRows?: number
+  generateLabel?: string    // e.g. "campaign brief" — used in "Ready to generate your X."
+  generatingLabel?: string  // e.g. "campaign brief…" — used in "Generating X…"
+  approvedLabel?: string    // e.g. "brief" — used in "Re-open to edit the X."
+  followUpPlaceholder?: string
   state: StepState
   followUp: string
   onFollowUpChange: (v: string) => void
@@ -43,7 +26,39 @@ interface SongLyricsStepPanelProps {
   onContentChange: (content: string) => void
 }
 
-export function SongLyricsStepPanel({
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      }}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+    >
+      {copied ? (
+        <>
+          <LucideCheck className="h-3.5 w-3.5 text-green-600" aria-hidden />
+          Copied
+        </>
+      ) : (
+        'Copy'
+      )}
+    </button>
+  )
+}
+
+export function EditableTextStepPanel({
+  stepNumber,
+  title,
+  tool,
+  textareaRows = 20,
+  generateLabel,
+  generatingLabel,
+  approvedLabel,
+  followUpPlaceholder = 'Refine…',
   state,
   followUp,
   onFollowUpChange,
@@ -53,7 +68,7 @@ export function SongLyricsStepPanel({
   onApprove,
   onReopen,
   onContentChange,
-}: SongLyricsStepPanelProps) {
+}: EditableTextStepPanelProps) {
   const [editedContent, setEditedContent] = useState(state.llmResponse ?? '')
   const prevStatusRef = useRef(state.status)
 
@@ -64,41 +79,33 @@ export function SongLyricsStepPanel({
     prevStatusRef.current = state.status
   }, [state.status, state.llmResponse])
 
-  function handleEdit(value: string) {
-    setEditedContent(value)
-    onContentChange(value)
-  }
+  const label = generateLabel ?? title.toLowerCase()
+  const gLabel = generatingLabel ?? `${label}…`
+  const aLabel = approvedLabel ?? label
 
-  const isEmptyStart =
-    state.status === 'pending' && !state.llmResponse && !state.error
+  const isEmptyStart = state.status === 'pending' && !state.llmResponse && !state.error
   const isGenerating = state.status === 'generating'
   const isLocked = state.status === 'done'
   const showWorkspace =
-    !isEmptyStart &&
-    !isGenerating &&
-    (Boolean(state.llmResponse) || Boolean(state.error) || isLocked)
+    !isEmptyStart && !isGenerating && (Boolean(state.llmResponse) || Boolean(state.error) || isLocked)
 
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step 3 of {WORKFLOW_TOTAL_STEPS}</span>
+          <span>Step {stepNumber} of {WORKFLOW_TOTAL_STEPS}</span>
           <span>·</span>
-          <span>SunoAI</span>
+          <span>{tool}</span>
         </div>
-        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
-          Song Lyrics
-        </h2>
+        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">{title}</h2>
       </div>
 
       {isEmptyStart && (
         <div className="flex flex-col items-center justify-center gap-4 py-16">
-          <p className="text-[13px] text-zinc-500">
-            Ready to generate your song lyrics.
-          </p>
+          <p className="text-[13px] text-zinc-500">Ready to generate your {label}.</p>
           <button
             onClick={onGenerate}
-            className="rounded-[6px] bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+            className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Generate
           </button>
@@ -107,26 +114,8 @@ export function SongLyricsStepPanel({
 
       {isGenerating && (
         <div className="flex flex-col items-center justify-center gap-3 py-16">
-          <svg
-            className="h-6 w-6 animate-spin text-indigo-500"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
-            />
-          </svg>
-          <p className="text-[13px] text-zinc-500">Generating song lyrics…</p>
+          <GenerateSpinner />
+          <p className="text-[13px] text-zinc-500">Generating {gLabel}</p>
         </div>
       )}
 
@@ -135,11 +124,9 @@ export function SongLyricsStepPanel({
           {isLocked && (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[13px] text-green-600">
-                Approved - Re-open to edit the lyrics.
+                Approved - Re-open to edit the {aLabel}.
               </p>
-              {state.llmResponse ? (
-                <CopyButton text={state.llmResponse} />
-              ) : null}
+              {state.llmResponse ? <CopyButton text={state.llmResponse} /> : null}
             </div>
           )}
 
@@ -152,11 +139,14 @@ export function SongLyricsStepPanel({
           {state.llmResponse && (
             <textarea
               value={isLocked ? (state.llmResponse ?? '') : editedContent}
-              onChange={e => handleEdit(e.target.value)}
+              onChange={e => {
+                setEditedContent(e.target.value)
+                onContentChange(e.target.value)
+              }}
               readOnly={isLocked}
-              rows={24}
+              rows={textareaRows}
               spellCheck={false}
-              className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-indigo-400"
+              className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-orange-400"
             />
           )}
 
@@ -164,9 +154,9 @@ export function SongLyricsStepPanel({
             <textarea
               value={followUp}
               onChange={e => onFollowUpChange(e.target.value)}
-              placeholder="Refine the lyrics… e.g. shorter chorus, different rhyme, clearer hook"
+              placeholder={followUpPlaceholder}
               rows={2}
-              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none"
+              className="flex-1 resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
             />
             <button
               onClick={onSendFollowUp}
@@ -194,9 +184,10 @@ export function SongLyricsStepPanel({
             ) : (
               <button
                 onClick={onApprove}
-                className="rounded-[6px] bg-indigo-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600"
+                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
               >
-                ✓ Approve
+                <LucideCheck className="h-4 w-4" aria-hidden />
+                Approve
               </button>
             )}
           </div>
@@ -205,4 +196,3 @@ export function SongLyricsStepPanel({
     </div>
   )
 }
-

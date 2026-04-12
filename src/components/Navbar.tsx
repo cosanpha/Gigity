@@ -1,4 +1,5 @@
 import { LucidePlus } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { BrandSwitcher } from './BrandSwitcher'
 
@@ -29,9 +30,13 @@ export function Navbar({
           href={brandId ? `/?brand=${encodeURIComponent(brandId)}` : '/'}
           className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-zinc-950"
         >
-          <div className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-orange-500 text-[13px] font-bold text-white">
-            G
-          </div>
+          <Image
+            src="/logo.png"
+            width={28}
+            height={28}
+            alt="Gigity Logo"
+            className="h-[28px] w-[28px] rounded-[6px]"
+          />
           Gigity
         </Link>
         {/* Divider */}
@@ -65,7 +70,10 @@ export function Navbar({
             href="/brand/new"
             className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
           >
-            <LucidePlus className="h-3.5 w-3.5" aria-hidden />
+            <LucidePlus
+              className="h-3.5 w-3.5"
+              aria-hidden
+            />
             New brand
           </Link>
         )}

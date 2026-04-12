@@ -3,6 +3,7 @@ import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 export type StepState = {
   status: 'pending' | 'generating' | 'done'
   llmResponse: string | null
+  publishPlatforms: Record<string, string> | null
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
@@ -32,29 +33,66 @@ export const WORKFLOW_STEPS: StepDefinition[] = [
     title: 'Campaign Brief',
     tool: 'Gigity',
     type: 'llm',
-    promptTemplate: `You are a creative strategist for {{brand_name}}.
+    promptTemplate: `You are the lead creative strategist for {{brand_name}}. This brief is the single source of truth: every later step (story, lyrics, music, characters, scenes, video prompts) will inherit from it. If the brief is vague, the whole ad fails-treat this like a director's one-pager, not marketing fluff.
 
-Product: {{brand_description}}
-Target audience: {{target_audience}}
-Brand tone: {{tone}}
-Publishing platforms: {{platform}}
-Reference videos (style examples): {{example_videos}}
+## Inputs (use all that are non-empty; do not invent facts)
+- Product / offer: {{brand_description}}
+- Target audience: {{target_audience}}
+- Voice & tone: {{tone}}
+- Primary platforms: {{platform}} (pace, aspect ratio, and culture differ-bias hook and CTA toward how people actually behave there)
+- Reference videos (steal pacing, energy, and edit rhythm-not the product): {{example_videos}}
+- Where to send viewers (site, app, store, signup): {{brand_links}}
 
-Write a campaign brief for a short-form video ad. Include:
-1. Campaign concept (1-2 sentences - the core idea)
-2. Hook (the first 3 seconds - what stops the scroll)
-3. Emotional arc (what the viewer feels: start → middle → end)
-4. Call to action
-5. Key message (one sentence the viewer should remember)
+## Quality bar (non-negotiable)
+- Specificity test: If you swapped "{{brand_name}}" for a random competitor and the brief still worked, rewrite until it breaks-name concrete benefits, moments, or proof, not slogans.
+- No generic openers, no "in a world where," no em dashes as fake gravitas, no filler adjectives ("revolutionary," "seamless," "empowering") unless tied to a concrete claim.
+- The hook must be visual or auditory in plain language (what we literally see or hear in frame 1-3), not a tagline.
+- One clear viewer job: what they should think, feel, or do after 30-60 seconds.
 
-Be specific to {{brand_name}}. Do not write a generic brief.`,
+## Output format (use these exact section headings)
+
+### North star
+One sentence: the single idea this video must prove. Not a slogan-a thesis.
+
+### Audience tension
+2-4 sentences: what belief, habit, or friction blocks them today, in their words (infer from audience + product; stay plausible).
+
+### Campaign concept
+2-3 sentences: the creative angle that resolves that tension for {{brand_name}}. Include at least one concrete scenario, object, or situation (not abstractions only).
+
+### Hook (0-3 seconds)
+Bullet list (2-3 bullets): exact attention device-visual beat, sound, text on screen, or first line of dialogue. Must feel native to {{platform}}.
+
+### Story spine (beat outline)
+Numbered list, 5-7 beats: each beat is one line (setup → tension → turn → proof or demo → emotional peak → CTA). Enough detail that a writer could script from this without guessing.
+
+### Emotional arc
+One line: start emotion → middle → end emotion (e.g. skepticism → curiosity → relief).
+
+### Proof & credibility (if applicable)
+What makes the claim believable in short-form (demo, stat, testimonial shape, before/after, social proof)-or "N/A" with one sentence why trust is not the barrier.
+
+### Visual & sonic direction
+2-4 bullets: palette, lighting, camera energy, pacing, music genre or vibe (no full lyrics). Align with reference videos when URLs exist; otherwise infer from brand + tone.
+
+### Call to action
+One sentence: the primary action, tied to {{brand_links}} when provided (e.g. "Tap link in bio," "Get the app," "Book a slot"). If links are empty, keep CTA concrete but generic.
+
+### Key message (takeaway)
+One memorable sentence the viewer should recall tomorrow-must include or clearly imply {{brand_name}}.
+
+### Guardrails
+2-4 bullets: topics, claims, or tones to avoid (legal risk, audience insult, off-brand humor, etc.).
+
+### Success criteria
+2-3 bullets: how we know this brief worked if we only watched the finished 45-second cut.`,
   },
   {
     stepNumber: 2,
     title: 'Story Script',
     tool: 'Gigity',
     type: 'llm',
-    promptTemplate: `Write a plain story narrative for a 30–60 second short-form video ad.
+    promptTemplate: `Write a plain story narrative for a 30-60 second short-form video ad.
 
 Campaign brief:
 {{step_1_output}}
@@ -63,7 +101,7 @@ Brand: {{brand_name}}
 Tone: {{tone}}
 Target audience: {{target_audience}}
 
-Write 3–6 flowing paragraphs that describe what happens in the video - as if telling the story to a director. Cover the emotional journey from problem to solution to CTA. Be specific about:
+Write 3-6 flowing paragraphs that describe what happens in the video - as if telling the story to a director. Cover the emotional journey from problem to solution to CTA. Be specific about:
 - Who we see and what they're doing
 - The setting and visual atmosphere in each beat
 - How the emotion shifts throughout
@@ -73,45 +111,48 @@ Rules:
 - Characters should feel like real people, not stock photo types
 - The opening beat is the hook (stops the scroll in 2 seconds)
 - The closing beat is the CTA or emotional payoff
-- Keep it concise - 30–60 seconds total running time`,
+- Keep it concise - 30-60 seconds total running time`,
   },
   {
     stepNumber: 3,
     title: 'Song Lyrics',
     tool: 'SunoAI',
     type: 'llm',
-    promptTemplate: `Write song lyrics for a 30–60 second {{brand_name}} ad.
+    promptTemplate: `Write Suno-ready lyrics for a **short-form ad** (~**45-60 seconds** at a moderate pop / hip-hop tempo - a real **verse-chorus-verse-chorus** feel, not a one-liner jingle).
 
-Story:
+Story (hit the arc: tension → turn → payoff / CTA, but you do not need every story beat in the lyrics):
 {{step_2_output}}
 
 Brand tone: {{tone}}
 Target audience: {{target_audience}}
 
-Write lyrics that follow the emotional arc of the story - from the opening problem beat through the discovery, to the confident payoff and CTA. Structure them for SunoAI:
+## Length window (important)
+- **Count only singable lines** (ignore section tags like [Verse 1]).
+- Aim for **at least 18 lines** so the track feels like a song, and **at most 24 lines** so Suno / clip limits do not cut you off mid-word.
+- **About 6-11 words per line** on average; mix shorter punchy lines with occasional slightly longer ones - avoid tiny fragments on every line.
 
+## Structure (use these sections in order)
 [Verse 1]
-(opening beats - problem / tension)
+**4-5 lines** - one clear scene + problem or desire (from the story opening).
 
 [Chorus]
-(emotional peak - the key brand moment)
+**4 lines** - hook + emotional peak; this should be what someone hums after one listen.
 
 [Verse 2]
-(solution / benefit beats)
+**4-5 lines** - solution, benefit, or “after” moment; advance the story, do not repeat verse 1.
 
 [Chorus]
-(repeat - drives the message home)
+**Same four lines as the first chorus, verbatim** - paste the identical chorus text again under this header so Suno treats it as a repeat.
 
 [Outro] (optional)
-(CTA / final feeling)
+**0-2 lines** - CTA or last hit of feeling; only if you are still ≤24 total lines.
 
-Rules:
-- Lyrics should mirror the story beats in order
-- The chorus is the emotional peak - most memorable moment
-- Rhyme scheme that feels natural, not forced
-- Avoid {{brand_name}} overuse - mention once or twice max
-- Vocabulary and cultural references for: {{target_audience}}
-- Total length: 30–60 seconds when sung at moderate tempo`,
+## Rules
+- Mirror the story’s emotional order (setup → lift → CTA) without narrating every paragraph of the script.
+- Natural rhyme; no filler syllables just to rhyme.
+- {{brand_name}}: **once or twice** max unless it is the hook.
+- Vocabulary and references for: {{target_audience}}
+- If you are under 18 lines, **add concrete imagery** (verbs, objects, one real moment) before you stop - do not pad with generic hype.`,
   },
   {
     stepNumber: 4,
@@ -136,12 +177,13 @@ CRITICAL: Everything on the lines after **Style Prompt** until the end of your r
 
 Rules for **Style Prompt**:
 - Use ONLY a tight comma-separated list of musical descriptors (genre, BPM, instruments, vocal type, mood, energy). No bullet lists, no paragraphs, no quoted explanations.
-- Target well under ${MAX_SUNO_STYLE_PROMPT_CHARS} characters so small edits still fit; aim for roughly 120–400 characters of descriptors.
+- Target well under ${MAX_SUNO_STYLE_PROMPT_CHARS} characters so small edits still fit; aim for roughly 120-400 characters of descriptors.
 - Do NOT add a separate “note” or explanation paragraph after the descriptors - fold any nuance into the comma-separated list only.
+- **Duration / form (required):** Suno outputs for this workflow are usually **capped around ~50 seconds to ~1:15** - always fold that into the comma list with **short tags** (e.g. ~50s-1:15 length, short-form ad, tight arrangement no long intro/outro, concise song structure). Producers use this line so the model does not imply a full 3-minute epic.
 
 Examples (short enough for Suno):
-"upbeat pop, 120 BPM, warm acoustic guitar, female vocals, hopeful, building energy"
-"lo-fi hip hop, 85 BPM, mellow, soft piano, light drums, introspective"
+"upbeat pop, 120 BPM, ~50s-1:15 length, tight arrangement, warm acoustic guitar, female vocals, hopeful"
+"lo-fi hip hop, 85 BPM, short-form ad, concise structure, mellow, soft piano, light drums, introspective"
 
 The descriptors must still reflect:
 - Brand tone: {{tone}}
@@ -153,30 +195,45 @@ The descriptors must still reflect:
     title: 'Character Images',
     tool: 'DALL-E',
     type: 'llm',
-    promptTemplate: `Based on this story script, identify all on-screen characters and write
-DALL-E image prompts for each one.
+    promptTemplate: `Based on this story script, identify every on-screen character and produce image-ready DALL-E prompts for each.
+
+Purpose: these images are REFERENCE STILLS for later scenes and video — the character must read unmistakably (silhouette, face, outfit, proportions). Prioritize clarity over storytelling or action.
 
 Story script:
 {{step_2_output}}
 
-For each character:
-1. Name and role in the story (1 sentence)
-2. Visual description (age, ethnicity, style, expression, body language)
-3. DALL-E prompt
+Visual style (use for every character — repeat this look in each DALL-E line, not a mix of styles):
+{{character_visual_style_instruction}}
 
-Format:
+For each character, write:
+
 **Character - [Name] ([role])**
-Description: ...
-DALL-E prompt: Portrait of [description], soft studio lighting, clean background, cinematic --ar 9:16 --style raw
+Description: 2-4 sentences (who they are in the story, age range, ethnicity if relevant, wardrobe, expression, posture, personality in one phrase).
 
-Be specific: "Vietnamese woman, 26, office casual, warm smile" beats "young professional woman".`,
+Output (planning checklist — do not paste as separate lines into DALL-E; fold all of this into the single DALL-E line below):
+- Ratio: vertical 9:16 portrait framing (full character visible head to toe, feet on ground or full figure in frame)
+- Reference clarity: single subject only, no other people or creatures; sharp readable face and outfit; neutral or slight personality pose — not mid-action
+- No interaction: character does not touch, hold, lean on, or use props, furniture, vehicles, or scene objects (wardrobe/accessories worn on the body are fine). No interacting with the environment — standing or simple stance as if on a shoot, not "in a scene"
+- Background: always describe a real, simple backdrop (solid color, soft gradient, white/light studio, or minimal seamless environment). Never empty void, transparent, or "no background" — the frame needs separation and depth so the subject reads as a reference, not a cutout
+- Style: pick one clear look (e.g. Pixar-style 3D cartoon, soft illustrated mascot, photoreal lifestyle, sleek 3D product render) that fits the brand story — state it explicitly
+- Shot: full body, centered, balanced composition, readable silhouette, even lighting on the figure
+- Lighting: soft key + gentle fill, subtle rim, or soft gradient light — even enough that facial features and clothing detail stay clear for reuse
+
+DALL-E prompt (CRITICAL):
+- Must be exactly ONE LINE after "DALL-E prompt:" — no line breaks, no bullet list on this line. The app only reads this single line for generation.
+- Write one dense comma-separated prompt: lead with the character and outfit, then a simple neutral full-body stance, then explicit simple background, style, lighting, and end with "vertical 9:16 portrait" or equivalent so composition is unambiguous. Include phrases like "solo full body reference", "no props", "not touching anything", "simple studio background" as needed so the model does not add scene clutter.
+
+Example shape (one line only):
+DALL-E prompt: Friendly humanoid robot mascot, compact rounded body, blue white and green accents, large expressive eyes, warm closed-mouth smile, relaxed arms at sides, solo full body reference pose, not holding or touching anything, clean soft gray gradient studio backdrop, even soft lighting, sharp clear silhouette, Pixar-style 3D cartoon, vertical 9:16 portrait
+
+Be specific: "Vietnamese woman, 26, linen blazer, subtle laugh, relaxed shoulders, hands empty at sides" beats "professional woman".`,
   },
   {
     stepNumber: 6,
     title: 'Scene Images',
     tool: 'DALL-E',
     type: 'llm',
-    promptTemplate: `Write DALL-E image generation prompts for a 30–60 second video.
+    promptTemplate: `Write DALL-E image generation prompts for a 30-60 second video.
 
 Story:
 {{step_2_output}}
@@ -187,7 +244,7 @@ Song lyrics (use to align scene beats with lyric lines):
 Character image references (for visual consistency):
 {{step_5_assets_output}}
 
-Break the story into 10–20 distinct visual beats. For each beat write one image prompt.
+Break the story into 10-20 distinct visual beats. For each beat write one image prompt.
 
 Format:
 

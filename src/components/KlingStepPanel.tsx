@@ -1,8 +1,9 @@
 'use client'
 
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
-import { isLikelyCloudinaryVideoDeliveryUrl } from '@/lib/cloudinary-client'
 import { apiFetch } from '@/lib/api-fetch'
+import { isLikelyCloudinaryVideoDeliveryUrl } from '@/lib/cloudinary-client'
+import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import {
   extractKlingScenesForEdit,
   replaceKlingScenePrompt,
@@ -51,6 +52,16 @@ function step7RefUrl(
 }
 
 function SceneReferenceThumb({ url, label }: { url: string; label: string }) {
+  if (!isHttpOrHttpsUrl(url)) {
+    return (
+      <span
+        className="inline-flex max-w-[72px] items-center rounded border border-red-200 bg-red-50 px-1 py-0.5 text-[10px] leading-tight text-red-600"
+        title={url}
+      >
+        Bad link
+      </span>
+    )
+  }
   return (
     <a
       href={url}
@@ -123,10 +134,13 @@ function SceneVideoSlot({
     setUploadError(null)
     const fd = new FormData()
     fd.append('video', file)
-    const res = await apiFetch('/api/v1/workflow/cloudinary/upload-video-file', {
-      method: 'POST',
-      body: fd,
-    })
+    const res = await apiFetch(
+      '/api/v1/workflow/cloudinary/upload-video-file',
+      {
+        method: 'POST',
+        body: fd,
+      }
+    )
     const data = await res.json().catch(() => ({}))
     setFileBusy(false)
     if (res.ok && typeof data.url === 'string') {
@@ -204,6 +218,7 @@ interface KlingStepPanelProps {
   onReopen: () => void
   onContentChange: (content: string) => void
   onPersistOutput: (outputAssetUrl: string | null) => void
+  llmModel?: string | null
 }
 
 export function KlingStepPanel({
@@ -577,3 +592,4 @@ export function KlingStepPanel({
     </div>
   )
 }
+

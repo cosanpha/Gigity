@@ -1,26 +1,18 @@
+import { llmModelPublishDescription } from '@/constants/workflow-llm-models'
 import { apiHandler } from '@/lib/api-handler'
 import { buildMessages, buildSystemMessage, callLLM } from '@/lib/llm'
+import {
+  joinPublishMarkdown,
+  mergeParsedIntoPlatformOrder,
+  normalizePublishPlatforms,
+  splitPublishMarkdownByHeading,
+} from '@/lib/publish-copy'
+import { IBrandProfile } from '@/models/BrandProfile'
+import type { IWorkflowStep } from '@/models/VideoProject'
 import VideoProject from '@/models/VideoProject'
 import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
-
-const USER_PROMPT = `Write publish-ready video copy for TikTok and YouTube for the short-form ad described in your context (campaign, story, lyrics, and prior steps).
-
-Output format - use these exact headings:
-
-## TikTok
-Caption text for the TikTok post. Open with a strong hook on the first line. Keep total length appropriate for TikTok (under 2200 characters). Include 3–6 relevant hashtags at the end.
-
-## YouTube
-Title: [single line, under 100 characters]
-
-Description:
-[2–4 short paragraphs: what the video offers, who it is for, tone matching the brand, and a clear but natural call to action. Add a line of keyword tags or hashtags at the end.]
-
-Rules:
-- Match the brand tone and platforms from the context.
-- Do not use placeholders like "[insert]" or "TBD" - write final copy the creator can paste as-is.
-- TikTok should feel native to short-form (direct, energetic where appropriate). YouTube title and description can be slightly more descriptive for search.`
+import { buildPublishUserPrompt } from './publish-prompt'
 
 export const POST = apiHandler(
   async (_req, ctx) => {
@@ -44,11 +36,11 @@ export const POST = apiHandler(
       )
     }
 
-    const brand =
-      project.brandProfileId as unknown as import('@/models/BrandProfile').IBrandProfile
+    const brand = project.brandProfileId as unknown as IBrandProfile
 
     const systemMessage = buildSystemMessage(brand, project.steps)
-    const messages = buildMessages(systemMessage, USER_PROMPT, [])
+    const userPrompt = buildPublishUserPrompt(brand.platforms ?? [])
+    const messages = buildMessages(systemMessage, userPrompt, [])
 
     const step9 = project.steps[8]
     if (!step9) {
@@ -67,11 +59,23 @@ export const POST = apiHandler(
     await project.save()
 
     try {
-      const response = await callLLM(messages)
-      step9.llmResponse = response
+      const response = await callLLM(messages, {
+        model: llmModelPublishDescription(),
+      })
+      const order = normalizePublishPlatforms(brand.platforms ?? [])
+      const parsed = splitPublishMarkdownByHeading(response)
+      const merged = mergeParsedIntoPlatformOrder(parsed, order)
+      const joined = joinPublishMarkdown(order, merged)
+      const s9 = step9 as IWorkflowStep
+      s9.llmResponse = joined
+      s9.publishPlatforms = merged
       step9.status = 'pending'
+      project.markModified('steps')
       await project.save()
-      return NextResponse.json({ llmResponse: response })
+      return NextResponse.json({
+        llmResponse: joined,
+        publishPlatforms: merged,
+      })
     } catch (err: unknown) {
       step9.status = 'pending'
       await project.save().catch(() => {})
@@ -81,4 +85,3 @@ export const POST = apiHandler(
   },
   { auth: true }
 )
-

@@ -7,6 +7,7 @@ export interface IBrandProfile extends Document {
   tone: string // comma-separated selected tones, e.g. "Warm, Modern"
   platforms: string[] // e.g. ["TikTok", "YouTube Shorts"]
   exampleVideoUrls: string[]
+  brandLinks: string[]
   logoUrl: string
   userId: null // always null in V1; V2 will set this to authenticated user's _id
   createdAt: Date
@@ -21,6 +22,7 @@ const BrandProfileSchema = new Schema<IBrandProfile>(
     tone: { type: String, default: '' },
     platforms: { type: [String], default: [] },
     exampleVideoUrls: { type: [String], default: [] },
+    brandLinks: { type: [String], default: [] },
     logoUrl: { type: String, default: '' },
     userId: { type: Schema.Types.Mixed, default: null },
   },

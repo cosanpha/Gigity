@@ -1,15 +1,17 @@
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import {
   CLOUDINARY_CLOUD_NAME_PUBLIC,
   partitionPromptUrlsForCloudinaryRefs,
 } from '@/lib/cloudinary-client'
-import { apiFetch } from '@/lib/api-fetch'
+import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { GenerateSpinner } from './ui/GenerateSpinner'
 import { PasteOnlyUrlInput } from './ui/PasteOnlyUrlInput'
 
@@ -26,6 +28,7 @@ interface SceneStepPanelProps {
   onReopen: () => void
   onContentChange: (content: string) => void
   onPersistOutput: (outputAssetUrl: string | null) => void
+  llmModel?: string | null
 }
 
 interface SceneParsed {
@@ -139,6 +142,16 @@ function DalleGenerateButton({
 }
 
 function ReferenceThumb({ url, label }: { url: string; label: string }) {
+  if (!isHttpOrHttpsUrl(url)) {
+    return (
+      <span
+        className="inline-flex max-w-[72px] items-center rounded border border-red-200 bg-red-50 px-1 py-0.5 text-[10px] leading-tight text-red-600"
+        title={url}
+      >
+        Bad link
+      </span>
+    )
+  }
   return (
     <a
       href={url}
@@ -172,6 +185,7 @@ export function SceneStepPanel({
   onReopen,
   onContentChange,
   onPersistOutput,
+  llmModel,
 }: SceneStepPanelProps) {
   const isDone = stepState.status === 'done'
 
@@ -213,6 +227,7 @@ export function SceneStepPanel({
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           Scene Images
         </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {/* Done state */}
@@ -280,7 +295,13 @@ export function SceneStepPanel({
                       </div>
                     )
                   })()}
-                  {doneUrls[i] && (
+                  {doneUrls[i]?.trim() && !isHttpOrHttpsUrl(doneUrls[i]) && (
+                    <p className="mb-2 text-[12px] text-red-500">
+                      This value is not a valid URL. Paste a link starting with
+                      https:// to preview the image.
+                    </p>
+                  )}
+                  {doneUrls[i]?.trim() && isHttpOrHttpsUrl(doneUrls[i]) && (
                     <>
                       <a
                         href={doneUrls[i]}
@@ -565,3 +586,4 @@ export function SceneStepPanel({
     </div>
   )
 }
+

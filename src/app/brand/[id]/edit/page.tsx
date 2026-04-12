@@ -1,7 +1,6 @@
 'use client'
 
 import { BrandForm, BrandFormData } from '@/components/BrandForm'
-import { apiFetch } from '@/lib/api-fetch'
 import { Navbar } from '@/components/Navbar'
 import {
   AlertDialog,
@@ -13,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { apiFetch } from '@/lib/api-fetch'
 import { LucideTrash2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -69,7 +69,7 @@ export default function BrandEditPage() {
     setDeleteError(
       typeof body.error === 'string'
         ? body.error
-        : 'Could not delete brand — try again'
+        : 'Could not delete brand - try again'
     )
   }
 
@@ -191,3 +191,4 @@ export default function BrandEditPage() {
     </>
   )
 }
+

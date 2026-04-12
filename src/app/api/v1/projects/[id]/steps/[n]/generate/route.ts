@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { llmModelForWorkflowGenerateStep } from '@/constants/workflow-llm-models'
 import { apiHandler } from '@/lib/api-handler'
 import { interpolate } from '@/lib/interpolate'
 import { buildMessages, buildSystemMessage, callLLM } from '@/lib/llm'
@@ -24,9 +25,10 @@ export const POST = apiHandler(
     }
 
     const body = await req.json().catch(() => ({}))
-    const { followUpMessage, retry } = body as {
+    const { followUpMessage, retry, characterStyle } = body as {
       followUpMessage?: string
       retry?: boolean
+      characterStyle?: string
     }
 
     // Load project with brand profile populated
@@ -70,7 +72,8 @@ export const POST = apiHandler(
       target_audience: brand.targetAudience,
       tone: brand.tone,
       platform: brand.platforms.join(', '),
-      example_videos: brand.exampleVideoUrls.join(', '),
+      example_videos: (brand.exampleVideoUrls ?? []).join(', '),
+      brand_links: (brand.brandLinks ?? []).join(', '),
       step_1_output: getStepOutput(project.steps as any[], 1),
       step_2_output: getStepOutput(project.steps as any[], 2),
       step_3_output: getStepOutput(project.steps as any[], 3),
@@ -79,6 +82,10 @@ export const POST = apiHandler(
       step_5_assets_output: getStepAssetOutput(project.steps as any[], 5),
       step_6_output: getStepOutput(project.steps as any[], 6),
       step_7_output: getStepOutput(project.steps as any[], 7),
+      character_visual_style_instruction:
+        stepNumber === 5
+          ? characterVisualStyleInstruction(characterStyle)
+          : '',
     }
 
     const userPrompt = interpolate(stepDef.promptTemplate!, ctx)
@@ -102,7 +109,9 @@ export const POST = apiHandler(
         followUpMessage
       )
 
-      const response = await callLLM(messages)
+      const response = await callLLM(messages, {
+        model: llmModelForWorkflowGenerateStep(stepNumber),
+      })
 
       // Append to conversation
       if (followUpMessage) {
@@ -124,6 +133,14 @@ export const POST = apiHandler(
   { auth: true }
 )
 
+function characterVisualStyleInstruction(style: string | undefined): string {
+  const s = style?.trim()
+  if (!s) {
+    return 'Pick one clear look that fits the brand story (e.g. Pixar-style 3D cartoon, anime, photorealistic) and use that same look for every character.'
+  }
+  return `${s}. Apply this consistently to every character DALL-E prompt.`
+}
+
 function getStepOutput(steps: any[], n: number): string {
   const s = steps[n - 1]
   if (!s || s.status !== 'done') return ''
@@ -141,4 +158,3 @@ function getStepAssetOutput(steps: any[], n: number): string {
   if (!s || s.status !== 'done') return ''
   return s.outputAssetUrl?.trim() ?? ''
 }
-

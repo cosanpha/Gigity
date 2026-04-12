@@ -1,5 +1,6 @@
 import { SUNO_API_BASE_URL, SUNO_API_KEY } from '@/constants/env.server'
 import { apiHandler } from '@/lib/api-handler'
+import { everyAudioUrlLineIsFinal } from '@/lib/suno-record-info'
 import { getStepDefinition } from '@/lib/workflow-templates'
 import VideoProject from '@/models/VideoProject'
 import mongoose from 'mongoose'
@@ -84,6 +85,15 @@ export const POST = apiHandler(async (req, ctx) => {
     if (sunoConfigured && !step.outputAssetUrl?.trim()) {
       return NextResponse.json(
         { error: 'Generate a song before approving this step' },
+        { status: 400 }
+      )
+    }
+    if (sunoConfigured && !everyAudioUrlLineIsFinal(step.outputAssetUrl)) {
+      return NextResponse.json(
+        {
+          error:
+            'Wait until each audio URL ends with a file extension (e.g. .mp3). Preview stream links without an extension cannot be approved.',
+        },
         { status: 400 }
       )
     }

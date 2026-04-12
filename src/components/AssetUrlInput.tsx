@@ -92,7 +92,7 @@ export function AssetUrlInput({
         value={rawInput}
         onValueChange={setRawInput}
         onBlur={handleBlur}
-        placeholder={`${placeholder} (paste only — typing disabled)`}
+        placeholder={`${placeholder} (paste only - typing disabled)`}
         rows={rows}
         className="resize-none rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
       />
@@ -148,3 +148,4 @@ export function AssetUrlInput({
     </div>
   )
 }
+

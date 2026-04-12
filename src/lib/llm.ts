@@ -1,9 +1,12 @@
-import { OPENAI_API_KEY, LLM_BASE_URL, LLM_MODEL } from '@/constants/env.server'
-import { getStepDefinition } from './workflow-templates'
+import { LLM_BASE_URL, LLM_MODEL, OPENAI_API_KEY } from '@/constants/env.server'
 import type { IBrandProfile } from '@/models/BrandProfile'
 import type { IMessage, IWorkflowStep } from '@/models/VideoProject'
+import { getStepDefinition } from './workflow-templates'
 
-export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+export type ChatMessage = {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
 
 /**
  * Build the system message for a generate call.
@@ -11,12 +14,23 @@ export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: stri
  * NOT stored in DB - recomputed on every call.
  */
 export function buildSystemMessage(
-  brand: Pick<IBrandProfile, 'name' | 'description' | 'targetAudience' | 'tone' | 'platforms' | 'exampleVideoUrls'>,
+  brand: Pick<
+    IBrandProfile,
+    | 'name'
+    | 'description'
+    | 'targetAudience'
+    | 'tone'
+    | 'platforms'
+    | 'exampleVideoUrls'
+    | 'brandLinks'
+  >,
   steps: IWorkflowStep[]
 ): string {
   const lines: string[] = []
 
-  lines.push(`You are a creative AI assistant helping produce a short-form video ad for ${brand.name}.`)
+  lines.push(
+    `You are a creative AI assistant helping produce a short-form video ad for ${brand.name}.`
+  )
   lines.push(``)
   lines.push(`Brand: ${brand.name}`)
   lines.push(`Description: ${brand.description}`)
@@ -24,8 +38,14 @@ export function buildSystemMessage(
   lines.push(`Tone: ${brand.tone || 'Not specified'}`)
   lines.push(`Platforms: ${brand.platforms.join(', ') || 'Not specified'}`)
 
-  if (brand.exampleVideoUrls.length > 0) {
-    lines.push(`Reference videos: ${brand.exampleVideoUrls.join(', ')}`)
+  const refs = brand.exampleVideoUrls ?? []
+  if (refs.length > 0) {
+    lines.push(`Reference videos: ${refs.join(', ')}`)
+  }
+
+  const links = brand.brandLinks ?? []
+  if (links.length > 0) {
+    lines.push(`Brand links (site, app stores, etc.): ${links.join(', ')}`)
   }
 
   // Include all prior approved LLM step outputs (steps 1–7 only)
@@ -65,7 +85,10 @@ export function buildMessages(
   const messages: ChatMessage[] = [
     { role: 'system', content: systemMessage },
     { role: 'user', content: userPrompt },
-    ...conversation.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ...conversation.map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    })),
   ]
   if (followUpMessage) {
     messages.push({ role: 'user', content: followUpMessage })
@@ -77,7 +100,10 @@ export function buildMessages(
  * Call the LLM API. Returns the assistant's response text.
  * Throws on API error or missing API key.
  */
-export async function callLLM(messages: ChatMessage[]): Promise<string> {
+export async function callLLM(
+  messages: ChatMessage[],
+  options?: { model?: string }
+): Promise<string> {
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured')
 
   const res = await fetch(`${LLM_BASE_URL}/chat/completions`, {
@@ -86,7 +112,7 @@ export async function callLLM(messages: ChatMessage[]): Promise<string> {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
-    body: JSON.stringify({ model: LLM_MODEL, messages }),
+    body: JSON.stringify({ model: options?.model ?? LLM_MODEL, messages }),
   })
 
   if (!res.ok) {

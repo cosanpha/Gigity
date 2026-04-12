@@ -3,11 +3,16 @@
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 import { apiFetch } from '@/lib/api-fetch'
-import { normalizeSunoPlayableUrl } from '@/lib/suno-record-info'
+import {
+  everyAudioUrlLineIsFinal,
+  normalizeSunoStoredUrl,
+  pathnameEndsWithAudioFile,
+} from '@/lib/suno-record-info'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
 import { startTransition, useEffect, useRef, useState } from 'react'
 import { extractBlock } from './LLMStepPanel'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
 
@@ -17,7 +22,7 @@ function splitStoredAudioUrls(raw: string | null | undefined): string[] {
     .split('\n')
     .map(u => u.trim())
     .filter(Boolean)
-    .map(normalizeSunoPlayableUrl)
+    .map(normalizeSunoStoredUrl)
 }
 
 function clampTrackIndex(idx: number | null | undefined, len: number): number {
@@ -192,7 +197,14 @@ function SunoMusicSection({
         ? [data.audioUrl.trim()]
         : []
     const trackUrls = fromList.length > 0 ? fromList : single
-    if (data.state === 'complete' && trackUrls.length > 0) {
+    if (data.state === 'streaming' && trackUrls.length > 0) {
+      setOptimisticTaskId(null)
+      setRemovedBundleForUndo(null)
+      onPersistRef.current({
+        outputAssetUrl: trackUrls.join('\n'),
+      })
+      setPollError(null)
+    } else if (data.state === 'complete' && trackUrls.length > 0) {
       setOptimisticTaskId(null)
       setRemovedBundleForUndo(null)
       onPersistRef.current({
@@ -339,7 +351,7 @@ function SunoMusicSection({
   useEffect(() => {
     if (!apiConfigured) return
     const taskId = sunoTaskId?.trim() || optimisticTaskId?.trim() || ''
-    if (!taskId || splitStoredAudioUrls(outputAssetUrl).length > 0) return
+    if (!taskId) return
 
     const ctl: SunoPollCtl = { cancelled: false }
 
@@ -357,12 +369,14 @@ function SunoMusicSection({
     apiConfigured,
     sunoTaskId,
     optimisticTaskId,
-    outputAssetUrl,
     localSunoKey,
     sunoApiKeyOverride,
   ])
 
   const storedAudioUrls = splitStoredAudioUrls(outputAssetUrl)
+  const hasStreamingPreview =
+    storedAudioUrls.length > 0 &&
+    storedAudioUrls.some(u => !pathnameEndsWithAudioFile(u))
 
   const waiting =
     apiConfigured &&
@@ -633,6 +647,14 @@ function SunoMusicSection({
               </button>
             ) : null}
           </div>
+          {hasStreamingPreview && !isLocked ? (
+            <p className="mb-2 text-[11px] leading-snug text-amber-800">
+              Preview stream (no file extension yet) - keep this page open or
+              use Check status; when Suno finishes, the link will update to
+              .mp3. Approve stays off until every URL ends with a file
+              extension.
+            </p>
+          ) : null}
           {storedAudioUrls.length >= 2 ? (
             <div className="flex flex-col gap-4">
               {storedAudioUrls.map((url, i) => (
@@ -703,6 +725,7 @@ interface MusicPromptStepPanelProps {
   onPersistSuno: (updates: SunoPersist) => void
   sunoBaseUrlConfigured?: boolean
   sunoEnvKeyConfigured?: boolean
+  llmModel?: string | null
 }
 
 export function MusicPromptStepPanel({
@@ -719,6 +742,7 @@ export function MusicPromptStepPanel({
   onPersistSuno,
   sunoBaseUrlConfigured,
   sunoEnvKeyConfigured,
+  llmModel,
 }: MusicPromptStepPanelProps) {
   const full = state.llmResponse ?? ''
   const lyricsFromDoc = extractBlock(full, 'Lyrics')
@@ -760,11 +784,13 @@ export function MusicPromptStepPanel({
   const styleCharCount = styleForSuno.length
   const styleExceedsSunoLimit = styleCharCount > MAX_SUNO_STYLE_PROMPT_CHARS
 
-  const hasSongUrl = splitStoredAudioUrls(state.outputAssetUrl).length > 0
+  const hasPreviewOrFinalAudioUrl =
+    splitStoredAudioUrls(state.outputAssetUrl).length > 0
+  const hasFinalSongUrl = everyAudioUrlLineIsFinal(state.outputAssetUrl)
   const approveRequiresSong =
     Boolean(sunoBaseUrlConfigured) &&
     (Boolean(sunoEnvKeyConfigured) || Boolean(state.sunoApiKeyOverride?.trim()))
-  const canApprove = !approveRequiresSong || hasSongUrl
+  const canApprove = !approveRequiresSong || hasFinalSongUrl
 
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
@@ -777,6 +803,7 @@ export function MusicPromptStepPanel({
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           Music Prompt
         </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {isEmptyStart && (
@@ -939,10 +966,19 @@ export function MusicPromptStepPanel({
                   />
                   Approve
                 </button>
-                {approveRequiresSong && !hasSongUrl ? (
+                {approveRequiresSong && !hasPreviewOrFinalAudioUrl ? (
                   <p className="text-[12px] text-zinc-500">
                     Generate a song above, then approve when you are happy with
                     the preview.
+                  </p>
+                ) : null}
+                {approveRequiresSong &&
+                hasPreviewOrFinalAudioUrl &&
+                !hasFinalSongUrl ? (
+                  <p className="text-[12px] text-zinc-500">
+                    Listen to the preview stream above. Approve unlocks when
+                    each audio URL ends with a file extension (e.g. .mp3) - that
+                    means the final file is ready.
                   </p>
                 ) : null}
               </div>
@@ -953,3 +989,4 @@ export function MusicPromptStepPanel({
     </div>
   )
 }
+

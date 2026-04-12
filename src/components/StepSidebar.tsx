@@ -1,3 +1,4 @@
+import { workflowStepLlmModelLabel } from '@/constants/workflow-llm-models'
 import { StepDefinition } from '@/lib/workflow-templates'
 import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
 
@@ -38,6 +39,7 @@ export function StepSidebar({
             state.status === 'pending' &&
             def.stepNumber > 1 &&
             steps[def.stepNumber - 2].status !== 'done'
+          const llmModel = workflowStepLlmModelLabel(def.stepNumber)
 
           return (
             <button
@@ -79,9 +81,17 @@ export function StepSidebar({
 
               {/* Step label */}
               <span
-                className={`min-w-0 truncate leading-tight ${isActive ? 'font-semibold' : ''}`}
+                className={`min-w-0 flex-1 truncate leading-tight ${isActive ? 'font-semibold' : ''}`}
               >
                 {def.title}
+                {llmModel && (
+                  <span
+                    className={`mt-0.5 block truncate font-mono text-[10px] tracking-normal normal-case ${isActive ? 'text-orange-500/90' : 'text-zinc-400'}`}
+                    title={llmModel}
+                  >
+                    {llmModel}
+                  </span>
+                )}
                 {def.tool !== 'Gigity' && def.tool !== 'Manual' && (
                   <span
                     className={`mt-0.5 block text-[11px] ${isActive ? 'text-orange-400' : 'text-zinc-400'}`}

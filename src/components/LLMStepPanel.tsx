@@ -6,6 +6,7 @@ import {
   WORKFLOW_TOTAL_STEPS,
 } from '@/lib/workflow-templates'
 import { LucideCheck, LucideSparkles } from 'lucide-react'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
 
@@ -21,6 +22,7 @@ interface LLMStepPanelProps {
   onSendFollowUp: () => void
   onApprove: (opts?: { outputAssetUrl?: string }) => void
   onReopen?: () => void
+  llmModel?: string | null
 }
 
 interface ResponseBlock {
@@ -102,6 +104,7 @@ export function LLMStepPanel({
   onSendFollowUp,
   onApprove,
   onReopen,
+  llmModel,
 }: LLMStepPanelProps) {
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
@@ -117,6 +120,7 @@ export function LLMStepPanel({
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           {stepDef.title}
         </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {/* State 1: No response yet */}
@@ -147,7 +151,11 @@ export function LLMStepPanel({
         <div>
           <div className="mb-4 flex items-center gap-2 rounded-[6px] border border-green-200 bg-green-50 px-4 py-2">
             <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
+              <LucideCheck
+                className="h-3 w-3"
+                strokeWidth={3}
+                aria-hidden
+              />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Approved
@@ -162,7 +170,10 @@ export function LLMStepPanel({
             )}
           </div>
           <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-orange-600 uppercase">
-            <LucideSparkles className="h-3 w-3" aria-hidden />
+            <LucideSparkles
+              className="h-3 w-3"
+              aria-hidden
+            />
             AI Output
           </div>
           <ResponseBlocks content={state.llmResponse!} />
@@ -189,7 +200,10 @@ export function LLMStepPanel({
           {state.llmResponse && (
             <>
               <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-orange-600 uppercase">
-                <LucideSparkles className="h-3 w-3" aria-hidden />
+                <LucideSparkles
+                  className="h-3 w-3"
+                  aria-hidden
+                />
                 AI Output
               </div>
               {state.conversation.length > 1 ? (
@@ -232,7 +246,10 @@ export function LLMStepPanel({
               onClick={() => onApprove()}
               className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
             >
-              <LucideCheck className="h-4 w-4" aria-hidden />
+              <LucideCheck
+                className="h-4 w-4"
+                aria-hidden
+              />
               Approve
             </button>
           </div>

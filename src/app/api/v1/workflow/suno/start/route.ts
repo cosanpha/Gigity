@@ -4,8 +4,8 @@ import {
   SUNO_API_BASE_URL,
   SUNO_API_KEY,
 } from '@/constants/env.server'
-import { requireAuth } from '@/lib/auth'
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
+import { requireAuth } from '@/lib/auth'
 import { summarizeSunoError } from '@/lib/suno-http'
 import { NextResponse } from 'next/server'
 
@@ -34,9 +34,7 @@ export async function POST(req: Request) {
   }
 
   const fromBody =
-    typeof sunoApiKey === 'string' && sunoApiKey.trim()
-      ? sunoApiKey.trim()
-      : ''
+    typeof sunoApiKey === 'string' && sunoApiKey.trim() ? sunoApiKey.trim() : ''
   const apiKey = fromBody || SUNO_API_KEY?.trim() || ''
   if (!apiKey) {
     return NextResponse.json(
@@ -115,4 +113,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ taskId })
 }
-

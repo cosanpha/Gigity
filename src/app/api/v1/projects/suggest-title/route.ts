@@ -1,3 +1,4 @@
+import { llmModelSuggestTitle } from '@/constants/workflow-llm-models'
 import { apiHandler } from '@/lib/api-handler'
 import { callLLM } from '@/lib/llm'
 import BrandProfile from '@/models/BrandProfile'
@@ -14,8 +15,8 @@ function sanitizeTitle(raw: string): string {
 
 export const POST = apiHandler(
   async (req: Request) => {
-    const body = await req.json().catch(() => ({}))
-    const brandProfileId = body.brandProfileId as string | undefined
+    const body = await req.json()
+    const brandProfileId = body.brandProfileId
     const hint =
       typeof body.hint === 'string' ? body.hint.trim().slice(0, 500) : ''
 
@@ -39,6 +40,8 @@ export const POST = apiHandler(
       brand.exampleVideoUrls?.length > 0
         ? brand.exampleVideoUrls.join(', ')
         : 'None listed'
+    const brandLinksStr =
+      brand.brandLinks?.length > 0 ? brand.brandLinks.join(', ') : 'None listed'
 
     const userBlock = [
       `Brand name: ${brand.name}`,
@@ -46,6 +49,7 @@ export const POST = apiHandler(
       `Target audience: ${brand.targetAudience || 'Not specified'}`,
       `Tone: ${brand.tone || 'Not specified'}`,
       `Platforms: ${platformStr}`,
+      `Brand links (website, app stores, etc.): ${brandLinksStr}`,
       `Reference video URLs (style cues): ${refs}`,
       '',
       hint
@@ -64,7 +68,7 @@ The title is the CREATIVE TOPIC for the entire pipeline: it anchors the campaign
 
 Rules:
 - Output exactly ONE line: the title text only. No quotes, bullets, labels like "Title:", or extra sentences.
-- Roughly 4–14 words, under 90 characters.
+- Roughly 3-10 words, under 90 characters.
 - Concrete beats vague (e.g. a moment, season, offer, emotion, or scene - tied to the brand).`,
       },
       { role: 'user' as const, content: userBlock },
@@ -72,7 +76,7 @@ Rules:
 
     let raw: string
     try {
-      raw = await callLLM(messages)
+      raw = await callLLM(messages, { model: llmModelSuggestTitle() })
     } catch {
       return NextResponse.json(
         {

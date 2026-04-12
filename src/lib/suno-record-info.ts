@@ -1,22 +1,32 @@
-const PATH_ENDS_WITH_AUDIO_EXT = /\.(mp3|wav|m4a|aac|ogg|flac)(?:\?.*)?$/i
+const PATH_ENDS_WITH_AUDIO_EXT =
+  /\.(mp3|wav|m4a|aac|ogg|flac|opus)(?:\?.*)?$/i
 
-export function normalizeSunoPlayableUrl(url: string): string {
+export function pathnameEndsWithAudioFile(url: string): boolean {
   const t = url.trim()
-  if (!/^https?:\/\//i.test(t)) return t
+  if (!t) return false
   try {
     const u = new URL(t)
-    const host = u.hostname.toLowerCase()
-    if (host !== 'musicfile.removeai.ai' && !host.endsWith('.removeai.ai'))
-      return t
-    const path = u.pathname
-    if (PATH_ENDS_WITH_AUDIO_EXT.test(path)) return t
-    if (path === '/' || path === '') return t
-    const base = path.replace(/\/$/, '')
-    u.pathname = `${base}.mp3`
-    return u.toString()
+    return PATH_ENDS_WITH_AUDIO_EXT.test(u.pathname)
   } catch {
-    return t
+    return PATH_ENDS_WITH_AUDIO_EXT.test(t)
   }
+}
+
+export function everyAudioUrlLineIsFinal(raw: string | null | undefined): boolean {
+  if (!raw?.trim()) return false
+  const lines = raw
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean)
+  return lines.length > 0 && lines.every(pathnameEndsWithAudioFile)
+}
+
+export function normalizeSunoStoredUrl(url: string): string {
+  return url.trim()
+}
+
+export function normalizeSunoPlayableUrl(url: string): string {
+  return normalizeSunoStoredUrl(url)
 }
 
 function findAudioUrl(obj: unknown, depth: number): string | null {
@@ -24,12 +34,12 @@ function findAudioUrl(obj: unknown, depth: number): string | null {
   if (typeof obj === 'string') {
     const s = obj.trim()
     if (!/^https?:\/\//i.test(s)) return null
-    if (/\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(s)) return s
+    if (/\.(mp3|wav|m4a|aac|ogg|flac|opus)(\?|$)/i.test(s)) return s
     try {
       const u = new URL(s)
       const host = u.hostname.toLowerCase()
       if (host === 'musicfile.removeai.ai' || host.endsWith('.removeai.ai')) {
-        return normalizeSunoPlayableUrl(s)
+        return s.trim()
       }
     } catch {
       return null
@@ -54,7 +64,7 @@ function findAudioUrl(obj: unknown, depth: number): string | null {
       ) {
         const v = o[key]
         if (typeof v === 'string' && v.startsWith('http'))
-          return normalizeSunoPlayableUrl(v)
+          return normalizeSunoStoredUrl(v)
       }
     }
     for (const v of Object.values(o)) {
@@ -87,7 +97,7 @@ export function extractSunoTaskId(data: unknown): string | null {
   return null
 }
 
-export type SunoPollState = 'pending' | 'complete' | 'failed'
+export type SunoPollState = 'pending' | 'streaming' | 'complete' | 'failed'
 
 function pickRecordPayload(raw: unknown): Record<string, unknown> | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
@@ -158,12 +168,12 @@ export function extractSunoTrackPlayableUrls(raw: unknown): string[] {
 
   const root = raw as Record<string, unknown>
   let urls = tryRec(root)
-  if (urls.length > 0) return urls.map(normalizeSunoPlayableUrl)
+  if (urls.length > 0) return urls.map(normalizeSunoStoredUrl)
 
   const data = root.data
   if (data && typeof data === 'object' && !Array.isArray(data)) {
     urls = tryRec(data as Record<string, unknown>)
-    if (urls.length > 0) return urls.map(normalizeSunoPlayableUrl)
+    if (urls.length > 0) return urls.map(normalizeSunoStoredUrl)
   }
 
   return []
@@ -239,8 +249,9 @@ export function parseSunoRecordInfo(raw: unknown): {
 
   const trackUrls = extractSunoTrackPlayableUrls(raw)
   if (trackUrls.length > 0) {
+    const allFinal = trackUrls.every(pathnameEndsWithAudioFile)
     return {
-      state: 'complete',
+      state: allFinal ? 'complete' : 'streaming',
       audioUrl: trackUrls[0],
       audioUrls: trackUrls,
     }
@@ -248,8 +259,9 @@ export function parseSunoRecordInfo(raw: unknown): {
 
   const legacyAudio = findAudioUrl(raw, 0)
   if (legacyAudio) {
+    const allFinal = pathnameEndsWithAudioFile(legacyAudio)
     return {
-      state: 'complete',
+      state: allFinal ? 'complete' : 'streaming',
       audioUrl: legacyAudio,
       audioUrls: [legacyAudio],
     }

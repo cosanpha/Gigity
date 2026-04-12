@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
+import { DEFAULT_CHARACTER_IMAGE_STYLE } from '@/constants/character-image-styles'
+import { workflowStepLlmModelLabel } from '@/constants/workflow-llm-models'
 import { apiFetch } from '@/lib/api-fetch'
+import {
+  joinPublishMarkdown,
+  mergeParsedIntoPlatformOrder,
+  normalizePublishPlatforms,
+  splitPublishMarkdownByHeading,
+} from '@/lib/publish-copy'
 import { encodePublishLinks } from '@/lib/publish-links'
 import {
   StepDefinition,
@@ -10,7 +18,7 @@ import {
 } from '@/lib/workflow-templates'
 import { LucideAlertCircle, LucideArrowLeft, LucideCheck } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CharacterStepPanel } from './CharacterStepPanel'
 import { EditableTextStepPanel } from './EditableTextStepPanel'
 import { ExternalStepPanel } from './ExternalStepPanel'
@@ -88,31 +96,66 @@ export function WorkflowClient({
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState(project.title)
   const [steps, setSteps] = useState<StepState[]>(
-    project.steps.map((s: any) => ({
-      status: s.status,
-      llmResponse: s.llmResponse ?? null,
-      outputAssetUrl: s.outputAssetUrl ?? null,
-      sunoTaskId: s.sunoTaskId ?? null,
-      sunoSelectedTrackIndex:
-        typeof s.sunoSelectedTrackIndex === 'number'
-          ? s.sunoSelectedTrackIndex
-          : null,
-      sunoApiKeyOverride:
-        typeof s.sunoApiKeyOverride === 'string' && s.sunoApiKeyOverride.trim()
-          ? s.sunoApiKeyOverride.trim()
-          : null,
-      conversation: s.conversation ?? [],
-      error: null,
-    }))
+    project.steps.map((s: any, idx: number) => {
+      let publishPlatforms: Record<string, string> | null = null
+      if (
+        s.publishPlatforms &&
+        typeof s.publishPlatforms === 'object' &&
+        !Array.isArray(s.publishPlatforms)
+      ) {
+        publishPlatforms = { ...s.publishPlatforms }
+      } else if (
+        idx === 8 &&
+        typeof s.llmResponse === 'string' &&
+        s.llmResponse.trim()
+      ) {
+        publishPlatforms = mergeParsedIntoPlatformOrder(
+          splitPublishMarkdownByHeading(s.llmResponse),
+          normalizePublishPlatforms(brand.platforms)
+        )
+      }
+      return {
+        status: s.status,
+        llmResponse: s.llmResponse ?? null,
+        publishPlatforms,
+        outputAssetUrl: s.outputAssetUrl ?? null,
+        sunoTaskId: s.sunoTaskId ?? null,
+        sunoSelectedTrackIndex:
+          typeof s.sunoSelectedTrackIndex === 'number'
+            ? s.sunoSelectedTrackIndex
+            : null,
+        sunoApiKeyOverride:
+          typeof s.sunoApiKeyOverride === 'string' &&
+          s.sunoApiKeyOverride.trim()
+            ? s.sunoApiKeyOverride.trim()
+            : null,
+        conversation: s.conversation ?? [],
+        error: null,
+      }
+    })
   )
   const [followUp, setFollowUp] = useState('')
+  const [characterImageStyle, setCharacterImageStyle] = useState(
+    DEFAULT_CHARACTER_IMAGE_STYLE
+  )
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
   const [approveError, setApproveError] = useState<string | null>(null)
 
+  const stepsRef = useRef(steps)
+  stepsRef.current = steps
+
   function updateStepContent(n: number, content: string) {
     setSteps(prev => patch(prev, n, { llmResponse: content }))
+  }
+
+  function updatePublishPlatforms(next: Record<string, string>) {
+    const order = normalizePublishPlatforms(brand.platforms)
+    const joined = joinPublishMarkdown(order, next)
+    setSteps(prev =>
+      patch(prev, 9, { llmResponse: joined, publishPlatforms: next })
+    )
   }
 
   function persistStepOutput(n: number, outputAssetUrl: string | null) {
@@ -137,6 +180,7 @@ export function WorkflowClient({
         steps: currentSteps.map(s => ({
           status: s.status,
           llmResponse: s.llmResponse,
+          publishPlatforms: s.publishPlatforms ?? null,
           outputAssetUrl: s.outputAssetUrl,
           sunoTaskId: s.sunoTaskId,
           sunoSelectedTrackIndex: s.sunoSelectedTrackIndex,
@@ -219,47 +263,125 @@ export function WorkflowClient({
 
   async function generate(
     n: number,
-    opts: { retry?: boolean; followUpMessage?: string } = {}
+    opts: {
+      retry?: boolean
+      followUpMessage?: string
+      characterStyle?: string
+    } = {}
   ) {
     setSteps(prev => patch(prev, n, { status: 'generating', error: null }))
 
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/${n}/generate`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(opts),
-      }
-    )
+    try {
+      const res = await apiFetch(
+        `/api/v1/projects/${project._id}/steps/${n}/generate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(opts),
+        }
+      )
 
-    if (res.ok) {
-      const data = await res.json()
-      setSteps(prev => {
-        const current = prev[n - 1]
-        const newConversation = opts.retry
-          ? [{ role: 'assistant', content: data.llmResponse }]
-          : opts.followUpMessage
-            ? [
-                ...current.conversation,
-                { role: 'user', content: opts.followUpMessage },
-                { role: 'assistant', content: data.llmResponse },
-              ]
-            : [{ role: 'assistant', content: data.llmResponse }]
+      if (res.ok) {
+        const data = await res.json().catch(() => null)
+        if (!data || typeof data.llmResponse !== 'string') {
+          setSteps(prev =>
+            patch(prev, n, {
+              status: 'pending',
+              error: 'Invalid response from server',
+            })
+          )
+          return
+        }
+        setSteps(prev => {
+          const current = prev[n - 1]
+          const newConversation = opts.retry
+            ? [{ role: 'assistant', content: data.llmResponse }]
+            : opts.followUpMessage
+              ? [
+                  ...current.conversation,
+                  { role: 'user', content: opts.followUpMessage },
+                  { role: 'assistant', content: data.llmResponse },
+                ]
+              : [{ role: 'assistant', content: data.llmResponse }]
 
-        return patch(prev, n, {
-          status: 'pending',
-          llmResponse: data.llmResponse,
-          conversation: newConversation,
-          error: null,
-          ...(n === 5 || n === 6 || n === 7 ? { outputAssetUrl: null } : {}),
+          const next = patch(prev, n, {
+            status: 'pending',
+            llmResponse: data.llmResponse,
+            conversation: newConversation,
+            error: null,
+            ...(n === 5 || n === 6 || n === 7 ? { outputAssetUrl: null } : {}),
+          })
+          void saveProgress(next)
+          return next
         })
-      })
-      if (opts.followUpMessage) setFollowUp('')
-    } else {
-      const err = await res.json().catch(() => ({ error: 'Unknown error' }))
-      setSteps(prev => patch(prev, n, { status: 'pending', error: err.error }))
+        if (opts.followUpMessage) setFollowUp('')
+      } else {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+        setSteps(prev =>
+          patch(prev, n, { status: 'pending', error: err.error })
+        )
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Network error'
+      setSteps(prev => patch(prev, n, { status: 'pending', error: message }))
     }
   }
+
+  useEffect(() => {
+    const idx = activeStep - 1
+    if (idx < 0 || idx >= WORKFLOW_TOTAL_STEPS) return
+    if (stepsRef.current[idx]?.status !== 'generating') return
+
+    let cancelled = false
+    ;(async () => {
+      const res = await apiFetch(`/api/v1/projects/${project._id}`)
+      if (!res.ok || cancelled) return
+      const data = await res.json().catch(() => null)
+      if (!data || !Array.isArray(data.steps) || cancelled) return
+      const serverRow = data.steps[idx]
+      if (!serverRow || typeof serverRow !== 'object') return
+
+      setSteps(prev => {
+        const local = prev[idx]
+        if (!local || local.status !== 'generating') return prev
+        if (serverRow.status === 'generating') return prev
+        return prev.map((s, i) =>
+          i === idx
+            ? {
+                ...s,
+                status: serverRow.status,
+                llmResponse: serverRow.llmResponse ?? null,
+                publishPlatforms:
+                  serverRow.publishPlatforms &&
+                  typeof serverRow.publishPlatforms === 'object' &&
+                  !Array.isArray(serverRow.publishPlatforms)
+                    ? {
+                        ...(serverRow.publishPlatforms as Record<
+                          string,
+                          string
+                        >),
+                      }
+                    : null,
+                outputAssetUrl: serverRow.outputAssetUrl ?? null,
+                sunoTaskId: serverRow.sunoTaskId ?? null,
+                sunoSelectedTrackIndex:
+                  typeof serverRow.sunoSelectedTrackIndex === 'number'
+                    ? serverRow.sunoSelectedTrackIndex
+                    : null,
+                conversation: Array.isArray(serverRow.conversation)
+                  ? serverRow.conversation
+                  : [],
+                error: null,
+              }
+            : s
+        )
+      })
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeStep, project._id])
 
   async function reopen(n: number) {
     const res = await apiFetch(
@@ -288,6 +410,8 @@ export function WorkflowClient({
         patch(prev, n, {
           status: 'pending',
           llmResponse: null,
+          publishPlatforms: null,
+          outputAssetUrl: null,
           conversation: [],
           error: null,
         })
@@ -298,11 +422,14 @@ export function WorkflowClient({
 
   async function approveCharacterStep(imageUrls: string) {
     setApproveError(null)
-    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/5/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outputAssetUrl: imageUrls }),
-    })
+    const res = await apiFetch(
+      `/api/v1/projects/${project._id}/steps/5/approve`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputAssetUrl: imageUrls }),
+      }
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Approve failed' }))
       setApproveError(err.error ?? 'Approve failed')
@@ -318,9 +445,12 @@ export function WorkflowClient({
   }
 
   async function reopenCharacterStep() {
-    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/5/reopen`, {
-      method: 'POST',
-    })
+    const res = await apiFetch(
+      `/api/v1/projects/${project._id}/steps/5/reopen`,
+      {
+        method: 'POST',
+      }
+    )
     if (!res.ok) return
     setSteps(prev => patch(prev, 5, { status: 'pending' }))
     setActiveStep(5)
@@ -328,11 +458,14 @@ export function WorkflowClient({
 
   async function approveSceneStep(imageUrls: string) {
     setApproveError(null)
-    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/6/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outputAssetUrl: imageUrls }),
-    })
+    const res = await apiFetch(
+      `/api/v1/projects/${project._id}/steps/6/approve`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputAssetUrl: imageUrls }),
+      }
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Approve failed' }))
       setApproveError(err.error ?? 'Approve failed')
@@ -346,11 +479,14 @@ export function WorkflowClient({
 
   async function approveKlingStep(videoUrls: string) {
     setApproveError(null)
-    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outputAssetUrl: videoUrls }),
-    })
+    const res = await apiFetch(
+      `/api/v1/projects/${project._id}/steps/7/approve`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputAssetUrl: videoUrls }),
+      }
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Approve failed' }))
       setApproveError(err.error ?? 'Approve failed')
@@ -363,9 +499,12 @@ export function WorkflowClient({
   }
 
   async function reopenSceneStep() {
-    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/6/reopen`, {
-      method: 'POST',
-    })
+    const res = await apiFetch(
+      `/api/v1/projects/${project._id}/steps/6/reopen`,
+      {
+        method: 'POST',
+      }
+    )
     if (!res.ok) return
     setSteps(prev => patch(prev, 6, { status: 'pending' }))
     setActiveStep(6)
@@ -420,7 +559,10 @@ export function WorkflowClient({
           href={`/?brand=${encodeURIComponent(brandProfileId)}`}
           className="inline-flex shrink-0 items-center gap-1 rounded-[4px] px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
         >
-          <LucideArrowLeft className="h-3.5 w-3.5" aria-hidden />
+          <LucideArrowLeft
+            className="h-3.5 w-3.5"
+            aria-hidden
+          />
           Videos
         </Link>
         <span className="h-4 w-px shrink-0 bg-zinc-200" />
@@ -478,10 +620,16 @@ export function WorkflowClient({
               <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-500" />
             )}
             {saveStatus === 'saved' && (
-              <LucideCheck className="h-3.5 w-3.5 text-green-500" aria-hidden />
+              <LucideCheck
+                className="h-3.5 w-3.5 text-green-500"
+                aria-hidden
+              />
             )}
             {saveStatus === 'error' && (
-              <LucideAlertCircle className="h-3.5 w-3.5 text-red-500" aria-hidden />
+              <LucideAlertCircle
+                className="h-3.5 w-3.5 text-red-500"
+                aria-hidden
+              />
             )}
             <span>
               {saveStatus === 'saving'
@@ -513,6 +661,7 @@ export function WorkflowClient({
               key={`brief-${steps[0].status}`}
               stepNumber={1}
               title="Campaign Brief"
+              llmModel={workflowStepLlmModelLabel(1)}
               tool="Gigity"
               textareaRows={18}
               generateLabel="campaign brief"
@@ -534,6 +683,7 @@ export function WorkflowClient({
               key={`story-${steps[1].status}`}
               stepNumber={2}
               title="Story Script"
+              llmModel={workflowStepLlmModelLabel(2)}
               tool="Gigity"
               textareaRows={24}
               generateLabel="story script"
@@ -555,6 +705,7 @@ export function WorkflowClient({
               key={`lyrics-${steps[2].status}`}
               stepNumber={3}
               title="Song Lyrics"
+              llmModel={workflowStepLlmModelLabel(3)}
               tool="SunoAI"
               textareaRows={24}
               generateLabel="song lyrics"
@@ -575,6 +726,7 @@ export function WorkflowClient({
             <MusicPromptStepPanel
               key={`music-${steps[3].status}`}
               state={steps[3]}
+              llmModel={workflowStepLlmModelLabel(4)}
               trackTitle={title}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -596,12 +748,22 @@ export function WorkflowClient({
             />
           ) : activeStep === 5 ? (
             <CharacterStepPanel
-              key={`char-${steps[4].status}-${steps[4].llmResponse?.length ?? 0}`}
+              key={`char-${project._id}-${steps[4].status}`}
               stepState={steps[4]}
+              llmModel={workflowStepLlmModelLabel(5)}
+              characterStyle={characterImageStyle}
+              onCharacterStyleChange={setCharacterImageStyle}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(5)}
-              onRetry={() => generate(5, { retry: true })}
+              onGenerate={() =>
+                generate(5, { characterStyle: characterImageStyle })
+              }
+              onRetry={() =>
+                generate(5, {
+                  retry: true,
+                  characterStyle: characterImageStyle,
+                })
+              }
               onSendFollowUp={() => generate(5, { followUpMessage: followUp })}
               onApprove={approveCharacterStep}
               onReopen={reopenCharacterStep}
@@ -610,8 +772,9 @@ export function WorkflowClient({
             />
           ) : activeStep === 6 ? (
             <SceneStepPanel
-              key={`scene-${steps[5].status}-${steps[5].llmResponse?.length ?? 0}`}
+              key={`scene-${project._id}-${steps[5].status}`}
               stepState={steps[5]}
+              llmModel={workflowStepLlmModelLabel(6)}
               characterImageUrls={collectAssets(steps).characterImages}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -625,9 +788,10 @@ export function WorkflowClient({
             />
           ) : activeStep === 7 ? (
             <KlingStepPanel
-              key={`kling-7-${steps[6].status}-${steps[6].llmResponse?.length ?? 0}`}
+              key={`kling-${project._id}-${steps[6].status}`}
               stepDef={currentStepDef}
               state={steps[6]}
+              llmModel={workflowStepLlmModelLabel(7)}
               sceneImageUrls={collectAssets(steps).sceneImages}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
@@ -643,6 +807,7 @@ export function WorkflowClient({
             <LLMStepPanel
               stepDef={currentStepDef}
               state={currentStepState}
+              llmModel={workflowStepLlmModelLabel(activeStep)}
               followUp={followUp}
               onFollowUpChange={setFollowUp}
               onGenerate={() => generate(activeStep)}
@@ -659,8 +824,10 @@ export function WorkflowClient({
               stepNumber={activeStep}
               stepDef={currentStepDef}
               state={currentStepState}
+              llmModel={workflowStepLlmModelLabel(activeStep)}
               priorStepOutput={getPriorOutput()}
               brandCtx={{ platform: brand.platforms.join(', ') }}
+              publishPlatformOrder={normalizePublishPlatforms(brand.platforms)}
               onApprove={() => approve(activeStep, {})}
               onReopen={() => reopen(activeStep)}
               projectTitle={title}
@@ -670,7 +837,7 @@ export function WorkflowClient({
               publishStep={
                 activeStep === 9
                   ? {
-                      onDescriptionChange: c => updateStepContent(9, c),
+                      onPublishPlatformsChange: updatePublishPlatforms,
                       onGenerate: async () => {
                         const res = await apiFetch(
                           `/api/v1/projects/${project._id}/steps/9/generate-publish-description`,
@@ -684,12 +851,19 @@ export function WorkflowClient({
                               : 'Generation failed'
                           )
                         }
+                        const pp =
+                          data.publishPlatforms &&
+                          typeof data.publishPlatforms === 'object' &&
+                          !Array.isArray(data.publishPlatforms)
+                            ? { ...data.publishPlatforms }
+                            : null
                         setSteps(prev => {
                           const next = patch(prev, 9, {
                             llmResponse:
                               typeof data.llmResponse === 'string'
                                 ? data.llmResponse
                                 : null,
+                            publishPlatforms: pp,
                           })
                           saveProgress(next)
                           return next

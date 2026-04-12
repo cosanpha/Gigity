@@ -9,6 +9,8 @@ export interface IWorkflowStep {
   stepNumber: number
   conversation: IMessage[]
   llmResponse: string | null
+  /** Step 9: per-platform publish copy (keys match brand publishing platforms). */
+  publishPlatforms: Record<string, string> | null
   outputAssetUrl: string | null
   sunoTaskId: string | null
   sunoSelectedTrackIndex: number | null
@@ -40,6 +42,7 @@ const WorkflowStepSchema = new Schema<IWorkflowStep>(
     stepNumber: { type: Number, required: true },
     conversation: { type: [MessageSchema], default: [] },
     llmResponse: { type: String, default: null },
+    publishPlatforms: { type: Schema.Types.Mixed, default: null },
     outputAssetUrl: { type: String, default: null },
     sunoTaskId: { type: String, default: null },
     sunoSelectedTrackIndex: { type: Number, default: null },

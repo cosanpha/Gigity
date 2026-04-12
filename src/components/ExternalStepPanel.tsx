@@ -2,6 +2,7 @@
 
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { interpolate } from '@/lib/interpolate'
+import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { decodePublishLinks } from '@/lib/publish-links'
 import {
   StepDefinition,
@@ -24,6 +25,7 @@ import {
 import Image from 'next/image'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
 
 interface ProjectAssets {
   characterImages: string[]
@@ -43,12 +45,15 @@ interface ExternalStepPanelProps {
   projectAssets?: ProjectAssets // CapCut: all collected project assets
   /** Used for zip download filename (project / video title). */
   projectTitle?: string
+  /** Step 9: normalized brand publishing platforms (same order as generate API). */
+  publishPlatformOrder?: string[]
   /** Step 9 (Publish): AI descriptions + optional published URLs. */
   publishStep?: {
-    onDescriptionChange: (content: string) => void
+    onPublishPlatformsChange: (next: Record<string, string>) => void
     onGenerate: () => Promise<void>
     onSaveLinks: (tiktok: string, youtube: string) => void
   }
+  llmModel?: string | null
 }
 
 function AssetGroup({
@@ -80,7 +85,7 @@ function AssetGroup({
               key={i}
               className="flex items-center gap-2 rounded-[6px] border border-zinc-100 bg-zinc-50 px-3 py-2"
             >
-              {isImage && (
+              {isImage && isHttpOrHttpsUrl(url) && (
                 <a
                   href={url}
                   target="_blank"
@@ -290,15 +295,17 @@ function DownloadAllButton({
 }
 
 function PublishStepSection({
-  description,
+  platformOrder,
+  publishPlatforms,
   outputAssetUrl,
-  onDescriptionChange,
+  onPublishPlatformsChange,
   onGenerate,
   onSaveLinks,
 }: {
-  description: string | null
+  platformOrder: string[]
+  publishPlatforms: Record<string, string> | null
   outputAssetUrl: string | null
-  onDescriptionChange: (content: string) => void
+  onPublishPlatformsChange: (next: Record<string, string>) => void
   onGenerate: () => Promise<void>
   onSaveLinks: (tiktok: string, youtube: string) => void
 }) {
@@ -329,23 +336,40 @@ function PublishStepSection({
     onSaveLinks(tiktok, youtube)
   }
 
+  function setPlatformText(platform: string, text: string) {
+    const base: Record<string, string> = {}
+    for (const p of platformOrder) base[p] = publishPlatforms?.[p] ?? ''
+    base[platform] = text
+    onPublishPlatformsChange(base)
+  }
+
   return (
     <div className="flex flex-col gap-4 rounded-[6px] border border-zinc-200 bg-white px-4 py-4">
       <div>
         <p className="mb-1.5 text-[12px] font-medium text-zinc-700">
-          Video description (TikTok + YouTube)
+          Publish copy by platform
         </p>
-        <p className="mb-2 text-[11px] text-zinc-500">
-          Generated from your workflow and brand. Edit before posting.
+        <p className="mb-3 text-[11px] text-zinc-500">
+          One box per publishing platform from your brand profile. Generate
+          fills them all; edit each before posting.
         </p>
-        <textarea
-          value={description ?? ''}
-          onChange={e => onDescriptionChange(e.target.value)}
-          rows={14}
-          spellCheck={false}
-          placeholder='Press "Generate video description" to create TikTok and YouTube copy from prior steps…'
-          className="w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-sans text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
-        />
+        <div className="flex flex-col gap-4">
+          {platformOrder.map(platform => (
+            <div key={platform}>
+              <label className="mb-1.5 block text-[12px] font-medium text-zinc-600">
+                {platform}
+              </label>
+              <textarea
+                value={publishPlatforms?.[platform] ?? ''}
+                onChange={e => setPlatformText(platform, e.target.value)}
+                rows={platform === 'YouTube' ? 14 : 8}
+                spellCheck={false}
+                placeholder={`Paste or generate copy for ${platform}…`}
+                className="w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-sans text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+              />
+            </div>
+          ))}
+        </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -373,7 +397,7 @@ function PublishStepSection({
           Published video links (optional)
         </p>
         <p className="mb-3 text-[11px] text-zinc-500">
-          After your video is live, paste URLs here — they save on paste/drop or
+          After your video is live, paste URLs here - they save on paste/drop or
           when you leave a field.
         </p>
         <label className="mb-2 block">
@@ -414,14 +438,21 @@ function PublishStepSection({
 }
 
 function PublishStepDoneView({
+  platformOrder,
+  publishPlatforms,
   llmResponse,
   outputAssetUrl,
 }: {
+  platformOrder: string[]
+  publishPlatforms: Record<string, string> | null
   llmResponse: string | null
   outputAssetUrl: string | null
 }) {
   const { tiktok, youtube } = decodePublishLinks(outputAssetUrl)
-  const hasContent = llmResponse?.trim() || tiktok || youtube
+  const hasPerPlatform =
+    publishPlatforms &&
+    platformOrder.some(p => (publishPlatforms[p] ?? '').trim())
+  const hasContent = hasPerPlatform || llmResponse?.trim() || tiktok || youtube
 
   return (
     <div className="flex flex-col gap-4">
@@ -430,7 +461,27 @@ function PublishStepDoneView({
           No description or publish links saved. Re-open this step to add them.
         </p>
       )}
-      {llmResponse?.trim() ? (
+      {hasPerPlatform ? (
+        <div className="flex flex-col gap-3">
+          {platformOrder.map(platform => {
+            const text = (publishPlatforms?.[platform] ?? '').trim()
+            if (!text) return null
+            return (
+              <div
+                key={platform}
+                className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3"
+              >
+                <p className="mb-2 text-[12px] font-medium text-zinc-500">
+                  {platform}
+                </p>
+                <pre className="max-h-64 overflow-y-auto font-sans text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800">
+                  {text}
+                </pre>
+              </div>
+            )
+          })}
+        </div>
+      ) : llmResponse?.trim() ? (
         <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
           <p className="mb-2 text-[12px] font-medium text-zinc-500">
             Video description
@@ -483,7 +534,9 @@ export function ExternalStepPanel({
   onReopen,
   projectAssets,
   projectTitle,
+  publishPlatformOrder = [],
   publishStep,
+  llmModel,
 }: ExternalStepPanelProps) {
   const [contextOpen, setContextOpen] = useState(true)
   const instruction = interpolate(stepDef.instruction ?? '', {
@@ -512,6 +565,7 @@ export function ExternalStepPanel({
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           {stepDef.title}
         </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {/* Approved state */}
@@ -540,6 +594,8 @@ export function ExternalStepPanel({
 
           {stepNumber === WORKFLOW_TOTAL_STEPS ? (
             <PublishStepDoneView
+              platformOrder={publishPlatformOrder}
+              publishPlatforms={state.publishPlatforms}
               llmResponse={state.llmResponse}
               outputAssetUrl={state.outputAssetUrl}
             />
@@ -677,9 +733,10 @@ export function ExternalStepPanel({
 
           {stepNumber === WORKFLOW_TOTAL_STEPS && publishStep ? (
             <PublishStepSection
-              description={state.llmResponse}
+              platformOrder={publishPlatformOrder}
+              publishPlatforms={state.publishPlatforms}
               outputAssetUrl={state.outputAssetUrl}
-              onDescriptionChange={publishStep.onDescriptionChange}
+              onPublishPlatformsChange={publishStep.onPublishPlatformsChange}
               onGenerate={publishStep.onGenerate}
               onSaveLinks={publishStep.onSaveLinks}
             />

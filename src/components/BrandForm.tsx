@@ -1,6 +1,7 @@
 'use client'
 
 import { CloudinaryImageUploadButton } from '@/components/CloudinaryImageUploadButton'
+import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { LucideCheck, LucidePlus, LucideX } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
@@ -29,17 +30,6 @@ const PLATFORMS = [
 const inputFocus =
   'focus:border-orange-400 focus:outline-none focus:ring-[3px] focus:ring-orange-100'
 
-function isHttpImageUrlCandidate(s: string): boolean {
-  const t = s.trim()
-  if (!t) return false
-  try {
-    const u = new URL(t)
-    return u.protocol === 'http:' || u.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
-
 export interface BrandFormData {
   name: string
   logoUrl: string
@@ -48,6 +38,7 @@ export interface BrandFormData {
   tone: string
   platforms: string[]
   exampleVideoUrls: string[]
+  brandLinks: string[]
 }
 
 interface BrandFormProps {
@@ -78,11 +69,14 @@ export function BrandForm({
   const [urls, setUrls] = useState<string[]>(
     initialData.exampleVideoUrls?.length ? initialData.exampleVideoUrls : ['']
   )
+  const [brandLinkRows, setBrandLinkRows] = useState<string[]>(
+    initialData.brandLinks?.length ? initialData.brandLinks : ['']
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [logoPreviewFailed, setLogoPreviewFailed] = useState(false)
   const trimmedLogoUrl = logoUrl.trim()
   const showLogoPreview =
-    isHttpImageUrlCandidate(trimmedLogoUrl) && !logoPreviewFailed
+    isHttpOrHttpsUrl(trimmedLogoUrl) && !logoPreviewFailed
 
   function toggleTone(t: string) {
     setSelectedTones(prev => {
@@ -114,6 +108,18 @@ export function BrandForm({
     setUrls(prev => prev.filter((_, i) => i !== index))
   }
 
+  function addBrandLink() {
+    setBrandLinkRows(prev => [...prev, ''])
+  }
+
+  function updateBrandLink(index: number, value: string) {
+    setBrandLinkRows(prev => prev.map((u, i) => (i === index ? value : u)))
+  }
+
+  function removeBrandLink(index: number) {
+    setBrandLinkRows(prev => prev.filter((_, i) => i !== index))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrors({})
@@ -126,6 +132,7 @@ export function BrandForm({
       tone: [...selectedTones].join(', '),
       platforms: [...selectedPlatforms],
       exampleVideoUrls: urls.map(u => u.trim()).filter(Boolean),
+      brandLinks: brandLinkRows.map(u => u.trim()).filter(Boolean),
     }
 
     await onSave(data)
@@ -177,7 +184,7 @@ export function BrandForm({
                 idleLabel="Upload logo…"
                 onUploaded={url => setLogoUrl(url)}
               />
-              {isHttpImageUrlCandidate(trimmedLogoUrl) && (
+              {isHttpOrHttpsUrl(trimmedLogoUrl) && (
                 <div className="mt-1">
                   {showLogoPreview ? (
                     <div className="relative h-[88px] w-[88px] overflow-hidden rounded-[6px] border border-zinc-200 bg-zinc-50">
@@ -302,6 +309,62 @@ export function BrandForm({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Brand links */}
+        <div className="border-b border-zinc-200 p-6">
+          <p className="mb-5 text-[12px] font-semibold tracking-wider text-zinc-500 uppercase">
+            Brand links
+          </p>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-medium text-zinc-700">
+              Website and app links
+            </label>
+            <p className="text-xs text-zinc-400">
+              Where people can download your app or visit your site (e.g. App
+              Store, Play Store, landing page). Paste full URLs.
+            </p>
+            <div className="flex flex-col gap-2">
+              {brandLinkRows.map((linkUrl, i) => (
+                <div
+                  key={i}
+                  className="flex gap-2"
+                >
+                  <PasteOnlyUrlInput
+                    type="url"
+                    value={linkUrl}
+                    onValueChange={v => updateBrandLink(i, v)}
+                    placeholder="Paste link (https://…) - typing disabled…"
+                    className={`h-9 flex-1 rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 text-sm placeholder:text-zinc-400 ${inputFocus}`}
+                  />
+                  {brandLinkRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeBrandLink(i)}
+                      aria-label="Remove link"
+                      className="px-2 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <LucideX
+                        className="h-4 w-4"
+                        aria-hidden
+                      />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addBrandLink}
+              className="inline-flex items-center gap-1.5 self-start text-[13px] text-orange-500 hover:text-orange-600"
+            >
+              <LucidePlus
+                className="h-3.5 w-3.5"
+                aria-hidden
+              />
+              Add link
+            </button>
           </div>
         </div>
 

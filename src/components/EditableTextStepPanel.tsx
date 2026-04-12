@@ -1,19 +1,20 @@
 'use client'
 
-import { GenerateSpinner } from './ui/GenerateSpinner'
-import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import type { StepState } from '@/lib/workflow-templates'
+import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import { startTransition, useEffect, useRef, useState } from 'react'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
+import { GenerateSpinner } from './ui/GenerateSpinner'
 
 interface EditableTextStepPanelProps {
   stepNumber: number
   title: string
   tool: string
   textareaRows?: number
-  generateLabel?: string    // e.g. "campaign brief" — used in "Ready to generate your X."
-  generatingLabel?: string  // e.g. "campaign brief…" — used in "Generating X…"
-  approvedLabel?: string    // e.g. "brief" — used in "Re-open to edit the X."
+  generateLabel?: string // e.g. "campaign brief" - used in "Ready to generate your X."
+  generatingLabel?: string // e.g. "campaign brief…" - used in "Generating X…"
+  approvedLabel?: string // e.g. "brief" - used in "Re-open to edit the X."
   followUpPlaceholder?: string
   state: StepState
   followUp: string
@@ -24,6 +25,7 @@ interface EditableTextStepPanelProps {
   onApprove: () => void
   onReopen: () => void
   onContentChange: (content: string) => void
+  llmModel?: string | null
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -40,7 +42,10 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? (
         <>
-          <LucideCheck className="h-3.5 w-3.5 text-green-600" aria-hidden />
+          <LucideCheck
+            className="h-3.5 w-3.5 text-green-600"
+            aria-hidden
+          />
           Copied
         </>
       ) : (
@@ -68,6 +73,7 @@ export function EditableTextStepPanel({
   onApprove,
   onReopen,
   onContentChange,
+  llmModel,
 }: EditableTextStepPanelProps) {
   const [editedContent, setEditedContent] = useState(state.llmResponse ?? '')
   const prevStatusRef = useRef(state.status)
@@ -83,26 +89,36 @@ export function EditableTextStepPanel({
   const gLabel = generatingLabel ?? `${label}…`
   const aLabel = approvedLabel ?? label
 
-  const isEmptyStart = state.status === 'pending' && !state.llmResponse && !state.error
+  const isEmptyStart =
+    state.status === 'pending' && !state.llmResponse && !state.error
   const isGenerating = state.status === 'generating'
   const isLocked = state.status === 'done'
   const showWorkspace =
-    !isEmptyStart && !isGenerating && (Boolean(state.llmResponse) || Boolean(state.error) || isLocked)
+    !isEmptyStart &&
+    !isGenerating &&
+    (Boolean(state.llmResponse) || Boolean(state.error) || isLocked)
 
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
       <div className="mb-6">
         <div className="mb-1 flex items-center gap-2 text-[13px] text-zinc-400">
-          <span>Step {stepNumber} of {WORKFLOW_TOTAL_STEPS}</span>
+          <span>
+            Step {stepNumber} of {WORKFLOW_TOTAL_STEPS}
+          </span>
           <span>·</span>
           <span>{tool}</span>
         </div>
-        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">{title}</h2>
+        <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
+          {title}
+        </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {isEmptyStart && (
         <div className="flex flex-col items-center justify-center gap-4 py-16">
-          <p className="text-[13px] text-zinc-500">Ready to generate your {label}.</p>
+          <p className="text-[13px] text-zinc-500">
+            Ready to generate your {label}.
+          </p>
           <button
             onClick={onGenerate}
             className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
@@ -126,7 +142,9 @@ export function EditableTextStepPanel({
               <p className="text-[13px] text-green-600">
                 Approved - Re-open to edit the {aLabel}.
               </p>
-              {state.llmResponse ? <CopyButton text={state.llmResponse} /> : null}
+              {state.llmResponse ? (
+                <CopyButton text={state.llmResponse} />
+              ) : null}
             </div>
           )}
 
@@ -186,7 +204,10 @@ export function EditableTextStepPanel({
                 onClick={onApprove}
                 className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
               >
-                <LucideCheck className="h-4 w-4" aria-hidden />
+                <LucideCheck
+                  className="h-4 w-4"
+                  aria-hidden
+                />
                 Approve
               </button>
             )}

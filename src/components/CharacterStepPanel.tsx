@@ -1,17 +1,22 @@
 'use client'
 
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
+import { CHARACTER_IMAGE_STYLES } from '@/constants/character-image-styles'
 import { apiFetch } from '@/lib/api-fetch'
+import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
 import { CopyButton } from './LLMStepPanel'
+import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { GenerateSpinner } from './ui/GenerateSpinner'
 
 interface CharacterStepPanelProps {
   stepState: StepState
+  characterStyle: string
+  onCharacterStyleChange: (value: string) => void
   followUp: string
   onFollowUpChange: (v: string) => void
   onGenerate: () => void
@@ -21,6 +26,7 @@ interface CharacterStepPanelProps {
   onReopen: () => void
   onContentChange: (content: string) => void
   onPersistOutput: (outputAssetUrl: string | null) => void
+  llmModel?: string | null
 }
 
 function alignedCharacterSlots(raw: string | null, count: number): string[] {
@@ -37,13 +43,49 @@ function extractCharacterPrompts(
       .split('\n')[0]
       .replace(/\*\*.*/, '')
       .trim()
-    const promptMatch = block.match(/DALL-E prompt:\s*(.+)/)
-    const prompt = promptMatch?.[1]?.split('\n')[0]?.trim() ?? ''
+    const promptMatch = block.match(/DALL-E prompt:\s*([\s\S]*)/i)
+    const prompt = promptMatch?.[1]?.trimEnd() ?? ''
     return { name, prompt }
   })
 }
 
 const CHARACTER_BLOCK_SEP = '**Character - '
+
+function CharacterStyleSelect({
+  id,
+  value,
+  onChange,
+}: {
+  id: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="flex w-full max-w-md flex-col gap-1.5">
+      <label
+        htmlFor={id}
+        className="text-[12px] font-medium text-zinc-600"
+      >
+        Visual style
+      </label>
+      <select
+        id={id}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none focus:border-orange-400"
+      >
+        {CHARACTER_IMAGE_STYLES.map(opt => (
+          <option
+            key={opt.value}
+            value={opt.value}
+          >
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 function replaceCharacterDallePrompt(
   fullText: string,
@@ -53,7 +95,7 @@ function replaceCharacterDallePrompt(
   const parts = fullText.split(CHARACTER_BLOCK_SEP)
   const i = characterIndex + 1
   if (i <= 0 || i >= parts.length) return fullText
-  const next = parts[i].replace(/DALL-E prompt:\s*[^\n]*/, () => {
+  const next = parts[i].replace(/DALL-E prompt:\s*[\s\S]*$/i, () => {
     return `DALL-E prompt: ${newPrompt}`
   })
   if (next === parts[i] && !/DALL-E prompt:/.test(parts[i])) {
@@ -121,6 +163,8 @@ function DalleGenerateButton({
 
 export function CharacterStepPanel({
   stepState,
+  characterStyle,
+  onCharacterStyleChange,
   followUp,
   onFollowUpChange,
   onGenerate,
@@ -130,6 +174,7 @@ export function CharacterStepPanel({
   onReopen,
   onContentChange,
   onPersistOutput,
+  llmModel,
 }: CharacterStepPanelProps) {
   const isFullyDone =
     stepState.status === 'done' && Boolean(stepState.outputAssetUrl?.trim())
@@ -170,6 +215,7 @@ export function CharacterStepPanel({
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
           Character Images
         </h2>
+        <StepLlmModelCaption model={llmModel} />
       </div>
 
       {/* Done state */}
@@ -219,7 +265,13 @@ export function CharacterStepPanel({
                     spellCheck={false}
                     className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-700 outline-none read-only:bg-zinc-50 read-only:text-zinc-700"
                   />
-                  {doneUrls[i] && (
+                  {doneUrls[i]?.trim() && !isHttpOrHttpsUrl(doneUrls[i]) && (
+                    <p className="mb-2 text-[12px] text-red-500">
+                      This value is not a valid URL. Paste a link starting with
+                      https:// to preview the image.
+                    </p>
+                  )}
+                  {doneUrls[i]?.trim() && isHttpOrHttpsUrl(doneUrls[i]) && (
                     <>
                       <a
                         href={doneUrls[i]}
@@ -267,8 +319,13 @@ export function CharacterStepPanel({
         !stepState.error && (
           <div className="flex flex-col items-center justify-center gap-4 py-16">
             <p className="text-[13px] text-zinc-500">
-              Ready to generate character prompts.
+              Choose a look, then generate character prompts.
             </p>
+            <CharacterStyleSelect
+              id="character-style-initial"
+              value={characterStyle}
+              onChange={onCharacterStyleChange}
+            />
             <button
               onClick={onGenerate}
               className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
@@ -324,41 +381,48 @@ export function CharacterStepPanel({
                   className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-800 outline-none focus:border-orange-400"
                 />
 
-                {/* Image preview */}
-                {characterUrls[i]?.trim() && (
-                  <div className="mb-3">
-                    <a
-                      href={characterUrls[i]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Image
-                        src={characterUrls[i]}
-                        alt={char.name}
-                        width={120}
-                        height={210}
-                        className="rounded-[6px] object-cover"
-                      />
-                    </a>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="flex items-center gap-1 text-[12px] text-green-600">
-                        <LucideCheck
-                          className="h-3.5 w-3.5"
-                          aria-hidden
-                        />
-                        Generated
-                      </span>
+                {characterUrls[i]?.trim() &&
+                  !isHttpOrHttpsUrl(characterUrls[i]) && (
+                    <p className="mb-2 text-[12px] text-red-500">
+                      This value is not a valid URL. Paste a link starting with
+                      https:// to preview the image.
+                    </p>
+                  )}
+                {characterUrls[i]?.trim() &&
+                  isHttpOrHttpsUrl(characterUrls[i]) && (
+                    <div className="mb-3">
                       <a
                         href={characterUrls[i]}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
                       >
-                        Open
+                        <Image
+                          src={characterUrls[i]}
+                          alt={char.name}
+                          width={120}
+                          height={210}
+                          className="rounded-[6px] object-cover"
+                        />
                       </a>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-[12px] text-green-600">
+                          <LucideCheck
+                            className="h-3.5 w-3.5"
+                            aria-hidden
+                          />
+                          Generated
+                        </span>
+                        <a
+                          href={characterUrls[i]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                        >
+                          Open
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="flex flex-wrap items-start gap-3">
                   <CloudinaryImageUploadButton
@@ -414,10 +478,16 @@ export function CharacterStepPanel({
                   Send
                 </button>
               </div>
-              <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                <CharacterStyleSelect
+                  id="character-style-retry"
+                  value={characterStyle}
+                  onChange={onCharacterStyleChange}
+                />
                 <button
+                  type="button"
                   onClick={onRetry}
-                  className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+                  className="w-fit rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
                 >
                   Start fresh
                 </button>
@@ -449,3 +519,4 @@ export function CharacterStepPanel({
     </div>
   )
 }
+

@@ -50,6 +50,7 @@ export const POST = apiHandler(async (req: Request) => {
     tone,
     platforms,
     exampleVideoUrls,
+    brandLinks,
     avatarUrl,
     logoUrl,
   } = body
@@ -66,6 +67,7 @@ export const POST = apiHandler(async (req: Request) => {
     tone,
     platforms,
     exampleVideoUrls,
+    brandLinks: Array.isArray(brandLinks) ? brandLinks : [],
     logoUrl: resolvedLogoUrl,
   })
   return NextResponse.json(profile, { status: 201 })

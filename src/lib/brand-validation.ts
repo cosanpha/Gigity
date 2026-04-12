@@ -1,5 +1,8 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validateUrls(body: any): { error: string; field: string } | null {
+import { BrandFormData } from '@/components/BrandForm'
+
+export function validateUrls(
+  body: BrandFormData
+): { error: string; field: string } | null {
   if (body.logoUrl && !/^https?:\/\//.test(body.logoUrl)) {
     return {
       error: 'logoUrl must start with http:// or https://',
@@ -12,6 +15,16 @@ export function validateUrls(body: any): { error: string; field: string } | null
         return {
           error: 'exampleVideoUrls must start with http:// or https://',
           field: 'exampleVideoUrls',
+        }
+      }
+    }
+  }
+  if (Array.isArray(body.brandLinks)) {
+    for (const url of body.brandLinks) {
+      if (url && !/^https?:\/\//.test(url)) {
+        return {
+          error: 'brandLinks must start with http:// or https://',
+          field: 'brandLinks',
         }
       }
     }

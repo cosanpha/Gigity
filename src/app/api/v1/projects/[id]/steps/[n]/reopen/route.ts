@@ -1,4 +1,5 @@
 import { apiHandler } from '@/lib/api-handler'
+import type { IWorkflowStep } from '@/models/VideoProject'
 import VideoProject from '@/models/VideoProject'
 import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
@@ -50,6 +51,9 @@ export const POST = apiHandler(
       step.outputAssetUrl = null
       step.conversation = []
       step.completedAt = null
+      if (stepNumber === 9) {
+        ;(step as IWorkflowStep).publishPlatforms = null
+      }
     }
 
     project.status = 'in_progress'

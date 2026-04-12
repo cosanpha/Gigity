@@ -1,5 +1,6 @@
 'use client'
 
+import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
 import { normalizeSunoPlayableUrl } from '@/lib/suno-record-info'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
@@ -555,7 +556,10 @@ function SunoMusicSection({
           className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
         >
           Open Suno
-          <LucideArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+          <LucideArrowUpRight
+            className="h-3.5 w-3.5"
+            aria-hidden
+          />
         </a>
       )}
       {canStart && (
@@ -568,15 +572,15 @@ function SunoMusicSection({
             (.mp3, .wav, .m4a, .aac, .ogg, .flac, .opus).
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <input
+            <PasteOnlyUrlInput
               type="url"
               value={manualUrl}
-              onChange={e => {
-                setManualUrl(e.target.value)
+              onValueChange={v => {
+                setManualUrl(v)
                 setManualUrlError(null)
               }}
-              placeholder="https://cdn.example.com/song.mp3"
-              className="min-w-0 flex-1 rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
+              placeholder="Paste audio URL (typing disabled)…"
+              className="min-w-0 flex-1 rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-[13px] text-zinc-800 placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">
               <button
@@ -928,7 +932,10 @@ export function MusicPromptStepPanel({
                   disabled={!canApprove}
                   className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <LucideCheck className="h-4 w-4" aria-hidden />
+                  <LucideCheck
+                    className="h-4 w-4"
+                    aria-hidden
+                  />
                   Approve
                 </button>
                 {approveRequiresSong && !hasSongUrl ? (

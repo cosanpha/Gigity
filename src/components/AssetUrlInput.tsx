@@ -2,6 +2,7 @@
 
 import { LucideCheck, LucideX } from 'lucide-react'
 import { useState } from 'react'
+import { PasteOnlyUrlTextarea } from './ui/PasteOnlyUrlTextarea'
 
 interface UrlStatus {
   original: string
@@ -86,13 +87,13 @@ export function AssetUrlInput({
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[13px] font-medium text-zinc-700">{label}</label>
-      <textarea
+      <PasteOnlyUrlTextarea
         value={rawInput}
-        onChange={e => setRawInput(e.target.value)}
+        onValueChange={setRawInput}
         onBlur={handleBlur}
-        placeholder={placeholder}
+        placeholder={`${placeholder} (paste only — typing disabled)`}
         rows={rows}
-        className="resize-none rounded-[6px] border border-zinc-200 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
+        className="resize-none rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none"
       />
 
       {/* Per-URL status indicators */}

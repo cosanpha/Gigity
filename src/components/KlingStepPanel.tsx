@@ -1,5 +1,6 @@
 'use client'
 
+import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { isLikelyCloudinaryVideoDeliveryUrl } from '@/lib/cloudinary-client'
 import {
   extractKlingScenesForEdit,
@@ -438,12 +439,11 @@ export function KlingStepPanel({
                   <p className="mb-1.5 text-[12px] font-medium text-zinc-600">
                     Video clip
                   </p>
-                  <input
-                    type="text"
+                  <PasteOnlyUrlInput
                     value={sceneVideoUrls[0] ?? ''}
-                    onChange={e => setSceneVideo(0, e.target.value)}
-                    placeholder="Paste video URL (.mp4 / .webm / .mov or Cloudinary /video/upload/…)"
-                    className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+                    onValueChange={v => setSceneVideo(0, v)}
+                    placeholder="Paste video URL (typing disabled)…"
+                    className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
                   <SceneVideoSlot
                     url={sceneVideoUrls[0] ?? ''}
@@ -509,12 +509,11 @@ export function KlingStepPanel({
                       <p className="mb-1.5 text-[12px] font-medium text-zinc-600">
                         Video clip URL
                       </p>
-                      <input
-                        type="text"
+                      <PasteOnlyUrlInput
                         value={sceneVideoUrls[i] ?? ''}
-                        onChange={e => setSceneVideo(i, e.target.value)}
-                        placeholder="Paste video URL (.mp4 / .webm / .mov or Cloudinary /video/upload/…)"
-                        className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+                        onValueChange={v => setSceneVideo(i, v)}
+                        placeholder="Paste video URL (typing disabled)…"
+                        className="mb-2 w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                       />
                       <SceneVideoSlot
                         url={sceneVideoUrls[i] ?? ''}
@@ -565,7 +564,10 @@ export function KlingStepPanel({
               disabled={!allVideosReady}
               className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <LucideCheck className="h-4 w-4" aria-hidden />
+              <LucideCheck
+                className="h-4 w-4"
+                aria-hidden
+              />
               Approve
             </button>
           </div>

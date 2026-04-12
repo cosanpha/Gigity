@@ -1,8 +1,10 @@
 'use client'
 
+import { CloudinaryImageUploadButton } from '@/components/CloudinaryImageUploadButton'
 import { LucideCheck, LucidePlus, LucideX } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { PasteOnlyUrlInput } from './ui/PasteOnlyUrlInput'
 
 const TONES = [
   'Warm',
@@ -81,10 +83,6 @@ export function BrandForm({
   const trimmedLogoUrl = logoUrl.trim()
   const showLogoPreview =
     isHttpImageUrlCandidate(trimmedLogoUrl) && !logoPreviewFailed
-
-  useEffect(() => {
-    setTimeout(() => setLogoPreviewFailed(false), 0)
-  }, [trimmedLogoUrl])
 
   function toggleTone(t: string) {
     setSelectedTones(prev => {
@@ -165,12 +163,19 @@ export function BrandForm({
               <label className="text-[13px] font-medium text-zinc-700">
                 Logo URL
               </label>
-              <input
+              <PasteOnlyUrlInput
                 type="url"
                 value={logoUrl}
-                onChange={e => setLogoUrl(e.target.value)}
-                placeholder="https://..."
-                className={`h-9 rounded-[6px] border border-zinc-200 px-3 text-sm text-zinc-950 placeholder:text-zinc-400 ${inputFocus}`}
+                onValueChange={v => {
+                  setLogoUrl(v)
+                  setLogoPreviewFailed(false)
+                }}
+                placeholder="Paste logo URL (typing disabled)…"
+                className={`h-9 rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-950 placeholder:text-zinc-400 ${inputFocus}`}
+              />
+              <CloudinaryImageUploadButton
+                idleLabel="Upload logo…"
+                onUploaded={url => setLogoUrl(url)}
               />
               {isHttpImageUrlCandidate(trimmedLogoUrl) && (
                 <div className="mt-1">
@@ -318,12 +323,12 @@ export function BrandForm({
                   key={i}
                   className="flex gap-2"
                 >
-                  <input
+                  <PasteOnlyUrlInput
                     type="url"
                     value={url}
-                    onChange={e => updateUrl(i, e.target.value)}
-                    placeholder="https://tiktok.com/..."
-                    className={`h-9 flex-1 rounded-[6px] border border-zinc-200 px-3 text-sm placeholder:text-zinc-400 ${inputFocus}`}
+                    onValueChange={v => updateUrl(i, v)}
+                    placeholder="Paste reference video URL (typing disabled)…"
+                    className={`h-9 flex-1 rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 text-sm placeholder:text-zinc-400 ${inputFocus}`}
                   />
                   {urls.length > 1 && (
                     <button

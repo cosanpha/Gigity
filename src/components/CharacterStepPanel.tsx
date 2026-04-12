@@ -1,5 +1,6 @@
 'use client'
 
+import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
@@ -175,7 +176,11 @@ export function CharacterStepPanel({
         <div>
           <div className="mb-4 flex items-center gap-2">
             <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
+              <LucideCheck
+                className="h-3 w-3"
+                strokeWidth={3}
+                aria-hidden
+              />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Approved
@@ -230,7 +235,10 @@ export function CharacterStepPanel({
                       </a>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="flex items-center gap-1 text-[12px] text-green-600">
-                          <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                          <LucideCheck
+                            className="h-3.5 w-3.5"
+                            aria-hidden
+                          />
                           Generated
                         </span>
                         <a
@@ -333,7 +341,10 @@ export function CharacterStepPanel({
                     </a>
                     <div className="mt-2 flex items-center gap-2">
                       <span className="flex items-center gap-1 text-[12px] text-green-600">
-                        <LucideCheck className="h-3.5 w-3.5" aria-hidden />
+                        <LucideCheck
+                          className="h-3.5 w-3.5"
+                          aria-hidden
+                        />
                         Generated
                       </span>
                       <a
@@ -359,12 +370,11 @@ export function CharacterStepPanel({
                 </div>
 
                 <div className="mt-2">
-                  <input
-                    type="text"
-                    placeholder="Or paste image URL manually…"
+                  <PasteOnlyUrlInput
+                    placeholder="Paste image URL here (typing disabled)…"
                     value={characterUrls[i] ?? ''}
-                    onChange={e => updateCharacterUrl(i, e.target.value)}
-                    className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+                    onValueChange={v => updateCharacterUrl(i, v)}
+                    className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-1.5 font-mono text-[13px] text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
                 </div>
               </div>
@@ -427,7 +437,10 @@ export function CharacterStepPanel({
             disabled={!allReady}
             className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <LucideCheck className="h-4 w-4" aria-hidden />
+            <LucideCheck
+              className="h-4 w-4"
+              aria-hidden
+            />
             Approve all images
           </button>
         </div>

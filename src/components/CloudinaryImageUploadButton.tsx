@@ -4,8 +4,10 @@ import { useRef, useState, type ChangeEvent } from 'react'
 
 export function CloudinaryImageUploadButton({
   onUploaded,
+  idleLabel = 'Choose image file…',
 }: {
   onUploaded: (url: string) => void
+  idleLabel?: string
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -59,7 +61,7 @@ export function CloudinaryImageUploadButton({
             Uploading…
           </span>
         ) : (
-          'Choose image file…'
+          idleLabel
         )}
       </button>
       {uploadError ? (

@@ -1,5 +1,6 @@
 'use client'
 
+import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { interpolate } from '@/lib/interpolate'
 import { decodePublishLinks } from '@/lib/publish-links'
 import {
@@ -22,7 +23,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import type { ReactNode } from 'react'
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ProjectAssets {
   characterImages: string[]
@@ -271,7 +272,10 @@ function DownloadAllButton({
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5">
-            <LucideDownload className="h-3.5 w-3.5" aria-hidden />
+            <LucideDownload
+              className="h-3.5 w-3.5"
+              aria-hidden
+            />
             Download all as zip ({total})
           </span>
         )}
@@ -318,25 +322,6 @@ function PublishStepSection({
       setGenErr(e instanceof Error ? e.message : 'Generation failed')
     } finally {
       setGenBusy(false)
-    }
-  }
-
-  function maybeAutoSaveAfterPaste(
-    e: ChangeEvent<HTMLInputElement>,
-    field: 'tiktok' | 'youtube',
-    value: string
-  ) {
-    const ne = e.nativeEvent
-    if (
-      ne instanceof InputEvent &&
-      ne.inputType === 'insertFromPaste' &&
-      value.trim()
-    ) {
-      if (field === 'tiktok') {
-        onSaveLinks(value, youtube)
-      } else {
-        onSaveLinks(tiktok, value)
-      }
     }
   }
 
@@ -388,41 +373,39 @@ function PublishStepSection({
           Published video links (optional)
         </p>
         <p className="mb-3 text-[11px] text-zinc-500">
-          After your video is live, add URLs here — they save when you paste or
+          After your video is live, paste URLs here — they save on paste/drop or
           when you leave a field.
         </p>
         <label className="mb-2 block">
           <span className="mb-1 block text-[11px] font-medium text-zinc-600">
             TikTok URL
           </span>
-          <input
+          <PasteOnlyUrlInput
             type="url"
             value={tiktok}
-            onChange={e => {
-              const v = e.target.value
+            onValueChange={v => {
               setTiktok(v)
-              maybeAutoSaveAfterPaste(e, 'tiktok', v)
+              onSaveLinks(v, youtube)
             }}
             onBlur={persistLinksFromBlur}
-            placeholder="https://www.tiktok.com/@…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+            placeholder="Paste TikTok URL (typing disabled)…"
+            className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
           />
         </label>
         <label className="block">
           <span className="mb-1 block text-[11px] font-medium text-zinc-600">
             YouTube URL
           </span>
-          <input
+          <PasteOnlyUrlInput
             type="url"
             value={youtube}
-            onChange={e => {
-              const v = e.target.value
+            onValueChange={v => {
               setYoutube(v)
-              maybeAutoSaveAfterPaste(e, 'youtube', v)
+              onSaveLinks(tiktok, v)
             }}
             onBlur={persistLinksFromBlur}
-            placeholder="https://www.youtube.com/watch?v=…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+            placeholder="Paste YouTube URL (typing disabled)…"
+            className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
           />
         </label>
       </div>
@@ -518,7 +501,10 @@ export function ExternalStepPanel({
           <span>·</span>
           <span className="flex items-center gap-1">
             <span className="flex items-center rounded border border-zinc-300 px-1 py-0.5 text-zinc-500">
-              <LucideArrowUpRight className="h-3 w-3" aria-hidden />
+              <LucideArrowUpRight
+                className="h-3 w-3"
+                aria-hidden
+              />
             </span>
             {stepDef.tool}
           </span>
@@ -533,7 +519,11 @@ export function ExternalStepPanel({
         <div>
           <div className="mb-4 flex items-center gap-2">
             <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck className="h-3 w-3" strokeWidth={3} aria-hidden />
+              <LucideCheck
+                className="h-3 w-3"
+                strokeWidth={3}
+                aria-hidden
+              />
             </span>
             <span className="text-[13px] font-medium text-green-600">
               Completed
@@ -591,22 +581,42 @@ export function ExternalStepPanel({
                 <AssetGroup
                   title="Character images"
                   urls={projectAssets.characterImages}
-                  icon={<LucideUser className="h-3.5 w-3.5" aria-hidden />}
+                  icon={
+                    <LucideUser
+                      className="h-3.5 w-3.5"
+                      aria-hidden
+                    />
+                  }
                 />
                 <AssetGroup
                   title="Scene images"
                   urls={projectAssets.sceneImages}
-                  icon={<LucideImages className="h-3.5 w-3.5" aria-hidden />}
+                  icon={
+                    <LucideImages
+                      className="h-3.5 w-3.5"
+                      aria-hidden
+                    />
+                  }
                 />
                 <AssetGroup
                   title="Video clips"
                   urls={projectAssets.videoClips}
-                  icon={<LucideVideo className="h-3.5 w-3.5" aria-hidden />}
+                  icon={
+                    <LucideVideo
+                      className="h-3.5 w-3.5"
+                      aria-hidden
+                    />
+                  }
                 />
                 <AssetGroup
                   title="Music track"
                   urls={projectAssets.musicTrack}
-                  icon={<LucideMusic className="h-3.5 w-3.5" aria-hidden />}
+                  icon={
+                    <LucideMusic
+                      className="h-3.5 w-3.5"
+                      aria-hidden
+                    />
+                  }
                 />
               </div>
             </div>
@@ -622,9 +632,15 @@ export function ExternalStepPanel({
                 <span>Context from previous step</span>
                 <span className="text-zinc-400">
                   {contextOpen ? (
-                    <LucideChevronDown className="h-4 w-4" aria-hidden />
+                    <LucideChevronDown
+                      className="h-4 w-4"
+                      aria-hidden
+                    />
                   ) : (
-                    <LucideChevronRight className="h-4 w-4" aria-hidden />
+                    <LucideChevronRight
+                      className="h-4 w-4"
+                      aria-hidden
+                    />
                   )}
                 </span>
               </button>
@@ -651,7 +667,10 @@ export function ExternalStepPanel({
                 className="mt-4 inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-4 py-2 text-[13px] text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
               >
                 Open {stepDef.tool}
-                <LucideArrowUpRight className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
+                <LucideArrowUpRight
+                  className="h-3.5 w-3.5 text-zinc-400"
+                  aria-hidden
+                />
               </a>
             )}
           </div>
@@ -669,7 +688,10 @@ export function ExternalStepPanel({
           {/* Expiry warning */}
           {stepDef.expiryWarning && (
             <div className="flex items-start gap-2 rounded-[6px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
-              <LucideAlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <LucideAlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                aria-hidden
+              />
               <span>{stepDef.expiryWarning}</span>
             </div>
           )}
@@ -679,7 +701,10 @@ export function ExternalStepPanel({
             onClick={onApprove}
             className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <LucideCheck className="h-4 w-4" aria-hidden />
+            <LucideCheck
+              className="h-4 w-4"
+              aria-hidden
+            />
             {stepNumber === WORKFLOW_TOTAL_STEPS
               ? 'Mark as published'
               : 'Mark as done'}

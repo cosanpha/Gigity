@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import { formatRelativeDate } from '@/lib/format-relative-date'
 import {
   getStepTitle,
@@ -49,7 +50,7 @@ export function VideoCard({ project }: VideoCardProps) {
       return
     }
     setDeleting(true)
-    await fetch(`/api/v1/projects/${id}`, { method: 'DELETE' })
+    await apiFetch(`/api/v1/projects/${id}`, { method: 'DELETE' })
     router.refresh()
   }
 

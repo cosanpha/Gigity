@@ -2,6 +2,7 @@
 
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { MAX_SUNO_STYLE_PROMPT_CHARS } from '@/constants/suno'
+import { apiFetch } from '@/lib/api-fetch'
 import { normalizeSunoPlayableUrl } from '@/lib/suno-record-info'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
@@ -157,7 +158,7 @@ function SunoMusicSection({
     const tid = taskId.trim()
     if (!tid) return
     const key = localSunoKey.trim() || (sunoApiKeyOverride ?? '').trim() || ''
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/v1/workflow/suno/status?taskId=${encodeURIComponent(tid)}`,
       {
         headers: key ? { 'X-Suno-Api-Key': key } : undefined,
@@ -232,7 +233,7 @@ function SunoMusicSection({
     setOptimisticTaskId(null)
     const keyForStart =
       localSunoKey.trim() || (sunoApiKeyOverride ?? '').trim() || ''
-    const res = await fetch('/api/v1/workflow/suno/start', {
+    const res = await apiFetch('/api/v1/workflow/suno/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

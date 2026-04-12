@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import { LucideCheck, LucideX } from 'lucide-react'
 import { useState } from 'react'
 import { PasteOnlyUrlTextarea } from './ui/PasteOnlyUrlTextarea'
@@ -55,7 +56,7 @@ export function AssetUrlInput({
           prev.map((s, j) => (j === i ? { ...s, status: 'uploading' } : s))
         )
 
-        const res = await fetch('/api/v1/assets/upload', {
+        const res = await apiFetch('/api/v1/assets/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),

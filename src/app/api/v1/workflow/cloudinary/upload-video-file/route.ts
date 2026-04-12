@@ -1,4 +1,5 @@
 import { CLOUDINARY_CLOUD_NAME } from '@/constants/env.server'
+import { requireAuth } from '@/lib/auth'
 import { uploadVideoBuffer } from '@/lib/cloudinary'
 import { NextResponse } from 'next/server'
 
@@ -7,6 +8,9 @@ const MAX_BYTES = 100 * 1024 * 1024
 export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
+  const deny = requireAuth(req)
+  if (deny) return deny
+
   if (!CLOUDINARY_CLOUD_NAME) {
     return NextResponse.json(
       { error: 'Cloudinary not configured' },

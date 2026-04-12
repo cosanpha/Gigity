@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import { useRef, useState, type ChangeEvent } from 'react'
 
 export function CloudinaryImageUploadButton({
@@ -25,7 +26,7 @@ export function CloudinaryImageUploadButton({
     setUploadError(null)
     const fd = new FormData()
     fd.append('image', file)
-    const res = await fetch('/api/v1/workflow/cloudinary/upload-image-file', {
+    const res = await apiFetch('/api/v1/workflow/cloudinary/upload-image-file', {
       method: 'POST',
       body: fd,
     })

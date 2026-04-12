@@ -1,6 +1,7 @@
 'use client'
 
 import { BrandForm, BrandFormData } from '@/components/BrandForm'
+import { apiFetch } from '@/lib/api-fetch'
 import { Navbar } from '@/components/Navbar'
 import {
   AlertDialog,
@@ -27,7 +28,7 @@ export default function BrandEditPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/v1/brand/${id}`)
+    apiFetch(`/api/v1/brand/${id}`)
       .then(r => {
         if (!r.ok) throw new Error('Not found')
         return r.json()
@@ -39,7 +40,7 @@ export default function BrandEditPage() {
   async function handleSave(data: BrandFormData) {
     setSaving(true)
     setError(null)
-    const res = await fetch(`/api/v1/brand/${id}`, {
+    const res = await apiFetch(`/api/v1/brand/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -57,7 +58,7 @@ export default function BrandEditPage() {
     if (!initialData) return
     setDeleting(true)
     setDeleteError(null)
-    const res = await fetch(`/api/v1/brand/${id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/v1/brand/${id}`, { method: 'DELETE' })
     if (res.ok) {
       setDeleteDialogOpen(false)
       router.push('/')

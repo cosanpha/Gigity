@@ -4,6 +4,7 @@ import {
   CLOUDINARY_CLOUD_NAME_PUBLIC,
   partitionPromptUrlsForCloudinaryRefs,
 } from '@/lib/cloudinary-client'
+import { apiFetch } from '@/lib/api-fetch'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import Image from 'next/image'
@@ -96,7 +97,7 @@ function DalleGenerateButton({
   async function generate() {
     setStatus('generating')
     setError(null)
-    const res = await fetch('/api/v1/workflow/dalle/generate', {
+    const res = await apiFetch('/api/v1/workflow/dalle/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: getPrompt(), size: '1024x1792' }),

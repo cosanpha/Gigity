@@ -1,6 +1,7 @@
 'use client'
 
 import { BrandForm, BrandFormData } from '@/components/BrandForm'
+import { apiFetch } from '@/lib/api-fetch'
 import { Navbar } from '@/components/Navbar'
 import { LucideArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -15,7 +16,7 @@ export default function BrandNewPage() {
   async function handleSave(data: BrandFormData) {
     setSaving(true)
     setError(null)
-    const res = await fetch('/api/v1/brand', {
+    const res = await apiFetch('/api/v1/brand', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

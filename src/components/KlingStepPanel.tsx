@@ -2,6 +2,7 @@
 
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { isLikelyCloudinaryVideoDeliveryUrl } from '@/lib/cloudinary-client'
+import { apiFetch } from '@/lib/api-fetch'
 import {
   extractKlingScenesForEdit,
   replaceKlingScenePrompt,
@@ -94,7 +95,7 @@ function SceneVideoSlot({
     if (!canUploadPastedUrl) return
     setUrlBusy(true)
     setUploadError(null)
-    const res = await fetch('/api/v1/workflow/cloudinary/upload-video', {
+    const res = await apiFetch('/api/v1/workflow/cloudinary/upload-video', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: trimmed }),
@@ -122,7 +123,7 @@ function SceneVideoSlot({
     setUploadError(null)
     const fd = new FormData()
     fd.append('video', file)
-    const res = await fetch('/api/v1/workflow/cloudinary/upload-video-file', {
+    const res = await apiFetch('/api/v1/workflow/cloudinary/upload-video-file', {
       method: 'POST',
       body: fd,
     })

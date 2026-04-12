@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import { encodePublishLinks } from '@/lib/publish-links'
 import {
   StepDefinition,
@@ -128,7 +129,7 @@ export function WorkflowClient({
 
   async function saveProgress(currentSteps: StepState[], signal?: AbortSignal) {
     setSaveStatus('saving')
-    const res = await fetch(`/api/v1/projects/${project._id}`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}`, {
       method: 'PATCH',
       signal,
       headers: { 'Content-Type': 'application/json' },
@@ -193,7 +194,7 @@ export function WorkflowClient({
       setEditingTitle(false)
       return
     }
-    const res = await fetch(`/api/v1/projects/${project._id}`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: titleInput.trim() }),
@@ -222,7 +223,7 @@ export function WorkflowClient({
   ) {
     setSteps(prev => patch(prev, n, { status: 'generating', error: null }))
 
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/v1/projects/${project._id}/steps/${n}/generate`,
       {
         method: 'POST',
@@ -261,7 +262,7 @@ export function WorkflowClient({
   }
 
   async function reopen(n: number) {
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/v1/projects/${project._id}/steps/${n}/reopen`,
       { method: 'POST' }
     )
@@ -297,7 +298,7 @@ export function WorkflowClient({
 
   async function approveCharacterStep(imageUrls: string) {
     setApproveError(null)
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/5/approve`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/5/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: imageUrls }),
@@ -317,7 +318,7 @@ export function WorkflowClient({
   }
 
   async function reopenCharacterStep() {
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/5/reopen`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/5/reopen`, {
       method: 'POST',
     })
     if (!res.ok) return
@@ -327,7 +328,7 @@ export function WorkflowClient({
 
   async function approveSceneStep(imageUrls: string) {
     setApproveError(null)
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/6/approve`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/6/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: imageUrls }),
@@ -345,7 +346,7 @@ export function WorkflowClient({
 
   async function approveKlingStep(videoUrls: string) {
     setApproveError(null)
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/7/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outputAssetUrl: videoUrls }),
@@ -362,7 +363,7 @@ export function WorkflowClient({
   }
 
   async function reopenSceneStep() {
-    const res = await fetch(`/api/v1/projects/${project._id}/steps/6/reopen`, {
+    const res = await apiFetch(`/api/v1/projects/${project._id}/steps/6/reopen`, {
       method: 'POST',
     })
     if (!res.ok) return
@@ -371,7 +372,7 @@ export function WorkflowClient({
   }
 
   async function approve(n: number, opts: { outputAssetUrl?: string } = {}) {
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/v1/projects/${project._id}/steps/${n}/approve`,
       {
         method: 'POST',
@@ -671,7 +672,7 @@ export function WorkflowClient({
                   ? {
                       onDescriptionChange: c => updateStepContent(9, c),
                       onGenerate: async () => {
-                        const res = await fetch(
+                        const res = await apiFetch(
                           `/api/v1/projects/${project._id}/steps/9/generate-publish-description`,
                           { method: 'POST' }
                         )

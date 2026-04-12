@@ -1,7 +1,7 @@
+import { AuthTokenBootstrap } from '@/components/AuthTokenBootstrap'
 import { PUBLIC_APP_URL } from '@/constants/env.server'
 import type { Metadata } from 'next'
 import './globals.css'
-
 export const metadata: Metadata = {
   title: 'Gigity',
   description:
@@ -47,7 +47,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AuthTokenBootstrap />
+        {children}
+      </body>
     </html>
   )
 }

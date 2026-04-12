@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '@/lib/api-fetch'
 import { LucideArrowRight, LucidePlus, LucideX } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -32,7 +33,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
   async function handleSuggestTitle() {
     setSuggesting(true)
     setError(null)
-    const res = await fetch('/api/v1/projects/suggest-title', {
+    const res = await apiFetch('/api/v1/projects/suggest-title', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -58,7 +59,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
     setCreating(true)
     setError(null)
 
-    const res = await fetch('/api/v1/projects', {
+    const res = await apiFetch('/api/v1/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ brandProfileId, title: title.trim() }),

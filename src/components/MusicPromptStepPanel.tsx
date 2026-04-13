@@ -801,7 +801,7 @@ export function MusicPromptStepPanel({
           <span>SunoAI</span>
         </div>
         <h2 className="text-[18px] font-semibold tracking-tight text-zinc-950">
-          Music Prompt
+          Song Audio
         </h2>
         <StepLlmModelCaption model={llmModel} />
       </div>

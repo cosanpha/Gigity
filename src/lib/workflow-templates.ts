@@ -156,7 +156,7 @@ Target audience: {{target_audience}}
   },
   {
     stepNumber: 4,
-    title: 'Music Prompt',
+    title: 'Song Audio',
     tool: 'SunoAI',
     type: 'llm',
     promptTemplate: `Create the SunoAI music generation package for this {{brand_name}} ad.
@@ -261,7 +261,7 @@ Rules:
   },
   {
     stepNumber: 7,
-    title: 'KlingAI Animation Prompts',
+    title: 'Animated Scenes',
     tool: 'KlingAI',
     type: 'llm',
     promptTemplate: `Write KlingAI video animation prompts for each scene.
@@ -278,34 +278,35 @@ Scene image prompts (one per scene):
 Character images (Cloudinary URLs):
 {{step_5_assets_output}}
 
-For each scene from Step 6, write a KlingAI prompt that animates the scene image into a short clip.
-Each clip should:
-- Start from the scene image (reference by scene number)
-- Describe the camera motion (pan, zoom, static, pull back, etc.)
-- Describe character movement or expression change
-- Match the energy and mood of the lyric line
-- Run 2-5 seconds
+For every scene from Step 6, treat the **matching lyric line** and the **Step 6 image prompt** as one beat: motion, mood, and timing should reflect what the line *means* and what the still already shows (subject, pose, props). Do not write generic animation that could apply to any frame.
+
+Each KlingAI line must stay one tight sentence (or two short clauses max) and include, in this order:
+1. **Subject action** — what the main subject does or how expression shifts (simple, one clear motion)
+2. **Camera** — pan, zoom, static, dolly, pull back, etc., chosen to support the lyric's emotional beat
+3. **Background / environment** — a few words on setting behind the subject (interior vs exterior, depth, key props or architecture, sky/wall/furniture, crowd vs empty) so the clip feels anchored in the same world as the scene image — not a full paragraph, just enough to keep continuity with Step 6
+4. **Mood & light** — tie to lyric + story (e.g. warm hopeful, cold tense, neon night)
+5. **Duration** — 2-5s
 
 Format:
 
 **Scene [N] - [short title]**
-Lyric: "[matching lyric line from step 3]"
+Lyric: "[exact matching lyric line from Step 3 for this scene]"
 Image: Scene [N] image (from Step 6)
-KlingAI prompt: [subject action], [camera motion], [mood/lighting], [duration in seconds]s
+KlingAI prompt: [subject action], [camera], [brief background/setting], [mood/lighting], [N]s
 
 Example:
 **Scene 3 - The Decision**
 Lyric: "She looked up and saw the light"
 Image: Scene 3 image (from Step 6)
-KlingAI prompt: Woman slowly lifts her gaze, camera pulls back to reveal open doorway,
-warm golden light blooms in background, hopeful atmosphere, 3s
+KlingAI prompt: Woman slowly lifts her gaze toward the doorway, gentle pull back, cozy apartment hallway with soft lamp glow behind her, warm light spilling from open door ahead, hopeful quiet mood, 3s
 
 Rules:
-- Keep prompts short and concrete - KlingAI works best with clear simple motions
-- Avoid complex multi-character interactions - KlingAI handles single-subject better
-- Camera motion should emphasize the lyric's emotional peak
-- Match clip energy to BPM: slow lyrics → slower motion, energetic chorus → faster cuts
-- Total sequence length: 30-60 seconds when all clips are assembled`,
+- Keep each KlingAI prompt short and concrete — clear simple motions beat long prose
+- Lyrics and scene prompts must stay in sync: if the lyric is intimate and slow, motion stays small; if the lyric is explosive, favor punchy camera or energy (still one primary subject when possible)
+- Avoid complex multi-character interactions — KlingAI handles single-subject motion better
+- Camera choice should land the lyric's emotional peak in those 2-5 seconds
+- Match clip energy to song feel: sparse or sad lines → slower, held frames; chorus or hype → snappier motion or stronger camera move
+- Total sequence length when clips are assembled: aim for 30-60 seconds across all scenes`,
   },
   {
     stepNumber: 8,

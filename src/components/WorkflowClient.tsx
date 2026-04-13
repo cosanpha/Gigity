@@ -648,14 +648,14 @@ export function WorkflowClient({
           {approveError}
         </div>
       )}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <StepSidebar
           steps={steps}
           stepDefs={stepDefs}
           activeStep={activeStep}
           onSelect={setActiveStep}
         />
-        <main className="flex-1 overflow-y-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto">
           {activeStep === 1 ? (
             <EditableTextStepPanel
               key={`brief-${steps[0].status}`}

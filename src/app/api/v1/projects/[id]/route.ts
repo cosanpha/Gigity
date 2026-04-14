@@ -15,6 +15,8 @@ type StepPayload = {
   conversation: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
+type ProjectStatus = 'in_progress' | 'completed' | 'canceled'
+
 // GET /api/v1/projects/:id — latest project (for client resync after generate)
 export const GET = apiHandler(
   async (_req, ctx) => {
@@ -56,6 +58,21 @@ export const PATCH = apiHandler(
 
     if (body.title?.trim()) {
       project.title = body.title.trim()
+    }
+
+    if (body.status) {
+      const allowedStatuses: ProjectStatus[] = [
+        'in_progress',
+        'completed',
+        'canceled',
+      ]
+      if (!allowedStatuses.includes(body.status as ProjectStatus)) {
+        return NextResponse.json(
+          { error: 'Invalid project status' },
+          { status: 400 }
+        )
+      }
+      project.status = body.status as ProjectStatus
     }
 
     if (Array.isArray(body.steps)) {

@@ -11,6 +11,7 @@ import { LucideLoader2, LucideX } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { StatusBadge } from './ui/StatusBadge'
 import { StepProgressBar } from './StepProgressBar'
 
 interface WorkflowStep {
@@ -22,7 +23,7 @@ interface VideoCardProps {
   project: {
     _id: unknown
     title: string
-    status: 'in_progress' | 'completed'
+    status: 'in_progress' | 'completed' | 'canceled'
     steps: WorkflowStep[]
     createdAt: Date | string
   }
@@ -31,13 +32,17 @@ interface VideoCardProps {
 export function VideoCard({ project }: VideoCardProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
+  const [canceling, setCanceling] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const steps = project.steps
   const doneCount = steps.filter(s => s.status === 'done').length
   const currentStepNumber = doneCount + 1
-  const listStatus: 'in_progress' | 'completed' = isWorkflowFullyComplete(steps)
-    ? 'completed'
-    : 'in_progress'
+  const listStatus: 'in_progress' | 'completed' | 'canceled' =
+    project.status === 'canceled'
+      ? 'canceled'
+      : isWorkflowFullyComplete(steps)
+        ? 'completed'
+        : 'in_progress'
   const currentStepTitle =
     listStatus === 'in_progress' ? getStepTitle(currentStepNumber) : null
   const id = String(project._id)
@@ -54,6 +59,30 @@ export function VideoCard({ project }: VideoCardProps) {
     router.refresh()
   }
 
+  async function handleCancelProject(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (listStatus === 'canceled' || canceling) return
+    setCanceling(true)
+    await apiFetch(`/api/v1/projects/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'canceled' }),
+    })
+    router.refresh()
+  }
+
+  async function handleReopenProject(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (listStatus !== 'canceled' || canceling) return
+    setCanceling(true)
+    await apiFetch(`/api/v1/projects/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'in_progress' }),
+    })
+    router.refresh()
+  }
+
   function cancelDelete(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
@@ -61,12 +90,15 @@ export function VideoCard({ project }: VideoCardProps) {
   }
 
   return (
-    <div className="group relative flex items-center justify-between rounded-[6px] border border-zinc-200 bg-white px-5 py-[14px] transition-all hover:border-zinc-300 hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+    <div className="group relative flex items-center justify-between rounded-[10px] border border-zinc-200 bg-white px-4 py-[13px] transition-all hover:border-zinc-300 hover:bg-zinc-50/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.07)]">
+      {listStatus === 'in_progress' && (
+        <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-[2px] bg-orange-300/70" />
+      )}
       <Link
         href={`/projects/${id}`}
-        className="flex min-w-0 flex-1 flex-col gap-1"
+        className="flex min-w-0 flex-1 flex-col gap-1 pl-1"
       >
-        <span className="truncate text-[14px] font-medium text-zinc-950">
+        <span className="truncate text-[13.5px] font-semibold text-zinc-950">
           {project.title}
         </span>
         <span className="text-[12px] text-zinc-500">
@@ -88,11 +120,11 @@ export function VideoCard({ project }: VideoCardProps) {
         </span>
       </Link>
 
-      <div className="ml-5 flex shrink-0 items-center gap-4">
+      <div className="ml-4 flex shrink-0 items-center gap-3">
         <StepProgressBar steps={steps} />
         <StatusBadge status={listStatus} />
 
-        {/* Delete button / confirm - visible on hover */}
+        {/* Cancel + delete actions - visible on hover */}
         {confirmDelete ? (
           <span className="flex items-center gap-1">
             <button
@@ -117,36 +149,49 @@ export function VideoCard({ project }: VideoCardProps) {
             </button>
           </span>
         ) : (
-          <button
-            onClick={handleDelete}
-            className="hidden rounded px-2 py-1 text-zinc-400 transition-colors group-hover:inline-flex group-hover:items-center hover:bg-red-50 hover:text-red-500"
-            title="Delete project"
-            aria-label="Delete project"
-          >
-            <LucideX
-              className="h-3.5 w-3.5"
-              aria-hidden
-            />
-          </button>
+          <span className="hidden items-center gap-1 group-hover:inline-flex">
+            <button
+              onClick={
+                listStatus === 'canceled'
+                  ? handleReopenProject
+                  : handleCancelProject
+              }
+              disabled={canceling}
+              className="rounded px-2 py-1 text-[12px] text-violet-600 transition-colors hover:bg-violet-100 hover:text-violet-700 disabled:opacity-50"
+              title={
+                listStatus === 'canceled' ? 'Re-open project' : 'Cancel project'
+              }
+              aria-label={
+                listStatus === 'canceled' ? 'Re-open project' : 'Cancel project'
+              }
+            >
+              {canceling ? (
+                <LucideLoader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden
+                />
+              ) : listStatus === 'canceled' ? (
+                'Re-open'
+              ) : (
+                'Cancel'
+              )}
+            </button>
+            <button
+              onClick={handleDelete}
+              className="rounded px-2 py-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500"
+              title="Delete project"
+              aria-label="Delete project"
+            >
+              <LucideX
+                className="h-3.5 w-3.5"
+                aria-hidden
+              />
+            </button>
+          </span>
         )}
       </div>
     </div>
   )
 }
 
-function StatusBadge({ status }: { status: 'in_progress' | 'completed' }) {
-  if (status === 'completed') {
-    return (
-      <span className="flex items-center gap-1.5 rounded-full bg-green-50 px-[9px] py-[3px] text-[12px] font-medium text-green-600">
-        <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-green-500" />
-        Completed
-      </span>
-    )
-  }
-  return (
-    <span className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-[9px] py-[3px] text-[12px] font-medium text-zinc-600">
-      <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-amber-400" />
-      In progress
-    </span>
-  )
-}
+

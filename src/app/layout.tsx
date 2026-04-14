@@ -1,4 +1,5 @@
 import { AuthTokenBootstrap } from '@/components/AuthTokenBootstrap'
+import { MotionLayout } from '@/components/MotionLayout'
 import { PUBLIC_APP_URL } from '@/constants/env.server'
 import type { Metadata } from 'next'
 import './globals.css'
@@ -49,7 +50,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <AuthTokenBootstrap />
-        {children}
+        <MotionLayout>{children}</MotionLayout>
       </body>
     </html>
   )

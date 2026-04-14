@@ -37,7 +37,7 @@ export default function BrandNewPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto min-h-screen max-w-[640px] bg-zinc-50 px-6 py-10">
+      <main className="mx-auto max-w-[640px] px-6 py-10 pb-20">
         <div className="mb-6 flex items-center gap-3">
           <Link
             href="/"
@@ -50,7 +50,7 @@ export default function BrandNewPage() {
             Back
           </Link>
         </div>
-        <h1 className="mb-1 text-xl font-semibold tracking-tight">
+        <h1 className="mb-1 text-[20px] font-bold tracking-tight text-zinc-950">
           Set up your brand
         </h1>
         <p className="mb-8 text-[13px] text-zinc-500">

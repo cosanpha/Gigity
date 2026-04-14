@@ -1,6 +1,6 @@
 import { DashboardProjectList } from '@/components/DashboardProjectList'
-import { Navbar } from '@/components/Navbar'
 import { NewVideoModal } from '@/components/NewVideoModal'
+import { PageLayout } from '@/components/PageLayout'
 import { ACTIVE_BRAND_COOKIE } from '@/lib/active-brand-cookie'
 import { connectDB } from '@/lib/db'
 import BrandProfile from '@/models/BrandProfile'
@@ -15,7 +15,7 @@ type DashboardBrand = { _id: string; name: string }
 type DashboardProject = {
   _id: string
   title: string
-  status: 'in_progress' | 'completed'
+  status: 'in_progress' | 'completed' | 'canceled'
   steps: Array<{
     stepNumber: number
     status: 'pending' | 'generating' | 'done'
@@ -39,8 +39,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const cookieStore = await cookies()
   const cookieBrand = cookieStore.get(ACTIVE_BRAND_COOKIE)?.value?.trim()
   const preferredId = paramBrand?.trim() || cookieBrand || ''
-  const activeBrand =
-    brands.find(b => b._id === preferredId) ?? brands[0]
+  const activeBrand = brands.find(b => b._id === preferredId) ?? brands[0]
   const activeBrandId = String(activeBrand._id)
 
   const rawProjects = await VideoProject.find({
@@ -51,35 +50,31 @@ export default async function DashboardPage({ searchParams }: Props) {
   const projects = JSON.parse(JSON.stringify(rawProjects)) as DashboardProject[]
 
   return (
-    <>
-      <Navbar
-        brandName={activeBrand.name}
-        brandId={activeBrandId}
-        brandSwitcherBrands={brands.map(b => ({
-          id: String(b._id),
-          name: b.name,
-        }))}
-      />
-      <div className="mx-auto max-w-[820px] px-6 py-10 pb-20">
-        {/* Page header */}
-        <div className="mb-7 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-zinc-950">
-              Videos
-            </h1>
-            <p className="mt-1 text-[13px] text-zinc-500">
-              {projects.length} project{projects.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <NewVideoModal brandProfileId={activeBrandId} />
+    <PageLayout
+      brandName={activeBrand.name}
+      brandId={activeBrandId}
+      brandSwitcherBrands={brands.map(b => ({
+        id: String(b._id),
+        name: b.name,
+      }))}
+    >
+      {/* Page header */}
+      <div className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-[20px] font-semibold tracking-tight text-zinc-950">
+            Videos
+          </h1>
+          <p className="mt-1 text-[13px] text-zinc-500">
+            {projects.length} project{projects.length !== 1 ? 's' : ''}
+          </p>
         </div>
-
-        <DashboardProjectList
-          projects={projects}
-          brandProfileId={activeBrandId}
-        />
+        <NewVideoModal brandProfileId={activeBrandId} />
       </div>
-    </>
+
+      <DashboardProjectList
+        projects={projects}
+        brandProfileId={activeBrandId}
+      />
+    </PageLayout>
   )
 }
-

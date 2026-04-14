@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gigity — Brand Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────────────────────────────── */
+:root {
+  --ds-accent:         #f97316;
+  --ds-accent-h:       #ea580c;
+  --ds-accent-light:   #fff7ed;
+  --ds-accent-mid:     #ffedd5;
+  --ds-accent-border:  #fed7aa;
+  --ds-accent-muted:   #fb923c;
+
+  --ds-bg:             #ffffff;
+  --ds-surface:        #ffffff;
+  --ds-surface-2:      #f4f4f5;
+  --ds-surface-3:      #fafafa;
+  --ds-border:         #e4e4e7;
+  --ds-border-2:       #d4d4d8;
+  --ds-text:           #09090b;
+  --ds-text-2:         #52525b;
+  --ds-text-3:         #71717a;
+  --ds-text-4:         #a1a1aa;
+
+  --ds-success:        #16a34a;
+  --ds-success-bg:     #f0fdf4;
+  --ds-success-border: #bbf7d0;
+  --ds-danger:         #dc2626;
+  --ds-danger-bg:      #fef2f2;
+  --ds-danger-border:  #fecaca;
+
+  --header-h: 52px;
+  --content-max: 640px;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 9999px;
+
+  --font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Source Sans 3', -apple-system, sans-serif;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* ─── RESET ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-sans);
+  background: var(--ds-bg);
+  color: var(--ds-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ─── NAVBAR ──────────────────────────────────────────────────────────────────── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: rgba(255,255,255,0.92);
+  border-bottom: 1px solid var(--ds-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.nav-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ds-text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.nav-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(249,115,22,0.3);
+  flex-shrink: 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-3);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius);
+  background: white;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.nav-btn:hover {
+  border-color: var(--ds-border-2);
+  background: var(--ds-surface-3);
+  color: var(--ds-text);
+}
+
+/* ─── PAGE SWITCHER ──────────────────────────────────────────────────────────── */
+.page-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: var(--ds-surface-3);
+  border-bottom: 1px solid var(--ds-border);
+  font-size: 12px;
+  color: var(--ds-text-3);
+}
+.page-switcher button {
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ds-border);
+  background: white;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--ds-text-2);
+  transition: all 0.12s;
+}
+.page-switcher button.active {
+  background: var(--ds-accent);
+  border-color: var(--ds-accent);
+  color: white;
+}
+.page-switcher button:hover:not(.active) {
+  border-color: var(--ds-border-2);
+  background: var(--ds-surface-2);
+}
+
+/* ─── MAIN CONTENT ───────────────────────────────────────────────────────────── */
+.page-root { display: none; }
+.page-root.active { display: block; }
+
+main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ─── BACK LINK ──────────────────────────────────────────────────────────────── */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ds-text-4);
+  text-decoration: none;
+  margin-bottom: 24px;
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--ds-text-2); }
+.back-link svg { width: 14px; height: 14px; }
+
+/* ─── PAGE HEADER ────────────────────────────────────────────────────────────── */
+.page-header {
+  margin-bottom: 28px;
+}
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ds-text);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+.page-header p {
+  font-size: 13px;
+  color: var(--ds-text-3);
+}
+
+/* ─── FORM CARD ──────────────────────────────────────────────────────────────── */
+.form-card {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius-lg);
+  background: white;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ─── FORM SECTION ───────────────────────────────────────────────────────────── */
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--ds-border);
+}
+.form-section:last-child { border-bottom: none; }
+
+.section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-text-4);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--ds-border);
+}
+
+/* ─── GRID ───────────────────────────────────────────────────────────────────── */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ─── FIELD ──────────────────────────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field + .field {
+  margin-top: 20px;
+}
+.field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-text-2);
+}
+.field-hint {
+  font-size: 12px;
+  color: var(--ds-text-4);
+  margin-top: -2px;
+}
+
+/* ─── INPUTS ──────────────────────────────────────────────────────────────────── */
+input[type="text"],
+input[type="url"],
+textarea {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ds-text);
+  background: white;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  height: 36px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type="text"]:focus,
+input[type="url"]:focus,
+textarea:focus {
+  border-color: var(--ds-accent-muted);
+  box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+}
+input::placeholder, textarea::placeholder { color: var(--ds-text-4); }
+
+textarea {
+  height: auto;
+  padding: 8px 12px;
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.input-paste {
+  background: var(--ds-surface-3);
+  cursor: default;
+}
+
+/* ─── LOGO AREA ──────────────────────────────────────────────────────────────── */
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logo-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-preview svg {
+  width: 28px;
+  height: 28px;
+  color: var(--ds-text-4);
+}
+
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ds-text-3);
+  background: var(--ds-surface-3);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-start;
+}
+.upload-btn:hover {
+  border-color: var(--ds-border-2);
+  color: var(--ds-text-2);
+  background: var(--ds-surface-2);
+}
+.upload-btn svg { width: 12px; height: 12px; }
+
+/* ─── PILL CHIPS ─────────────────────────────────────────────────────────────── */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--ds-text-2);
+  cursor: pointer;
+  transition: all 0.12s;
+  user-select: none;
+}
+.chip:hover {
+  border-color: var(--ds-border-2);
+  background: var(--ds-surface-3);
+}
+.chip.selected {
+  border-color: var(--ds-accent-border);
+  background: var(--ds-accent-light);
+  color: #c2410c; /* orange-700 */
+}
+
+.chip-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--ds-border-2);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.chip.selected .chip-check {
+  background: var(--ds-accent);
+  border-color: var(--ds-accent);
+}
+.chip-check svg { width: 9px; height: 9px; color: white; display: none; }
+.chip.selected .chip-check svg { display: block; }
+
+/* ─── URL ROWS ───────────────────────────────────────────────────────────────── */
+.url-rows { display: flex; flex-direction: column; gap: 8px; }
+.url-row { display: flex; align-items: center; gap: 8px; }
+.url-row input { flex: 1; }
+.url-remove {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--ds-text-4);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.12s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.url-remove:hover { color: var(--ds-danger); background: var(--ds-danger-bg); }
+.url-remove svg { width: 14px; height: 14px; }
+
+.add-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-accent);
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+  transition: color 0.12s;
+}
+.add-link-btn:hover { color: var(--ds-accent-h); }
+.add-link-btn svg { width: 13px; height: 13px; }
+
+/* ─── FORM FOOTER ─────────────────────────────────────────────────────────────── */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  background: var(--ds-accent);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 1px 3px rgba(249,115,22,0.3);
+}
+.btn-primary:hover { background: var(--ds-accent-h); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── DANGER ZONE ─────────────────────────────────────────────────────────────── */
+.danger-zone {
+  margin-top: 40px;
+  border-top: 1px solid var(--ds-border);
+  padding-top: 28px;
+}
+
+.danger-zone-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-text-4);
+  margin-bottom: 6px;
+}
+
+.danger-zone p {
+  font-size: 13px;
+  color: var(--ds-text-3);
+  max-width: 460px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  background: white;
+  color: var(--ds-danger);
+  border: 1px solid var(--ds-danger-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-danger:hover { background: var(--ds-danger-bg); border-color: #fca5a5; }
+.btn-danger svg { width: 15px; height: 15px; }
+
+/* ─── ERROR BANNER ────────────────────────────────────────────────────────────── */
+.error-banner {
+  border: 1px solid var(--ds-danger-border);
+  background: var(--ds-danger-bg);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--ds-danger);
+  margin-bottom: 20px;
+}
+
+/* ─── CONFIRM DIALOG OVERLAY ──────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.overlay.open { display: flex; }
+
+.dialog {
+  background: white;
+  border: 1px solid var(--ds-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+}
+.dialog h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.dialog p { font-size: 13px; color: var(--ds-text-3); line-height: 1.6; margin-bottom: 20px; }
+.dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+.btn-outline {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  background: white;
+  color: var(--ds-text-2);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.btn-outline:hover { background: var(--ds-surface-3); }
+
+/* ─── DARK MODE ───────────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ds-bg: #09090b;
+    --ds-surface: #111113;
+    --ds-surface-2: #18181b;
+    --ds-surface-3: #1c1c1f;
+    --ds-border: #27272a;
+    --ds-border-2: #3f3f46;
+    --ds-text: #fafafa;
+    --ds-text-2: #a1a1aa;
+    --ds-text-3: #71717a;
+    --ds-text-4: #52525b;
+  }
+  input[type="text"], input[type="url"], textarea {
+    background: var(--ds-surface-2);
+    color: var(--ds-text);
+  }
+  .form-card { background: var(--ds-surface); }
+  .chip { background: var(--ds-surface-2); }
+  .chip.selected { background: #431407; color: #fdba74; }
+  .nav-btn { background: var(--ds-surface); color: var(--ds-text-3); }
+  .btn-primary { box-shadow: none; }
+  .dialog { background: var(--ds-surface); }
+  .upload-btn { background: var(--ds-surface-2); }
+  .input-paste { background: var(--ds-surface-2); }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE SWITCHER (design preview only) -->
+<div class="page-switcher">
+  <span>Preview:</span>
+  <button class="active" onclick="showPage('new')">New brand</button>
+  <button onclick="showPage('edit')">Edit brand</button>
+</div>
+
+<!-- ─── NAVBAR ──────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="#" class="nav-logo-link">
+      <div class="nav-logo-img">G</div>
+      Gigity
+    </a>
+  </div>
+  <div class="navbar-right">
+    <a href="#" class="nav-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New brand
+    </a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE: NEW BRAND                                                       -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="page-root active" id="page-new">
+<main>
+
+  <a href="#" class="back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+  </a>
+
+  <div class="page-header">
+    <h1>Set up your brand</h1>
+    <p>This context is used to pre-fill every step of the video workflow.</p>
+  </div>
+
+  <div class="form-card">
+
+    <!-- Identity -->
+    <div class="form-section">
+      <div class="section-label">Identity</div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">Brand name *</label>
+          <input type="text" placeholder="Deewas" value="Deewas" />
+        </div>
+        <div class="field logo-area">
+          <label class="field-label">Logo</label>
+          <input class="input-paste" type="url" placeholder="Paste logo URL…" value="https://example.com/logo.png" readonly />
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Upload logo…
+          </button>
+          <div class="logo-preview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:20px">
+        <label class="field-label">Description *</label>
+        <textarea rows="3" placeholder="What does your product do? Who is it for?">Deewas is a salary-advance fintech app helping young professionals in Southeast Asia access their earned wages instantly — before payday — without loans or interest.</textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">Target audience</label>
+        <input type="text" value="Young adults 22–35 managing their first salary in Vietnam and Indonesia" />
+      </div>
+    </div>
+
+    <!-- Platforms & Tone -->
+    <div class="form-section">
+      <div class="section-label">Tone & Platforms</div>
+
+      <div class="field">
+        <label class="field-label">Brand tone</label>
+        <div class="chip-group" id="tone-group-new">
+          <!-- chips injected by JS -->
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Publishing platforms</label>
+        <div class="chip-group" id="platform-group-new">
+          <!-- chips injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand links -->
+    <div class="form-section">
+      <div class="section-label">Brand links</div>
+      <div class="field">
+        <label class="field-label">Website and app links</label>
+        <p class="field-hint">Where people can download your app or visit your site. Paste full URLs.</p>
+        <div class="url-rows" id="links-new">
+          <div class="url-row">
+            <input class="input-paste" type="url" value="https://apps.apple.com/app/deewas" readonly />
+          </div>
+          <div class="url-row">
+            <input class="input-paste" type="url" value="https://play.google.com/store/apps/deewas" readonly />
+            <button class="url-remove" title="Remove">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="add-link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add link
+        </button>
+      </div>
+    </div>
+
+    <!-- References -->
+    <div class="form-section">
+      <div class="section-label">References</div>
+      <div class="field">
+        <label class="field-label">Example video URLs</label>
+        <p class="field-hint">Reference videos for style. The AI uses these as inspiration.</p>
+        <div class="url-rows" id="refs-new">
+          <div class="url-row">
+            <input class="input-paste" type="url" placeholder="Paste reference video URL…" readonly />
+          </div>
+        </div>
+        <button class="add-link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add URL
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /form-card -->
+
+  <div class="form-footer">
+    <button class="btn-primary">Save brand</button>
+  </div>
+
+</main>
+</div><!-- /page-new -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE: EDIT BRAND                                                      -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="page-root" id="page-edit">
+<main>
+
+  <div class="page-header">
+    <h1>Edit brand</h1>
+    <p>Changes apply to all future workflow steps.</p>
+  </div>
+
+  <div class="form-card">
+
+    <!-- Identity -->
+    <div class="form-section">
+      <div class="section-label">Identity</div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">Brand name *</label>
+          <input type="text" value="Deewas" />
+        </div>
+        <div class="field logo-area">
+          <label class="field-label">Logo</label>
+          <input class="input-paste" type="url" value="https://cdn.deewas.app/logo.png" readonly />
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Upload logo…
+          </button>
+          <div class="logo-preview" style="background:var(--ds-accent-light)">
+            <div style="width:44px;height:44px;border-radius:8px;background:var(--ds-accent);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px;">D</div>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:20px">
+        <label class="field-label">Description *</label>
+        <textarea rows="3">Deewas is a salary-advance fintech app helping young professionals in Southeast Asia access their earned wages instantly — before payday — without loans or interest.</textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">Target audience</label>
+        <input type="text" value="Young adults 22–35 managing their first salary in Vietnam and Indonesia" />
+      </div>
+    </div>
+
+    <!-- Tone & Platforms -->
+    <div class="form-section">
+      <div class="section-label">Tone & Platforms</div>
+      <div class="field">
+        <label class="field-label">Brand tone</label>
+        <div class="chip-group" id="tone-group-edit"></div>
+      </div>
+      <div class="field">
+        <label class="field-label">Publishing platforms</label>
+        <div class="chip-group" id="platform-group-edit"></div>
+      </div>
+    </div>
+
+    <!-- Brand links -->
+    <div class="form-section">
+      <div class="section-label">Brand links</div>
+      <div class="field">
+        <label class="field-label">Website and app links</label>
+        <p class="field-hint">Where people can download your app or visit your site. Paste full URLs.</p>
+        <div class="url-rows">
+          <div class="url-row">
+            <input class="input-paste" type="url" value="https://apps.apple.com/app/deewas" readonly />
+            <button class="url-remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          <div class="url-row">
+            <input class="input-paste" type="url" value="https://play.google.com/store/apps/deewas" readonly />
+            <button class="url-remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <button class="add-link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add link
+        </button>
+      </div>
+    </div>
+
+    <!-- References -->
+    <div class="form-section">
+      <div class="section-label">References</div>
+      <div class="field">
+        <label class="field-label">Example video URLs</label>
+        <p class="field-hint">Reference videos for style. The AI uses these as inspiration.</p>
+        <div class="url-rows">
+          <div class="url-row">
+            <input class="input-paste" type="url" value="https://www.tiktok.com/@deewas/video/123" readonly />
+            <button class="url-remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <button class="add-link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add URL
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /form-card -->
+
+  <div class="form-footer">
+    <button class="btn-primary">Save brand</button>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="danger-zone">
+    <div class="danger-zone-label">Danger zone</div>
+    <p>Permanently delete this brand. You can only delete a brand that has no video projects yet.</p>
+    <button class="btn-danger" onclick="document.getElementById('delete-dialog').classList.add('open')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Delete brand
+    </button>
+  </div>
+
+</main>
+</div><!-- /page-edit -->
+
+<!-- Delete confirm dialog -->
+<div class="overlay" id="delete-dialog">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h2>Delete this brand?</h2>
+    <p>This will permanently delete <strong>Deewas</strong>. This cannot be undone. Brands with existing video projects cannot be deleted until those projects are removed.</p>
+    <div class="dialog-actions">
+      <button class="btn-outline" onclick="document.getElementById('delete-dialog').classList.remove('open')">Cancel</button>
+      <button class="btn-primary" style="background:var(--ds-danger);box-shadow:none">Delete brand</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── TONES & PLATFORMS DATA ────────────────────────────────────────────────────
+const TONES = ['Warm','Encouraging','Modern','Professional','Playful','Bold','Calm','Energetic','Minimalist','Relatable']
+const PLATFORMS = ['TikTok','YouTube Shorts','Instagram Reels','YouTube','Twitter / X']
+
+const EDIT_TONES = new Set(['Warm','Encouraging','Modern'])
+const EDIT_PLATFORMS = new Set(['TikTok','YouTube Shorts','Instagram Reels'])
+
+function makeChipGroup(containerId, items, selectedSet) {
+  const container = document.getElementById(containerId)
+  if (!container) return
+  items.forEach(item => {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'chip' + (selectedSet.has(item) ? ' selected' : '')
+    btn.innerHTML = `
+      <span class="chip-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+      ${item}
+    `
+    btn.addEventListener('click', () => btn.classList.toggle('selected'))
+    container.appendChild(btn)
+  })
+}
+
+makeChipGroup('tone-group-new', TONES, new Set(['Modern','Energetic']))
+makeChipGroup('platform-group-new', PLATFORMS, new Set(['TikTok','YouTube Shorts']))
+makeChipGroup('tone-group-edit', TONES, EDIT_TONES)
+makeChipGroup('platform-group-edit', PLATFORMS, EDIT_PLATFORMS)
+
+// ─── PAGE SWITCHER ─────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page-root').forEach(p => p.classList.remove('active'))
+  document.getElementById('page-' + name).classList.add('active')
+  document.querySelectorAll('.page-switcher button').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && name === 'new') || (i === 1 && name === 'edit'))
+  })
+}
+</script>
+
+</body>
+</html>

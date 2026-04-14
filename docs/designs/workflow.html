@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Gigity — Workflow</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ─── DESIGN TOKENS ───────────────────────────────────────────────────────── */
+      :root {
+        --ds-accent: #f97316;
+        --ds-accent-h: #ea580c;
+        --ds-accent-light: #fff7ed;
+        --ds-accent-mid: #ffedd5;
+        --ds-accent-border: #fed7aa;
+        --ds-accent-muted: #fb923c;
+
+        --ds-bg: #ffffff;
+        --ds-surface: #ffffff;
+        --ds-surface-2: #f4f4f5;
+        --ds-surface-3: #fafafa;
+        --ds-border: #e4e4e7;
+        --ds-border-2: #d4d4d8;
+        --ds-text: #09090b;
+        --ds-text-2: #52525b;
+        --ds-text-3: #71717a;
+        --ds-text-4: #a1a1aa;
+
+        --ds-success: #16a34a;
+        --ds-success-bg: #f0fdf4;
+        --ds-success-border: #bbf7d0;
+        --ds-danger: #dc2626;
+
+        --header-h: 52px;
+        --sidebar-w: 232px;
+        --radius: 6px;
+        --radius-lg: 10px;
+        --radius-pill: 9999px;
+
+        --font-sans:
+          'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-body: 'Source Sans 3', -apple-system, sans-serif;
+
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+        --shadow-md:
+          0 4px 16px rgba(0, 0, 0, 0.09), 0 1px 4px rgba(0, 0, 0, 0.04);
+      }
+
+      /* ─── RESET ───────────────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: var(--font-sans);
+        background: var(--ds-bg);
+        color: var(--ds-text);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      /* ─── NAVBAR ──────────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] motion.nav: initial={{ opacity:0, y:-6 }}, animate={{ opacity:1, y:0 }}, duration:0.2 */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        height: var(--header-h);
+        background: rgba(255, 255, 255, 0.93);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--ds-border);
+        flex-shrink: 0;
+      }
+      .navbar-inner {
+        height: 100%;
+        padding: 0 16px 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .back-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        color: var(--ds-text-3);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: var(--radius);
+        transition:
+          color 0.12s,
+          background 0.12s;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .back-link:hover {
+        color: var(--ds-text);
+        background: var(--ds-surface-2);
+      }
+      .back-link svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        flex-shrink: 0;
+      }
+
+      .navbar-sep {
+        width: 1px;
+        height: 18px;
+        background: var(--ds-border);
+        flex-shrink: 0;
+      }
+
+      .project-title-wrap {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .project-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--ds-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 5px;
+        transition: background 0.12s;
+      }
+      .project-title:hover {
+        background: var(--ds-surface-2);
+      }
+
+      .brand-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 9px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--ds-border);
+        background: var(--ds-surface-2);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .brand-pill-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--ds-accent);
+      }
+
+      /* Navbar progress */
+      .navbar-progress {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        margin-left: auto;
+      }
+      .progress-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+        white-space: nowrap;
+      }
+      .progress-track {
+        width: 72px;
+        height: 5px;
+        background: var(--ds-surface-2);
+        border-radius: var(--radius-pill);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--ds-accent);
+        border-radius: var(--radius-pill);
+        /* [FRAMER-MOTION] animate width change on step complete: transition={{ duration:0.4, ease:'easeOut' }} */
+        transition: width 0.4s ease;
+      }
+      .progress-pct {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: var(--ds-accent);
+        flex-shrink: 0;
+        min-width: 30px;
+      }
+
+      /* ─── APP SHELL ───────────────────────────────────────────────────────────── */
+      .app-shell {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* ─── SIDEBAR ─────────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Sidebar: initial={{ x:-12, opacity:0 }}, animate={{ x:0, opacity:1 }}, duration:0.22, delay:0.05 */
+      .sidebar {
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        border-right: 1px solid var(--ds-border);
+        display: flex;
+        flex-direction: column;
+        background: var(--ds-surface-3);
+        overflow: hidden;
+      }
+      .sidebar-header {
+        padding: 12px 16px 10px;
+        border-bottom: 1px solid var(--ds-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .sidebar-heading {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ds-text-4);
+      }
+      .sidebar-done-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+      }
+
+      .sidebar-steps {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 0;
+      }
+
+      /* Individual step item */
+      /* [FRAMER-MOTION] On step complete: status icon scales to checkmark: scale 0.5→1.2→1, duration:0.25 */
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+        position: relative;
+      }
+      .step-item:hover:not(.step-locked) {
+        background: rgba(0, 0, 0, 0.03);
+      }
+      .step-item.step-active {
+        border-left-color: var(--ds-accent);
+        background: var(--ds-accent-light);
+      }
+      .step-item.step-locked {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .step-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1.5px solid var(--ds-border-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ds-text-4);
+        flex-shrink: 0;
+        transition: all 0.15s;
+      }
+      .step-icon.done {
+        background: var(--ds-success);
+        border-color: var(--ds-success);
+        color: white;
+      }
+      .step-icon.active {
+        background: var(--ds-accent-light);
+        border-color: var(--ds-accent-border);
+        color: var(--ds-accent);
+      }
+      .step-icon.generating {
+        border-color: var(--ds-accent-border);
+        color: var(--ds-accent-muted);
+      }
+      .step-icon.locked {
+        border-color: var(--ds-border);
+        color: var(--ds-text-4);
+        opacity: 0.5;
+      }
+
+      .step-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .step-name {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ds-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .step-item.step-active .step-name {
+        color: var(--ds-accent-h);
+      }
+      .step-item.step-locked .step-name {
+        color: var(--ds-text-4);
+      }
+      .step-meta {
+        font-family: var(--font-body);
+        font-size: 11px;
+        color: var(--ds-text-4);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .step-meta.done-meta {
+        color: var(--ds-success);
+        font-weight: 600;
+      }
+      .step-meta.active-meta {
+        color: var(--ds-accent-muted);
+      }
+
+      /* Step type badge (external) */
+      .step-type-badge {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        color: var(--ds-text-4);
+      }
+      .step-type-badge svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+      }
+
+      /* ─── MAIN PANEL ──────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Step panel switch: AnimatePresence mode="sync"
+   Each panel: initial={{ opacity:0, x:6 }}, animate={{ opacity:1, x:0 }},
+   exit={{ opacity:0, x:-6 }}, transition={{ duration:0.15 }} */
+      .main-panel {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Step panel header */
+      .panel-header {
+        padding: 24px 28px 20px;
+        border-bottom: 1px solid var(--ds-border);
+        background: var(--ds-surface);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .panel-step-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ds-text-4);
+        margin-bottom: 4px;
+      }
+      .panel-step-label span {
+        color: var(--ds-accent);
+      }
+      .panel-title {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: var(--ds-text);
+        margin-bottom: 4px;
+      }
+      .panel-desc {
+        font-family: var(--font-body);
+        font-size: 13px;
+        color: var(--ds-text-3);
+      }
+      .panel-model-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 8px;
+        padding: 2px 9px;
+        border-radius: var(--radius-pill);
+        background: var(--ds-surface-2);
+        border: 1px solid var(--ds-border);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+      }
+      .panel-model-tag-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--ds-accent-muted);
+      }
+
+      /* Panel body */
+      .panel-body {
+        flex: 1;
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* Response block */
+      .response-block {
+        background: var(--ds-surface);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+      .response-block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--ds-border);
+        background: var(--ds-surface-3);
+      }
+      .response-block-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ds-text-2);
+      }
+      .copy-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: var(--ds-surface);
+        font-family: var(--font-sans);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .copy-btn:hover {
+        background: var(--ds-surface-2);
+        color: var(--ds-text);
+      }
+      .copy-btn svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+      }
+      .response-block-body {
+        padding: 16px;
+        font-family: var(--font-body);
+        font-size: 14px;
+        color: var(--ds-text);
+        line-height: 1.65;
+        white-space: pre-wrap;
+      }
+
+      /* Approved callout */
+      .approved-callout {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--ds-success-bg);
+        border: 1px solid var(--ds-success-border);
+        border-radius: var(--radius-lg);
+      }
+      .approved-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--ds-success);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .approved-icon svg {
+        width: 14px;
+        height: 14px;
+        stroke: white;
+        fill: none;
+      }
+      .approved-text {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ds-success);
+      }
+      .approved-sub {
+        font-family: var(--font-body);
+        font-size: 12px;
+        color: #15803d;
+        margin-top: 1px;
+      }
+      .reopen-btn {
+        margin-left: auto;
+        padding: 5px 12px;
+        border: 1px solid var(--ds-success-border);
+        border-radius: var(--radius);
+        background: transparent;
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-success);
+        cursor: pointer;
+        transition: all 0.12s;
+        flex-shrink: 0;
+      }
+      .reopen-btn:hover {
+        background: var(--ds-success-bg);
+      }
+
+      /* Follow-up area */
+      .followup-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .followup-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-text-3);
+      }
+      .followup-row {
+        display: flex;
+        gap: 8px;
+      }
+      .followup-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: var(--ds-surface);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        color: var(--ds-text);
+        outline: none;
+        transition:
+          border-color 0.12s,
+          box-shadow 0.12s;
+      }
+      .followup-input::placeholder {
+        color: var(--ds-text-4);
+      }
+      .followup-input:focus {
+        border-color: var(--ds-accent-border);
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+      }
+
+      /* Action bar */
+      .action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 28px;
+        border-top: 1px solid var(--ds-border);
+        background: var(--ds-surface-3);
+        position: sticky;
+        bottom: 0;
+      }
+      .action-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .action-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: var(--radius);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.12s;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .btn svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+        flex-shrink: 0;
+      }
+
+      .btn-ghost {
+        padding: 7px 14px;
+        color: var(--ds-text-3);
+        border-color: var(--ds-border);
+        background: var(--ds-surface);
+      }
+      .btn-ghost:hover {
+        border-color: var(--ds-border-2);
+        background: var(--ds-surface-2);
+        color: var(--ds-text);
+      }
+
+      .btn-generate {
+        padding: 8px 18px;
+        background: var(--ds-accent);
+        border-color: var(--ds-accent);
+        color: white;
+        box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25);
+      }
+      .btn-generate:hover {
+        background: var(--ds-accent-h);
+        border-color: var(--ds-accent-h);
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.35);
+      }
+      .btn-generate svg {
+        stroke: white;
+      }
+
+      .btn-approve {
+        padding: 8px 22px;
+        background: var(--ds-success);
+        border-color: var(--ds-success);
+        color: white;
+        box-shadow: 0 1px 3px rgba(22, 163, 74, 0.25);
+      }
+      .btn-approve:hover {
+        background: #15803d;
+        border-color: #15803d;
+        box-shadow: 0 2px 6px rgba(22, 163, 74, 0.35);
+      }
+      .btn-approve svg {
+        stroke: white;
+      }
+
+      /* Spinner animation */
+      .spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ─── DONE STATE (step 1 approved example) ────────────────────────────────── */
+      /* Shows what a completed step panel looks like (for reference) */
+      .step-approved-panel {
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* ─── PREFERS-REDUCED-MOTION ──────────────────────────────────────────────── */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     NAVBAR
+     [FRAMER-MOTION] motion.nav initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }}
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <!-- Back to dashboard -->
+        <a
+          href="/"
+          class="back-link"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Videos
+        </a>
+
+        <div class="navbar-sep"></div>
+
+        <!-- Project title + brand -->
+        <div class="project-title-wrap">
+          <!-- [FRAMER-MOTION] title edit: AnimatePresence toggles between text and input, scale 0.98→1 -->
+          <span class="project-title">Deewas App — Summer Sale Campaign</span>
+          <span class="brand-pill">
+            <span class="brand-pill-dot"></span>
+            Deewas App
+          </span>
+        </div>
+
+        <!-- Step progress -->
+        <div class="navbar-progress">
+          <span class="progress-label">Step 2 / 9</span>
+          <div class="progress-track">
+            <!-- 1 done of 9 = 11% -->
+            <div
+              class="progress-fill"
+              style="width: 11%"
+            ></div>
+          </div>
+          <span class="progress-pct">11%</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     APP SHELL: Sidebar + Main
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="app-shell">
+      <!-- ────────────────────────────────────────────────────────────────────────
+       SIDEBAR
+       [FRAMER-MOTION] motion.aside initial={{ x:-12, opacity:0 }} animate={{ x:0, opacity:1 }}, delay:0.05
+    ──────────────────────────────────────────────────────────────────────── -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-heading">Steps</span>
+          <span class="sidebar-done-count">1 / 9 done</span>
+        </div>
+
+        <div class="sidebar-steps">
+          <!-- Step 1: DONE -->
+          <!-- [FRAMER-MOTION] On complete: icon scales checkmark in, green fill spreads from center -->
+          <div
+            class="step-item"
+            onclick="activateStep(1)"
+          >
+            <div class="step-icon done">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div class="step-info">
+              <span class="step-name">Campaign Brief</span>
+              <span class="step-meta done-meta">Approved</span>
+            </div>
+          </div>
+
+          <!-- Step 2: ACTIVE (has LLM response, not yet approved) -->
+          <div
+            class="step-item step-active"
+            onclick="activateStep(2)"
+          >
+            <div class="step-icon active">2</div>
+            <div class="step-info">
+              <span class="step-name">Script &amp; Lyrics</span>
+              <span class="step-meta active-meta">Review &amp; approve</span>
+            </div>
+          </div>
+
+          <!-- Step 3: PENDING (unlocked, previous is done) -->
+          <div
+            class="step-item"
+            onclick="activateStep(3)"
+          >
+            <div
+              class="step-icon"
+              style="border-color: var(--ds-border); color: var(--ds-text-3)"
+            >
+              3
+            </div>
+            <div class="step-info">
+              <span class="step-name">Song Lyrics</span>
+              <span class="step-meta">Pending</span>
+            </div>
+          </div>
+
+          <!-- Step 4: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">4</div>
+            <div class="step-info">
+              <span class="step-name">Music Track</span>
+              <span class="step-meta">Locked</span>
+            </div>
+            <span class="step-type-badge">
+              <svg
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                />
+                <polyline points="15 3 21 3 21 9" />
+                <line
+                  x1="10"
+                  y1="14"
+                  x2="21"
+                  y2="3"
+                />
+              </svg>
+            </span>
+          </div>
+
+          <!-- Step 5: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">5</div>
+            <div class="step-info">
+              <span class="step-name">Character Images</span>
+              <span class="step-meta">Locked</span>
+            </div>
+          </div>
+
+          <!-- Step 6: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">6</div>
+            <div class="step-info">
+              <span class="step-name">Scene Images</span>
+              <span class="step-meta">Locked</span>
+            </div>
+          </div>
+
+          <!-- Step 7: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">7</div>
+            <div class="step-info">
+              <span class="step-name">Video Clips</span>
+              <span class="step-meta">Locked</span>
+            </div>
+            <span class="step-type-badge">
+              <svg
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                />
+                <polyline points="15 3 21 3 21 9" />
+                <line
+                  x1="10"
+                  y1="14"
+                  x2="21"
+                  y2="3"
+                />
+              </svg>
+            </span>
+          </div>
+
+          <!-- Step 8: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">8</div>
+            <div class="step-info">
+              <span class="step-name">Assemble in CapCut</span>
+              <span class="step-meta">Locked</span>
+            </div>
+            <span class="step-type-badge">
+              <svg
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                />
+                <polyline points="15 3 21 3 21 9" />
+                <line
+                  x1="10"
+                  y1="14"
+                  x2="21"
+                  y2="3"
+                />
+              </svg>
+            </span>
+          </div>
+
+          <!-- Step 9: LOCKED -->
+          <div class="step-item step-locked">
+            <div class="step-icon locked">9</div>
+            <div class="step-info">
+              <span class="step-name">Publish</span>
+              <span class="step-meta">Locked</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ────────────────────────────────────────────────────────────────────────
+       MAIN PANEL — Step 2: Script & Lyrics (has response, pending approval)
+       [FRAMER-MOTION] AnimatePresence mode="sync" wraps this panel
+       Panel: initial={{ opacity:0, x:6 }}, animate={{ opacity:1, x:0 }},
+       exit={{ opacity:0, x:-6 }}, transition={{ duration:0.15 }}
+       CRITICAL: duration MUST be ≤150ms to avoid blocking approve button click
+    ──────────────────────────────────────────────────────────────────────── -->
+      <main
+        class="main-panel"
+        id="main-panel"
+      >
+        <!-- Step header (sticky) -->
+        <div class="panel-header">
+          <div class="panel-step-label">
+            Step <span>2</span> of 9 &nbsp;·&nbsp; AI-generated
+          </div>
+          <div class="panel-title">Script &amp; Lyrics</div>
+          <div class="panel-desc">
+            Gigity generates a video script and song lyrics tailored to your
+            brand and target audience.
+          </div>
+          <div class="panel-model-tag">
+            <span class="panel-model-tag-dot"></span>
+            GPT-4o mini
+          </div>
+        </div>
+
+        <!-- Panel body -->
+        <div class="panel-body">
+          <!-- Story Script block -->
+          <div class="response-block">
+            <div class="response-block-header">
+              <span class="response-block-label">Story Script</span>
+              <button class="copy-btn">
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect
+                    x="9"
+                    y="9"
+                    width="13"
+                    height="13"
+                    rx="2"
+                    ry="2"
+                  />
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div
+              class="response-block-body"
+              id="block-script"
+            >
+              Scene 1: Opens on a young professional staring at her phone,
+              expenses piling up after payday. Scene 2: She discovers Deewas —
+              taps "Add transaction," her budget snaps into place. Scene 3:
+              Fast-forward — same person, coffee in hand, checking her savings
+              goal progress. Smile. Scene 4: Text overlay: "Deewas. Your money,
+              finally under control." Logo fade-in.
+            </div>
+          </div>
+
+          <!-- Song Lyrics block -->
+          <div class="response-block">
+            <div class="response-block-header">
+              <span class="response-block-label">Song Lyrics</span>
+              <button class="copy-btn">
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect
+                    x="9"
+                    y="9"
+                    width="13"
+                    height="13"
+                    rx="2"
+                    ry="2"
+                  />
+                  <path
+                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                  />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="response-block-body">
+              [Verse 1] Payday comes, payday goes Where it all went — nobody
+              knows But now I've got something in my hand Finally got a money
+              plan [Chorus] Deewas, Deewas — count every peso Deewas, Deewas —
+              watch your savings grow No more stress, no more guessing game With
+              Deewas, money's never the same
+            </div>
+          </div>
+
+          <!-- Follow-up area -->
+          <div class="followup-wrap">
+            <div class="followup-label">Refine this response</div>
+            <div class="followup-row">
+              <input
+                type="text"
+                class="followup-input"
+                placeholder="Make the chorus punchier, change the tone to playful, shorter script…"
+              />
+              <button
+                class="btn btn-ghost"
+                style="padding: 7px 14px; flex-shrink: 0"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line
+                    x1="22"
+                    y1="2"
+                    x2="11"
+                    y2="13"
+                  />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action bar (sticky bottom) -->
+        <!-- [FRAMER-MOTION] action bar: slides up from y:8, opacity 0→1, delay:0.1 -->
+        <div class="action-bar">
+          <div class="action-bar-left">
+            <button class="btn btn-ghost">
+              <svg
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 .49-3.07" />
+              </svg>
+              Retry
+            </button>
+          </div>
+          <div class="action-bar-right">
+            <!-- [FRAMER-MOTION] Approve button: on click, scale 0.96→1, then step complete animation in sidebar -->
+            <button
+              class="btn btn-approve"
+              onclick="approveStep()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Approve &amp; continue
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // ─── INTERACTIVE DEMO ────────────────────────────────────────────────────────
+
+      // Approve step — shows completed state
+      function approveStep() {
+        const panel = document.getElementById('main-panel')
+        panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-step-label">Step <span style="color:var(--ds-accent)">2</span> of 9</div>
+      <div class="panel-title">Script &amp; Lyrics</div>
+    </div>
+    <div class="step-approved-panel">
+      <div class="approved-callout">
+        <div class="approved-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="approved-text">Script &amp; Lyrics approved</div>
+          <div class="approved-sub">Your approved response will be used as context in the next steps.</div>
+        </div>
+        <button class="reopen-btn" onclick="location.reload()">Re-open</button>
+      </div>
+      <div class="response-block">
+        <div class="response-block-header">
+          <span class="response-block-label">Story Script</span>
+          <button class="copy-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        </div>
+        <div class="response-block-body">Scene 1: Opens on a young professional staring at her phone, expenses piling up after payday.
+
+Scene 2: She discovers Deewas — taps "Add transaction," her budget snaps into place.
+
+Scene 3: Fast-forward — same person, coffee in hand, checking her savings goal progress. Smile.
+
+Scene 4: Text overlay: "Deewas. Your money, finally under control." Logo fade-in.</div>
+      </div>
+    </div>
+    <div class="action-bar">
+      <div class="action-bar-left"></div>
+      <div class="action-bar-right">
+        <button class="btn btn-generate" onclick="goStep3()">
+          <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          Next: Song Lyrics
+        </button>
+      </div>
+    </div>
+  `
+
+        // Update sidebar step 2 to done
+        document.querySelectorAll('.step-item')[1].innerHTML = `
+    <div class="step-icon done">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="step-info">
+      <span class="step-name">Script &amp; Lyrics</span>
+      <span class="step-meta done-meta">Approved</span>
+    </div>
+  `
+        document
+          .querySelectorAll('.step-item')[1]
+          .classList.remove('step-active')
+
+        // Activate step 3
+        document.querySelectorAll('.step-item')[2].classList.add('step-active')
+        document
+          .querySelectorAll('.step-item')[2]
+          .querySelector('.step-icon').textContent = '3'
+        document
+          .querySelectorAll('.step-item')[2]
+          .querySelector('.step-icon')
+          .classList.add('active')
+        document.querySelector('.sidebar-done-count').textContent = '2 / 9 done'
+        document.querySelector('.progress-fill').style.width = '22%'
+        document.querySelector('.progress-label').textContent = 'Step 3 / 9'
+        document.querySelector('.progress-pct').textContent = '22%'
+      }
+
+      function goStep3() {
+        location.reload()
+      }
+
+      function activateStep(n) {
+        console.log('Navigate to step', n)
+      }
+    </script>
+  </body>
+</html>
+

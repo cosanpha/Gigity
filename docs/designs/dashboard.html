@@ -1,597 +1,1742 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Gigity — Dashboard Design</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<style>
-/* ─── DESIGN TOKENS ─── */
-:root {
-  /* Orange primary */
-  --orange-50:  #fff7ed;
-  --orange-100: #ffedd5;
-  --orange-200: #fed7aa;
-  --orange-400: #fb923c;
-  --orange-500: #f97316;
-  --orange-600: #ea580c;
-  --orange-700: #c2410c;
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Gigity — Dashboard</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  /* #111 secondary */
-  --ink:        #111111;
+    <style>
+      /* ─── DESIGN TOKENS (from globals.css + ds-* tokens) ─────────────────────── */
+      :root {
+        /* Brand orange */
+        --ds-accent: #f97316; /* orange-500 */
+        --ds-accent-h: #ea580c; /* orange-600 */
+        --ds-accent-light: #fff7ed; /* orange-50 */
+        --ds-accent-mid: #ffedd5; /* orange-100 */
+        --ds-accent-border: #fed7aa; /* orange-200 */
+        --ds-accent-muted: #fb923c; /* orange-400 */
 
-  /* Zinc neutrals (shadcn neutral) */
-  --zinc-50:  #fafafa;
-  --zinc-100: #f4f4f5;
-  --zinc-200: #e4e4e7;
-  --zinc-300: #d4d4d8;
-  --zinc-400: #a1a1aa;
-  --zinc-500: #71717a;
-  --zinc-600: #52525b;
-  --zinc-700: #3f3f46;
-  --zinc-900: #18181b;
-  --white:    #ffffff;
+        /* Neutrals (zinc scale) */
+        --ds-bg: #ffffff;
+        --ds-surface: #ffffff;
+        --ds-surface-2: #f4f4f5; /* zinc-100 */
+        --ds-surface-3: #fafafa; /* zinc-50 */
+        --ds-border: #e4e4e7; /* zinc-200 */
+        --ds-border-2: #d4d4d8; /* zinc-300 */
+        --ds-text: #09090b; /* zinc-950 */
+        --ds-text-2: #52525b; /* zinc-600 */
+        --ds-text-3: #71717a; /* zinc-500 */
+        --ds-text-4: #a1a1aa; /* zinc-400 */
 
-  /* Semantic */
-  --bg:           var(--white);
-  --surface:      var(--white);
-  --surface-2:    var(--zinc-50);
-  --border:       var(--zinc-200);
-  --border-2:     var(--zinc-300);
-  --text:         var(--ink);
-  --text-2:       var(--zinc-600);
-  --text-muted:   var(--zinc-400);
-  --accent:       var(--orange-500);
-  --accent-hover: var(--orange-600);
-  --accent-light: var(--orange-50);
-  --accent-border:var(--orange-200);
+        /* Semantic */
+        --ds-success: #16a34a; /* green-600 */
+        --ds-success-bg: #f0fdf4;
+        --ds-success-border: #bbf7d0;
+        --ds-danger: #dc2626; /* red-600 */
+        --ds-danger-bg: #fef2f2;
+        --ds-danger-border: #fecaca;
+        --ds-warning: #d97706; /* amber-600 */
+        --ds-warning-bg: #fffbeb;
 
-  /* Status */
-  --green-500: #22c55e;
-  --green-600: #16a34a;
-  --green-50:  #f0fdf4;
-  --amber-400: #fbbf24;
-  --amber-500: #f59e0b;
-  --amber-50:  #fffbeb;
-  --red-500:   #ef4444;
-  --red-50:    #fef2f2;
-  --red-600:   #dc2626;
+        /* Layout */
+        --header-h: 52px;
+        --content-max: 820px;
+        --radius: 6px;
+        --radius-lg: 10px;
+        --radius-pill: 9999px;
 
-  /* Radius (shadcn neutral — subtle, not bubbly) */
-  --r-sm:  4px;
-  --r-md:  6px;
-  --r-lg:  8px;
+        /* Fonts */
+        --font-sans:
+          'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-body: 'Source Sans 3', -apple-system, sans-serif;
 
-  /* Typography */
-  --font: 'Geist', system-ui, -apple-system, sans-serif;
-}
+        /* Shadows */
+        --shadow-sm:
+          0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md:
+          0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+        --shadow-card-hover:
+          0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-font-smoothing: antialiased; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
-a { text-decoration: none; color: inherit; }
-button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+      /* ─── RESET ───────────────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: var(--font-sans);
+        background: var(--ds-bg);
+        color: var(--ds-text);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+      }
 
-/* ─── LAYOUT ─── */
-.page { display: flex; flex-direction: column; min-height: 100vh; }
+      /* ─── NAVBAR ──────────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Navbar slides down from y:-8 on page mount, opacity 0→1     */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        height: var(--header-h);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--ds-border);
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+      }
+      .navbar-inner {
+        max-width: 100%;
+        height: 100%;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .navbar-logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        text-decoration: none;
+        flex-shrink: 0;
+      }
+      .navbar-logo-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--ds-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 4px rgba(249, 115, 22, 0.3);
+        flex-shrink: 0;
+      }
+      .navbar-logo-icon svg {
+        width: 16px;
+        height: 16px;
+        fill: white;
+      }
+      .navbar-logo-wordmark {
+        font-family: var(--font-sans);
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ds-text);
+        letter-spacing: -0.3px;
+      }
 
-/* ─── NAVBAR ─── */
-.navbar {
-  position: sticky; top: 0; z-index: 10;
-  height: 52px;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
-}
-.navbar-left { display: flex; align-items: center; gap: 10px; }
-.logo-mark {
-  width: 28px; height: 28px;
-  background: var(--accent);
-  border-radius: var(--r-md);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; color: var(--white);
-  letter-spacing: -0.5px;
-  flex-shrink: 0;
-}
-.logo-text {
-  font-size: 15px; font-weight: 600; color: var(--ink);
-  letter-spacing: -0.3px;
-}
-.nav-divider {
-  width: 1px; height: 16px;
-  background: var(--border-2);
-  margin: 0 2px;
-}
-.brand-pill {
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 10px;
-  background: var(--zinc-100);
-  border: 1px solid var(--border);
-  border-radius: 99px;
-  font-size: 12px; font-weight: 500; color: var(--zinc-600);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.brand-pill:hover { border-color: var(--border-2); background: var(--zinc-200); }
-.brand-pill-dot {
-  width: 6px; height: 6px;
-  background: var(--accent);
-  border-radius: 50%;
-}
-.brand-chevron { font-size: 10px; color: var(--zinc-400); }
+      .navbar-sep {
+        width: 1px;
+        height: 18px;
+        background: var(--ds-border);
+        flex-shrink: 0;
+      }
 
-.navbar-right { display: flex; align-items: center; gap: 6px; }
-.btn-ghost {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  font-size: 13px; color: var(--zinc-600);
-  background: var(--white);
-  transition: all 0.12s;
-}
-.btn-ghost:hover { border-color: var(--border-2); background: var(--zinc-50); color: var(--ink); }
-.btn-primary {
-  padding: 6px 14px;
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: var(--r-md);
-  font-size: 13px; font-weight: 500; color: var(--white);
-  transition: background 0.12s, border-color 0.12s;
-}
-.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+      /* Brand badge / switcher */
+      .brand-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--ds-border);
+        background: var(--ds-surface-2);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-text-2);
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          border-color 0.12s;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .brand-badge:hover {
+        background: var(--ds-surface);
+        border-color: var(--ds-border-2);
+      }
+      .brand-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ds-accent);
+        flex-shrink: 0;
+      }
 
-/* ─── MAIN CONTENT ─── */
-.main { flex: 1; }
-.content { max-width: 820px; margin: 0 auto; padding: 40px 24px 80px; }
+      .navbar-spacer {
+        flex: 1;
+      }
 
-/* ─── PAGE HEADER ─── */
-.page-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px; margin-bottom: 28px;
-}
-.page-header-left h1 {
-  font-size: 20px; font-weight: 600; color: var(--ink);
-  letter-spacing: -0.4px;
-}
-.page-header-left p {
-  margin-top: 3px; font-size: 13px; color: var(--zinc-500);
-}
+      /* Navbar action buttons */
+      .navbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: var(--radius);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.12s,
+          border-color 0.12s,
+          color 0.12s,
+          box-shadow 0.12s;
+        text-decoration: none;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .btn-ghost {
+        padding: 5px 12px;
+        color: var(--ds-text-3);
+        border-color: var(--ds-border);
+        background: transparent;
+      }
+      .btn-ghost:hover {
+        border-color: var(--ds-border-2);
+        background: var(--ds-surface-2);
+        color: var(--ds-text);
+      }
+      .btn-primary {
+        padding: 6px 14px;
+        background: var(--ds-accent);
+        color: #fff;
+        border-color: var(--ds-accent);
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25);
+      }
+      .btn-primary:hover {
+        background: var(--ds-accent-h);
+        border-color: var(--ds-accent-h);
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.35);
+      }
+      .btn-primary svg {
+        width: 14px;
+        height: 14px;
+        stroke: white;
+        fill: none;
+      }
+      .btn-ghost svg {
+        width: 14px;
+        height: 14px;
+        stroke: currentColor;
+        fill: none;
+      }
 
-/* ─── FILTER BAR ─── */
-.filter-bar {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 16px;
-}
-.filter-tab {
-  padding: 4px 12px;
-  border: 1px solid transparent;
-  border-radius: 99px;
-  font-size: 13px; color: var(--zinc-500);
-  cursor: pointer; background: none;
-  transition: all 0.12s;
-}
-.filter-tab:hover { color: var(--ink); background: var(--zinc-100); }
-.filter-tab.active {
-  color: var(--ink); font-weight: 500;
-  background: var(--zinc-100);
-  border-color: var(--border);
-}
-.filter-spacer { flex: 1; }
-.search-input {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  font-size: 13px; color: var(--ink);
-  background: var(--white);
-  outline: none;
-  width: 200px;
-  font-family: var(--font);
-  transition: border-color 0.12s;
-}
-.search-input::placeholder { color: var(--zinc-400); }
-.search-input:focus { border-color: var(--border-2); }
+      /* ─── PAGE CONTENT ────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Page wrapper: initial={{ opacity:0, y:8 }}, animate={{ opacity:1, y:0 }}, duration:0.22 */
+      .page {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: 36px 24px 80px;
+      }
 
-/* ─── PROJECT LIST ─── */
-.project-list { display: flex; flex-direction: column; gap: 6px; }
+      /* Page header */
+      .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.4px;
+        color: var(--ds-text);
+      }
+      .page-subtitle {
+        margin-top: 3px;
+        font-size: 13px;
+        color: var(--ds-text-3);
+        font-family: var(--font-body);
+      }
 
-.project-card {
-  position: relative;
-  display: flex; align-items: center;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 14px 18px;
-  transition: border-color 0.12s, box-shadow 0.12s;
-  cursor: pointer;
-}
-.project-card:hover {
-  border-color: var(--border-2);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.project-card-link {
-  display: flex; flex-direction: column; gap: 3px;
-  flex: 1; min-width: 0;
-}
-.project-card-title {
-  font-size: 14px; font-weight: 500; color: var(--ink);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.project-card-meta {
-  font-size: 12px; color: var(--zinc-500);
-  display: flex; align-items: center; gap: 6px;
-}
-.meta-sep { color: var(--zinc-300); }
+      /* ─── FILTER BAR ──────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Active tab pill: use layout prop + shared layoutId for smooth slide */
+      .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 20px;
+        flex-wrap: nowrap;
+      }
+      .filter-tabs {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: var(--ds-surface-2);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius-pill);
+        padding: 3px;
+      }
+      .tab {
+        padding: 4px 12px;
+        border-radius: var(--radius-pill);
+        border: none;
+        background: transparent;
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ds-text-3);
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        white-space: nowrap;
+      }
+      .tab:hover {
+        color: var(--ds-text);
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .tab.active {
+        background: var(--ds-accent);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(249, 115, 22, 0.3);
+      }
+      .tab-all.active {
+        background: var(--ds-text);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
 
-.project-card-right {
-  display: flex; align-items: center; gap: 14px;
-  flex-shrink: 0; margin-left: 20px;
-}
+      .filter-spacer {
+        flex: 1;
+      }
 
-/* Progress bar */
-.progress-bar { display: flex; align-items: center; gap: 2px; }
-.progress-seg {
-  width: 14px; height: 4px;
-  border-radius: 2px;
-  background: var(--zinc-200);
-}
-.progress-seg.done { background: var(--accent); }
-.progress-seg.active { background: var(--orange-400); opacity: 0.6; }
+      .search-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--ds-text-4);
+        pointer-events: none;
+      }
+      .search-icon svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        fill: none;
+      }
+      .search-input {
+        width: 200px;
+        padding: 6px 12px 6px 30px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: var(--ds-surface);
+        font-family: var(--font-sans);
+        font-size: 12px;
+        color: var(--ds-text);
+        outline: none;
+        transition:
+          border-color 0.12s,
+          box-shadow 0.12s;
+      }
+      .search-input::placeholder {
+        color: var(--ds-text-4);
+      }
+      .search-input:focus {
+        border-color: var(--ds-accent-border);
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+      }
 
-/* Status badge */
-.status-badge {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 12px; font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 99px;
-}
-.status-badge.completed {
-  color: var(--green-600);
-  background: var(--green-50);
-}
-.status-badge.in-progress {
-  color: var(--zinc-600);
-  background: var(--zinc-100);
-}
-.status-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-}
-.status-badge.completed .status-dot { background: var(--green-500); }
-.status-badge.in-progress .status-dot { background: var(--amber-400); }
+      /* ─── SECTION HEADERS ─────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Section header: initial={{ opacity:0 }}, animate={{ opacity:1 }}, delay per group */
+      .section {
+        margin-bottom: 24px;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .section-label {
+        font-family: var(--font-sans);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ds-text-4);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .section-line {
+        flex: 1;
+        height: 1px;
+        background: var(--ds-border);
+      }
+      .section-count {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ds-text-4);
+        background: var(--ds-surface-2);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius-pill);
+        padding: 1px 7px;
+        flex-shrink: 0;
+      }
 
-/* Delete button */
-.delete-btn {
-  opacity: 0;
-  padding: 4px 8px;
-  border-radius: var(--r-sm);
-  font-size: 12px; color: var(--zinc-400);
-  transition: all 0.12s;
-}
-.project-card:hover .delete-btn { opacity: 1; }
-.delete-btn:hover { background: var(--red-50); color: var(--red-500); }
+      /* ─── VIDEO CARD ──────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Each card: stagger entrance — initial={{ opacity:0, y:12 }}, animate={{ opacity:1, y:0 }}
+   staggerChildren: 0.05s, delay = index * 0.05 */
+      .card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .video-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 13px 16px;
+        background: var(--ds-surface);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius-lg);
+        transition:
+          border-color 0.14s,
+          box-shadow 0.14s,
+          background 0.14s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+      }
+      .video-card:hover {
+        border-color: var(--ds-border-2);
+        box-shadow: var(--shadow-card-hover);
+        background: var(--ds-surface-3);
+      }
+      /* In-progress cards get a subtle left accent line */
+      .video-card.in-progress::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        border-radius: 0 2px 2px 0;
+        background: var(--ds-accent-muted);
+        opacity: 0.7;
+      }
+      .video-card-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .video-card-title {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ds-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        /* [PRETEXT] data-pretext for dynamic height on resize */
+      }
+      .video-card-meta {
+        font-family: var(--font-body);
+        font-size: 12px;
+        color: var(--ds-text-3);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .meta-dot {
+        color: var(--ds-border-2);
+        margin: 0 4px;
+      }
 
-/* ─── SECTION DIVIDER ─── */
-.section-label {
-  font-size: 11px; font-weight: 500; color: var(--zinc-400);
-  letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 8px 0 6px;
-  display: flex; align-items: center; gap: 10px;
-}
-.section-label::after {
-  content: ''; flex: 1; height: 1px; background: var(--border);
-}
+      .video-card-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
 
-/* ─── EMPTY STATE ─── */
-.empty-state {
-  text-align: center; padding: 64px 24px;
-  border: 1px dashed var(--border-2);
-  border-radius: var(--r-lg);
-  background: var(--zinc-50);
-}
-.empty-icon {
-  width: 40px; height: 40px;
-  background: var(--orange-50);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--r-md);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 18px;
-}
-.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-.empty-state p { font-size: 13px; color: var(--zinc-500); margin-bottom: 20px; max-width: 300px; margin-left: auto; margin-right: auto; }
+      /* Progress pips */
+      .progress-pips {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .pip {
+        width: 16px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--ds-surface-2);
+        transition: background 0.15s;
+      }
+      .pip.done {
+        background: var(--ds-accent);
+      }
+      .pip.generating {
+        background: var(--ds-accent-border);
+        animation: pip-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes pip-pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
 
-/* ─── DESIGN ANNOTATION PANEL (for review only) ─── */
-.annotation-panel {
-  position: fixed; right: 0; top: 0; bottom: 0; width: 300px;
-  background: #0f172a; color: #e2e8f0;
-  overflow-y: auto; padding: 24px 20px;
-  font-family: var(--font); font-size: 13px; line-height: 1.6;
-  border-left: 1px solid #1e293b;
-}
-.annotation-panel h2 { font-size: 14px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
-.annotation-panel .ver { font-size: 11px; color: #64748b; margin-bottom: 20px; }
-.annotation-section { margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 16px; }
-.annotation-section:last-child { border-bottom: none; }
-.annotation-section h3 { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
-.token { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #1e293b; flex-shrink: 0; }
-.token-name { color: #cbd5e1; font-size: 12px; }
-.token-value { color: #64748b; font-size: 11px; margin-left: auto; }
-.note { background: #1e293b; border-radius: 4px; padding: 8px 10px; font-size: 12px; color: #94a3b8; margin-top: 6px; }
-.note strong { color: #e2e8f0; }
-.change { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; font-size: 12px; color: #94a3b8; }
-.change-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
-.body-container { margin-right: 300px; }
+      /* Status badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: var(--radius-pill);
+        font-family: var(--font-sans);
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .badge-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .badge-progress {
+        background: var(--ds-surface-2);
+        color: var(--ds-text-2);
+        border: 1px solid var(--ds-border);
+      }
+      .badge-progress .badge-dot {
+        background: var(--ds-warning);
+      }
+      .badge-done {
+        background: var(--ds-success-bg);
+        color: var(--ds-success);
+        border: 1px solid var(--ds-success-border);
+      }
+      .badge-done .badge-dot {
+        background: var(--ds-success);
+      }
+      .badge-canceled {
+        background: var(--ds-danger-bg);
+        color: var(--ds-danger);
+        border: 1px solid var(--ds-danger-border);
+      }
+      .badge-canceled .badge-dot {
+        background: var(--ds-danger);
+      }
 
-/* ─── PREVIEW ANNOTATION (inline badges on screen for review) ─── */
-.preview-only { pointer-events: none; }
-</style>
-</head>
-<body class="preview-only">
+      /* Card hover actions */
+      .card-actions {
+        display: none;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+      }
+      .video-card:hover .card-actions {
+        display: flex;
+      }
+      .card-action-btn {
+        padding: 4px 8px;
+        border: none;
+        background: transparent;
+        border-radius: 5px;
+        font-family: var(--font-sans);
+        font-size: 11.5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.1s,
+          color 0.1s;
+        color: var(--ds-text-4);
+      }
+      .card-action-btn:hover {
+        background: var(--ds-surface-2);
+        color: var(--ds-text-2);
+      }
+      .card-action-btn.danger:hover {
+        background: var(--ds-danger-bg);
+        color: var(--ds-danger);
+      }
 
-<div class="body-container">
-<div class="page">
+      /* ─── EMPTY STATE ─────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Empty state: fade in with slight scale, initial={{ scale:0.97, opacity:0 }} */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 56px 24px;
+        border: 1.5px dashed var(--ds-border-2);
+        border-radius: var(--radius-lg);
+        background: var(--ds-surface-3);
+        text-align: center;
+      }
+      .empty-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--ds-accent-light);
+        border: 1px solid var(--ds-accent-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+      .empty-icon svg {
+        width: 22px;
+        height: 22px;
+        stroke: var(--ds-accent);
+        fill: none;
+      }
+      .empty-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ds-text);
+        margin-bottom: 6px;
+      }
+      .empty-desc {
+        font-family: var(--font-body);
+        font-size: 13px;
+        color: var(--ds-text-3);
+        max-width: 280px;
+        margin-bottom: 20px;
+        line-height: 1.55;
+      }
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="navbar-left">
-      <!-- Logo -->
-      <div class="logo-mark">G</div>
-      <span class="logo-text">Gigity</span>
-      <div class="nav-divider"></div>
-      <!-- Brand switcher pill -->
-      <button class="brand-pill">
-        <span class="brand-pill-dot"></span>
-        TechBrand Co
-        <span class="brand-chevron">▾</span>
-      </button>
-    </div>
-    <div class="navbar-right">
-      <button class="btn-ghost">Edit brand</button>
-      <button class="btn-ghost">+ New brand</button>
-    </div>
-  </nav>
+      /* ─── MODAL ───────────────────────────────────────────────────────────────── */
+      /* [FRAMER-MOTION] Modal overlay: opacity 0→1. Dialog: scale 0.95→1, y 8→0, duration:0.18 */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(3px);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s;
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal {
+        width: 100%;
+        max-width: 440px;
+        background: var(--ds-surface);
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transform: scale(0.96) translateY(8px);
+        transition: transform 0.18s;
+        overflow: hidden;
+      }
+      .modal-overlay.open .modal {
+        transform: scale(1) translateY(0);
+      }
 
-  <!-- MAIN -->
-  <main class="main">
-    <div class="content">
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px 16px;
+        border-bottom: 1px solid var(--ds-border);
+      }
+      .modal-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ds-text);
+      }
+      .modal-close {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ds-text-4);
+        transition:
+          background 0.12s,
+          color 0.12s;
+      }
+      .modal-close:hover {
+        background: var(--ds-surface-2);
+        color: var(--ds-text);
+      }
+      .modal-close svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+      }
 
+      .modal-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-text-2);
+        letter-spacing: 0.01em;
+      }
+      .form-label span {
+        font-weight: 400;
+        color: var(--ds-text-4);
+      }
+      .form-input {
+        padding: 8px 12px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: var(--ds-surface);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        color: var(--ds-text);
+        outline: none;
+        transition:
+          border-color 0.12s,
+          box-shadow 0.12s;
+      }
+      .form-input:focus {
+        border-color: var(--ds-accent-border);
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+      }
+      .form-input::placeholder {
+        color: var(--ds-text-4);
+      }
+
+      .form-row {
+        display: flex;
+        gap: 8px;
+      }
+      .form-row .form-input {
+        flex: 1;
+      }
+      .btn-suggest {
+        padding: 8px 14px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: var(--ds-surface-2);
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ds-text-2);
+        cursor: pointer;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.12s;
+        flex-shrink: 0;
+      }
+      .btn-suggest:hover {
+        border-color: var(--ds-border-2);
+        background: var(--ds-surface);
+        color: var(--ds-text);
+      }
+      .btn-suggest svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        fill: none;
+      }
+
+      .modal-footer {
+        padding: 14px 20px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        border-top: 1px solid var(--ds-border);
+      }
+      .btn-modal-cancel {
+        padding: 7px 14px;
+        border: 1px solid var(--ds-border);
+        border-radius: var(--radius);
+        background: transparent;
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ds-text-3);
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .btn-modal-cancel:hover {
+        background: var(--ds-surface-2);
+        color: var(--ds-text);
+      }
+      .btn-modal-create {
+        padding: 7px 20px;
+        border: 1px solid var(--ds-accent);
+        border-radius: var(--radius);
+        background: var(--ds-accent);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.12s;
+        box-shadow: 0 1px 3px rgba(249, 115, 22, 0.25);
+      }
+      .btn-modal-create:hover {
+        background: var(--ds-accent-h);
+        border-color: var(--ds-accent-h);
+        box-shadow: 0 2px 6px rgba(249, 115, 22, 0.35);
+      }
+      .btn-modal-create svg {
+        width: 14px;
+        height: 14px;
+        stroke: white;
+        fill: none;
+      }
+
+      /* ─── PREFERS-REDUCED-MOTION ──────────────────────────────────────────────── */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+        .pip.generating {
+          animation: none;
+          opacity: 1;
+        }
+      }
+
+      /* ─── RESPONSIVE ──────────────────────────────────────────────────────────── */
+      @media (max-width: 600px) {
+        .page {
+          padding: 24px 16px 60px;
+        }
+        .search-input {
+          width: 140px;
+        }
+        .badge {
+          display: none;
+        }
+        .video-card-right {
+          gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     NAVBAR
+     [FRAMER-MOTION] motion.nav: initial={{ opacity:0, y:-8 }}, animate={{ opacity:1, y:0 }},
+     transition={{ duration: 0.2, ease: "easeOut" }}
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a
+          href="/"
+          class="navbar-logo"
+        >
+          <div class="navbar-logo-icon">
+            <!-- Clapperboard icon -->
+            <svg
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 8h16M4 8l2-4h12l2 4M4 8v12h16V8M9 8V4M15 8V4M4 12h16"
+                stroke="white"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              />
+            </svg>
+          </div>
+          <span class="navbar-logo-wordmark">Gigity</span>
+        </a>
+
+        <div class="navbar-sep"></div>
+
+        <!-- Brand badge (shows active brand name) -->
+        <a
+          href="#"
+          class="brand-badge"
+        >
+          <span class="brand-badge-dot"></span>
+          Deewas App
+          <!-- [FRAMER-MOTION] brand switcher dropdown slides down on click -->
+        </a>
+
+        <div class="navbar-spacer"></div>
+
+        <div class="navbar-actions">
+          <a
+            href="/brand/edit"
+            class="btn btn-ghost"
+          >
+            Edit brand
+          </a>
+          <a
+            href="/brand/new"
+            class="btn btn-ghost"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line
+                x1="12"
+                y1="5"
+                x2="12"
+                y2="19"
+              />
+              <line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+              />
+            </svg>
+            New brand
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     PAGE CONTENT
+     [FRAMER-MOTION] motion.main: initial={{ opacity:0, y:10 }}, animate={{ opacity:1, y:0 }},
+     transition={{ duration: 0.22, ease: "easeOut", delay: 0.05 }}
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <main
+      class="page"
+      id="page-root"
+    >
       <!-- Page header -->
       <div class="page-header">
-        <div class="page-header-left">
-          <h1>Videos</h1>
-          <p>4 projects · TechBrand Co</p>
+        <div>
+          <h1
+            class="page-title"
+            data-pretext
+          >
+            Videos
+          </h1>
+          <p class="page-subtitle">6 projects</p>
         </div>
-        <button class="btn-primary">+ New video</button>
+        <!-- NEW VIDEO BUTTON — triggers modal -->
+        <!-- [FRAMER-MOTION] Modal: AnimatePresence wraps overlay, scale 0.95→1 on enter -->
+        <button
+          class="btn btn-primary"
+          onclick="openModal()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line
+              x1="12"
+              y1="5"
+              x2="12"
+              y2="19"
+            />
+            <line
+              x1="5"
+              y1="12"
+              x2="19"
+              y2="12"
+            />
+          </svg>
+          New video
+        </button>
       </div>
 
-      <!-- Filter bar -->
+      <!-- Filter bar + Search -->
+      <!-- [FRAMER-MOTION] Filter tab active pill: layoutId="tab-pill" for smooth slide between tabs -->
       <div class="filter-bar">
-        <button class="filter-tab active">All</button>
-        <button class="filter-tab">In progress</button>
-        <button class="filter-tab">Completed</button>
+        <div class="filter-tabs">
+          <button
+            class="tab tab-all active"
+            onclick="setTab(this, 'all')"
+          >
+            All
+          </button>
+          <button
+            class="tab"
+            onclick="setTab(this, 'in_progress')"
+          >
+            In progress
+          </button>
+          <button
+            class="tab"
+            onclick="setTab(this, 'completed')"
+          >
+            Completed
+          </button>
+          <button
+            class="tab"
+            onclick="setTab(this, 'canceled')"
+          >
+            Canceled
+          </button>
+        </div>
         <div class="filter-spacer"></div>
-        <input class="search-input" type="text" placeholder="Search videos…" />
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle
+                cx="11"
+                cy="11"
+                r="8"
+              />
+              <line
+                x1="21"
+                y1="21"
+                x2="16.65"
+                y2="16.65"
+              />
+            </svg>
+          </span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search videos…"
+            oninput="filterCards(this.value)"
+          />
+        </div>
       </div>
 
-      <!-- IN PROGRESS section -->
-      <div class="section-label">In progress</div>
-
-      <!-- Project list -->
-      <div class="project-list">
-
-        <!-- Card 1: active, step 4 -->
-        <div class="project-card">
-          <div class="project-card-link">
-            <div class="project-card-title">Summer Launch Campaign — Product Reveal</div>
-            <div class="project-card-meta">
-              Started today
-              <span class="meta-sep">·</span>
-              Step 4 of 9
-              <span class="meta-sep">·</span>
-              Music generation
+      <!-- ─── IN PROGRESS SECTION ───────────────────────────────────────────── -->
+      <!-- [FRAMER-MOTION] Section: initial={{ opacity:0 }}, animate={{ opacity:1 }}, delay:0.08 -->
+      <div
+        class="section"
+        id="section-progress"
+      >
+        <div class="section-header">
+          <span class="section-label">In progress</span>
+          <div class="section-line"></div>
+          <span class="section-count">3</span>
+        </div>
+        <!-- [FRAMER-MOTION] ul: staggerChildren: 0.05s -->
+        <div
+          class="card-list"
+          id="list-progress"
+        >
+          <!-- Card 1: generating step 2 -->
+          <!-- [FRAMER-MOTION] li: initial={{ opacity:0, y:14 }}, animate={{ opacity:1, y:0 }}, delay: 0*0.05 -->
+          <div
+            class="video-card in-progress"
+            onclick="navigate('project-1')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — Summer Sale Campaign</span
+              >
+              <span class="video-card-meta">
+                Started 2 hours ago
+                <span class="meta-dot">·</span>
+                Step 2 of 9
+                <span class="meta-dot">·</span>
+                Script &amp; Lyrics
+              </span>
+            </div>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip generating"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+              </div>
+              <span class="badge badge-progress">
+                <span class="badge-dot"></span>
+                In progress
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn"
+                  onclick="event.stopPropagation()"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-          <div class="project-card-right">
-            <div class="progress-bar">
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg active"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
+
+          <!-- Card 2: step 5 of 9 -->
+          <!-- [FRAMER-MOTION] delay: 1*0.05 = 0.05s -->
+          <div
+            class="video-card in-progress"
+            onclick="navigate('project-2')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — New Year Financial Reset</span
+              >
+              <span class="video-card-meta">
+                Started yesterday
+                <span class="meta-dot">·</span>
+                Step 5 of 9
+                <span class="meta-dot">·</span>
+                Character Images
+              </span>
             </div>
-            <span class="status-badge in-progress"><span class="status-dot"></span>In progress</span>
-            <button class="delete-btn">✕</button>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip generating"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+              </div>
+              <span class="badge badge-progress">
+                <span class="badge-dot"></span>
+                In progress
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn"
+                  onclick="event.stopPropagation()"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: step 7 of 9 -->
+          <!-- [FRAMER-MOTION] delay: 2*0.05 = 0.10s -->
+          <div
+            class="video-card in-progress"
+            onclick="navigate('project-3')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — Budget for Beginners</span
+              >
+              <span class="video-card-meta">
+                Started 3 days ago
+                <span class="meta-dot">·</span>
+                Step 7 of 9
+                <span class="meta-dot">·</span>
+                Video Clips
+              </span>
+            </div>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip generating"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+              </div>
+              <span class="badge badge-progress">
+                <span class="badge-dot"></span>
+                In progress
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn"
+                  onclick="event.stopPropagation()"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-
-        <!-- Card 2: early stage -->
-        <div class="project-card">
-          <div class="project-card-link">
-            <div class="project-card-title">Brand Story — Founder Journey</div>
-            <div class="project-card-meta">
-              Yesterday
-              <span class="meta-sep">·</span>
-              Step 2 of 9
-              <span class="meta-sep">·</span>
-              Story script
-            </div>
-          </div>
-          <div class="project-card-right">
-            <div class="progress-bar">
-              <div class="progress-seg done"></div>
-              <div class="progress-seg active"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-              <div class="progress-seg"></div>
-            </div>
-            <span class="status-badge in-progress"><span class="status-dot"></span>In progress</span>
-            <button class="delete-btn">✕</button>
-          </div>
-        </div>
-
-        <!-- COMPLETED section -->
-        <div class="section-label" style="margin-top:10px;">Completed</div>
-
-        <!-- Card 3: completed -->
-        <div class="project-card">
-          <div class="project-card-link">
-            <div class="project-card-title">Q1 Product Demo — Feature Highlights</div>
-            <div class="project-card-meta">
-              3 days ago
-              <span class="meta-sep">·</span>
-              All 9 steps done
-            </div>
-          </div>
-          <div class="project-card-right">
-            <div class="progress-bar">
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-            </div>
-            <span class="status-badge completed"><span class="status-dot"></span>Completed</span>
-            <button class="delete-btn">✕</button>
-          </div>
-        </div>
-
-        <!-- Card 4: completed -->
-        <div class="project-card">
-          <div class="project-card-link">
-            <div class="project-card-title">Holiday Sale Announcement</div>
-            <div class="project-card-meta">
-              5 days ago
-              <span class="meta-sep">·</span>
-              All 9 steps done
-            </div>
-          </div>
-          <div class="project-card-right">
-            <div class="progress-bar">
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-              <div class="progress-seg done"></div>
-            </div>
-            <span class="status-badge completed"><span class="status-dot"></span>Completed</span>
-            <button class="delete-btn">✕</button>
-          </div>
-        </div>
-
-      </div><!-- /project-list -->
-
-      <!-- EMPTY STATE (shown when no projects exist — not visible here) -->
-      <!--
-      <div class="empty-state">
-        <div class="empty-icon">🎬</div>
-        <h3>No videos yet</h3>
-        <p>Create your first AI-generated video for TechBrand Co</p>
-        <button class="btn-primary">+ New video</button>
       </div>
-      -->
 
-    </div><!-- /content -->
-  </main>
+      <!-- ─── COMPLETED SECTION ────────────────────────────────────────────── -->
+      <!-- [FRAMER-MOTION] delay: 0.18s after in-progress section -->
+      <div
+        class="section"
+        id="section-completed"
+      >
+        <div class="section-header">
+          <span class="section-label">Completed</span>
+          <div class="section-line"></div>
+          <span class="section-count">2</span>
+        </div>
+        <div
+          class="card-list"
+          id="list-completed"
+        >
+          <!-- Card 4: all done -->
+          <!-- [FRAMER-MOTION] delay: 3*0.05 = 0.15s -->
+          <div
+            class="video-card"
+            onclick="navigate('project-4')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — Track Every Peso</span
+              >
+              <span class="video-card-meta">
+                Completed last week
+                <span class="meta-dot">·</span>
+                All 9 steps done
+              </span>
+            </div>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+              </div>
+              <span class="badge badge-done">
+                <span class="badge-dot"></span>
+                Completed
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
 
-</div><!-- /page -->
-</div><!-- /body-container -->
+          <!-- Card 5: completed -->
+          <!-- [FRAMER-MOTION] delay: 4*0.05 = 0.20s -->
+          <div
+            class="video-card"
+            onclick="navigate('project-5')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — Pay Day Ritual</span
+              >
+              <span class="video-card-meta">
+                Completed 2 weeks ago
+                <span class="meta-dot">·</span>
+                All 9 steps done
+              </span>
+            </div>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+              </div>
+              <span class="badge badge-done">
+                <span class="badge-dot"></span>
+                Completed
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<!-- DESIGN ANNOTATION PANEL -->
-<div class="annotation-panel">
-  <h2>Dashboard — Design Spec</h2>
-  <div class="ver">v2.0 · Orange + #111 + shadcn neutral</div>
+      <!-- ─── CANCELED SECTION ─────────────────────────────────────────────── -->
+      <!-- [FRAMER-MOTION] delay: 0.28s -->
+      <div
+        class="section"
+        id="section-canceled"
+      >
+        <div class="section-header">
+          <span class="section-label">Canceled</span>
+          <div class="section-line"></div>
+          <span class="section-count">1</span>
+        </div>
+        <div
+          class="card-list"
+          id="list-canceled"
+        >
+          <!-- Card 6: canceled -->
+          <!-- [FRAMER-MOTION] delay: 5*0.05 = 0.25s -->
+          <div
+            class="video-card"
+            style="opacity: 0.7"
+            onclick="navigate('project-6')"
+          >
+            <div class="video-card-main">
+              <span
+                class="video-card-title"
+                data-pretext
+                >Deewas App — Valentine Day Special</span
+              >
+              <span class="video-card-meta">
+                Canceled 3 weeks ago
+                <span class="meta-dot">·</span>
+                Step 3 of 9
+              </span>
+            </div>
+            <div class="video-card-right">
+              <div class="progress-pips">
+                <div class="pip done"></div>
+                <div class="pip done"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+                <div class="pip"></div>
+              </div>
+              <span class="badge badge-canceled">
+                <span class="badge-dot"></span>
+                Canceled
+              </span>
+              <div class="card-actions">
+                <button
+                  class="card-action-btn"
+                  onclick="event.stopPropagation()"
+                >
+                  Re-open
+                </button>
+                <button
+                  class="card-action-btn danger"
+                  onclick="event.stopPropagation()"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line
+                      x1="18"
+                      y1="6"
+                      x2="6"
+                      y2="18"
+                    />
+                    <line
+                      x1="6"
+                      y1="6"
+                      x2="18"
+                      y2="18"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
 
-  <div class="annotation-section">
-    <h3>Color Tokens</h3>
-    <div class="token">
-      <div class="swatch" style="background:#f97316"></div>
-      <span class="token-name">--accent</span>
-      <span class="token-value">#f97316</span>
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+     NEW VIDEO MODAL
+     [FRAMER-MOTION] AnimatePresence wraps .modal-overlay
+     Overlay: initial={{ opacity:0 }}, animate={{ opacity:1 }}, exit={{ opacity:0 }}, duration:0.18
+     Dialog: initial={{ scale:0.95, y:8 }}, animate={{ scale:1, y:0 }}, exit={{ scale:0.95, y:4 }}, duration:0.16
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <div
+      class="modal-overlay"
+      id="modal"
+      onclick="closeModalOnBg(event)"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">New video</span>
+          <button
+            class="modal-close"
+            onclick="closeModal()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line
+                x1="18"
+                y1="6"
+                x2="6"
+                y2="18"
+              />
+              <line
+                x1="6"
+                y1="6"
+                x2="18"
+                y2="18"
+              />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label"
+              >Video idea hint <span>(optional)</span></label
+            >
+            <input
+              type="text"
+              class="form-input"
+              placeholder="e.g. summer promo, savings tip, emotional story…"
+            />
+          </div>
+          <div class="form-field">
+            <label class="form-label">Project title</label>
+            <div class="form-row">
+              <input
+                type="text"
+                class="form-input"
+                id="modal-title-input"
+                placeholder="Deewas App — Summer Sale Campaign"
+              />
+              <button class="btn-suggest">
+                <svg
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                Suggest
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-modal-cancel"
+            onclick="closeModal()"
+          >
+            Cancel
+          </button>
+          <button class="btn-modal-create">
+            <svg
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            Start workflow
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="token">
-      <div class="swatch" style="background:#ea580c"></div>
-      <span class="token-name">--accent-hover</span>
-      <span class="token-value">#ea580c</span>
-    </div>
-    <div class="token">
-      <div class="swatch" style="background:#111111"></div>
-      <span class="token-name">--ink (text)</span>
-      <span class="token-value">#111111</span>
-    </div>
-    <div class="token">
-      <div class="swatch" style="background:#e4e4e7"></div>
-      <span class="token-name">--border</span>
-      <span class="token-value">#e4e4e7</span>
-    </div>
-    <div class="token">
-      <div class="swatch" style="background:#fafafa"></div>
-      <span class="token-name">--surface-2</span>
-      <span class="token-value">#fafafa</span>
-    </div>
-  </div>
 
-  <div class="annotation-section">
-    <h3>Typography</h3>
-    <div class="token"><span class="token-name">Font</span><span class="token-value">Geist (or Inter)</span></div>
-    <div class="token"><span class="token-name">Page h1</span><span class="token-value">20px / 600 / -0.4px</span></div>
-    <div class="token"><span class="token-name">Card title</span><span class="token-value">14px / 500 / #111</span></div>
-    <div class="token"><span class="token-name">Meta text</span><span class="token-value">12px / 400 / zinc-500</span></div>
-    <div class="note"><strong>Note:</strong> Switch from Montserrat to Geist or keep Montserrat. Geist reads cleaner at small sizes. Montserrat is fine — just reduce weight variation.</div>
-  </div>
+    <script type="module">
+      // ─── PRETEXT IMPORT ────────────────────────────────────────────────────────
+      import { prepare, layout } from './pretext.js'
 
-  <div class="annotation-section">
-    <h3>Key Changes vs Current</h3>
-    <div class="change"><div class="change-dot"></div>Orange replaces all indigo (#6366f1 → #f97316)</div>
-    <div class="change"><div class="change-dot"></div>Brand switcher moves into a pill in navbar (not just a text label)</div>
-    <div class="change"><div class="change-dot"></div>Projects grouped by status (In progress / Completed sections)</div>
-    <div class="change"><div class="change-dot"></div>Filter tabs + search bar added above list</div>
-    <div class="change"><div class="change-dot"></div>Step name shown in card meta ("Music generation") not just step number</div>
-    <div class="change"><div class="change-dot"></div>Status badges use pill shape (rounded-full) not inline text</div>
-    <div class="change"><div class="change-dot"></div>Delete button on hover, far right, not overlapping content</div>
-    <div class="change"><div class="change-dot"></div>Section divider labels (11px uppercase zinc-400)</div>
-    <div class="change"><div class="change-dot"></div>Progress bar: 14×4px segs with 2px gap (slightly larger than before)</div>
-  </div>
+      // ─── TEXT LAYOUT ────────────────────────────────────────────────────────────
+      // prepare() called once after fonts load; layout() called on every resize
+      const textElements = new Map()
 
-  <div class="annotation-section">
-    <h3>Spacing</h3>
-    <div class="token"><span class="token-name">Content max-width</span><span class="token-value">820px</span></div>
-    <div class="token"><span class="token-name">Content padding</span><span class="token-value">40px 24px</span></div>
-    <div class="token"><span class="token-name">Card padding</span><span class="token-value">14px 18px</span></div>
-    <div class="token"><span class="token-name">Card gap</span><span class="token-value">6px</span></div>
-    <div class="token"><span class="token-name">Header → list gap</span><span class="token-value">28px</span></div>
-  </div>
+      async function initPretext() {
+        await document.fonts.ready
+        const els = document.querySelectorAll('[data-pretext]')
+        for (const el of els) {
+          const font = getComputedStyle(el).font
+          textElements.set(el, prepare(el.textContent || '', font))
+        }
+        relayout()
+      }
 
-  <div class="annotation-section">
-    <h3>Interactions</h3>
-    <div class="note"><strong>Delete:</strong> On hover, show ✕. First click sets confirmDelete=true, shows red "Delete" + "Cancel". Second click deletes.</div>
-    <div class="note" style="margin-top:8px"><strong>Brand pill:</strong> Opens brand switcher dropdown. Dropdown should be a popover with brand list, "+ New brand" at bottom.</div>
-    <div class="note" style="margin-top:8px"><strong>New video button:</strong> Opens modal (existing NewVideoModal). Orange CTA — the only orange in the top area.</div>
-  </div>
+      function relayout() {
+        for (const [el, handle] of textElements) {
+          const lh = parseFloat(getComputedStyle(el).lineHeight) || 20
+          const { height } = layout(handle, el.clientWidth, lh)
+          el.style.height = height + 'px'
+        }
+      }
 
-  <div class="annotation-section">
-    <h3>Empty State</h3>
-    <div class="note"><strong>When 0 projects:</strong> Dashed border box, centered. Icon in orange-50 bg box, h3 "No videos yet", supporting text, orange CTA. No generic "empty" sadness — warm and action-oriented.</div>
-  </div>
-</div>
+      new ResizeObserver(relayout).observe(document.body)
+      initPretext()
+    </script>
 
-</body>
+    <script>
+      // ─── MODAL ──────────────────────────────────────────────────────────────────
+      function openModal() {
+        document.getElementById('modal').classList.add('open')
+      }
+      function closeModal() {
+        document.getElementById('modal').classList.remove('open')
+      }
+      function closeModalOnBg(e) {
+        if (e.target === document.getElementById('modal')) closeModal()
+      }
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeModal()
+      })
+
+      // ─── FILTER TABS ────────────────────────────────────────────────────────────
+      function setTab(btn, filter) {
+        document
+          .querySelectorAll('.tab')
+          .forEach(t => t.classList.remove('active'))
+        btn.classList.add('active')
+
+        const sections = {
+          progress: document.getElementById('section-progress'),
+          completed: document.getElementById('section-completed'),
+          canceled: document.getElementById('section-canceled'),
+        }
+
+        if (filter === 'all') {
+          Object.values(sections).forEach(s => (s.style.display = ''))
+        } else if (filter === 'in_progress') {
+          sections.progress.style.display = ''
+          sections.completed.style.display = 'none'
+          sections.canceled.style.display = 'none'
+        } else if (filter === 'completed') {
+          sections.progress.style.display = 'none'
+          sections.completed.style.display = ''
+          sections.canceled.style.display = 'none'
+        } else if (filter === 'canceled') {
+          sections.progress.style.display = 'none'
+          sections.completed.style.display = 'none'
+          sections.canceled.style.display = ''
+        }
+      }
+
+      // ─── SEARCH ─────────────────────────────────────────────────────────────────
+      function filterCards(query) {
+        const q = query.trim().toLowerCase()
+        document.querySelectorAll('.video-card').forEach(card => {
+          const title = card
+            .querySelector('.video-card-title')
+            .textContent.toLowerCase()
+          card.style.display = !q || title.includes(q) ? '' : 'none'
+        })
+      }
+
+      // ─── NAVIGATION (demo) ──────────────────────────────────────────────────────
+      function navigate(id) {
+        // In real app: router.push(`/projects/${id}`)
+        console.log('Navigate to project:', id)
+      }
+    </script>
+  </body>
 </html>
+

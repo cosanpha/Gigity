@@ -30,14 +30,24 @@ Implement in order. Don't skip ahead — later plans depend on earlier ones.
 | 04d | [04d-llm-step-panel.md](04d-llm-step-panel.md)             | LLMStepPanel (4 sub-states)             | M3        |
 | 04e | [04e-external-step-panel.md](04e-external-step-panel.md)   | ExternalStepPanel component             | M3        |
 | 05  | [05-prompt-validation.md](05-prompt-validation.md)         | 7 LLM prompts + manual test process     | Pre-M2    |
+| 06a | [06a-ui-shared-components.md](06a-ui-shared-components.md) | StatusBadge, SectionHeader, PageLayout, MotionLayout | UI-A |
+| 06b | [06b-ui-navbar-videocard.md](06b-ui-navbar-videocard.md)   | Navbar polish, VideoCard redesign       | UI-A      |
+| 06c | [06c-ui-dashboard-list.md](06c-ui-dashboard-list.md)       | Pill filter tabs, stagger animations    | UI-A      |
+| 06d | [06d-ui-page-layouts.md](06d-ui-page-layouts.md)           | Wire PageLayout into dashboard page     | UI-A      |
+| 06e | [06e-ui-animations-setup.md](06e-ui-animations-setup.md)   | Install framer-motion, wire MotionLayout | UI-A     |
+| 06f | [06f-ui-workflow-animations.md](06f-ui-workflow-animations.md) | WorkflowClient + StepSidebar animations | UI-A  |
+| 06g | [06g-ui-brand-form-pages.md](06g-ui-brand-form-pages.md)   | BrandForm SectionHeader + page polish   | UI-A      |
+| 06h | [06h-ui-modals-empty.md](06h-ui-modals-empty.md)           | NewVideoModal animation + EmptyState    | UI-A      |
+
+> **06 chunks implement order:** `06a` → `06e` → `06b`, `06c`, `06d` (any order) → `06f`, `06g`, `06h` (any order)
 
 ## Design reference
 
-See `docs/designs/` for the three HTML mockups:
+See `docs/designs/` for HTML mockups:
 
 - `dashboard.html` — the video list page
-- `brand-setup.html` — brand form page
-- `workflow-view.html` — the 11-step workflow page
+- `workflow.html` — the 11-step workflow page
+- `brand.html` — brand new/edit pages
 
 ## Key decisions (locked)
 

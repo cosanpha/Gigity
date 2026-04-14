@@ -1,5 +1,6 @@
 'use client'
 
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { CloudinaryImageUploadButton } from '@/components/CloudinaryImageUploadButton'
 import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { LucideCheck, LucidePlus, LucideX } from 'lucide-react'
@@ -143,15 +144,13 @@ export function BrandForm({
       onSubmit={handleSubmit}
       className="max-w-[640px]"
     >
-      <div className="overflow-hidden rounded-[8px] border border-zinc-200 bg-white">
+      <div className="overflow-hidden rounded-[10px] border border-zinc-200 bg-white shadow-sm">
         {/* Identity section */}
         <div className="border-b border-zinc-200 p-6">
-          <p className="mb-5 text-[12px] font-semibold tracking-wider text-zinc-500 uppercase">
-            Identity
-          </p>
+          <SectionHeader label="Identity" />
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-zinc-700">
+              <label className="text-[13px] font-semibold text-zinc-700">
                 Brand name *
               </label>
               <input
@@ -167,7 +166,7 @@ export function BrandForm({
               )}
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-zinc-700">
+              <label className="text-[13px] font-semibold text-zinc-700">
                 Logo URL
               </label>
               <PasteOnlyUrlInput
@@ -207,7 +206,7 @@ export function BrandForm({
             </div>
           </div>
           <div className="mt-6 flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Description *
             </label>
             <textarea
@@ -220,7 +219,7 @@ export function BrandForm({
             />
           </div>
           <div className="mt-6 flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Target audience
             </label>
             <input
@@ -233,13 +232,11 @@ export function BrandForm({
           </div>
         </div>
 
-        {/* Platforms section */}
+        {/* Tone & Platforms section */}
         <div className="border-b border-zinc-200 p-6">
-          <p className="mb-5 text-[12px] font-semibold tracking-wider text-zinc-500 uppercase">
-            Platforms
-          </p>
+          <SectionHeader label="Tone & Platforms" />
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Brand tone
             </label>
             <div className="flex flex-wrap gap-2">
@@ -275,7 +272,7 @@ export function BrandForm({
             </div>
           </div>
           <div className="mt-6 flex flex-col gap-2">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Publishing platforms
             </label>
             <div className="flex flex-wrap gap-2">
@@ -314,11 +311,9 @@ export function BrandForm({
 
         {/* Brand links */}
         <div className="border-b border-zinc-200 p-6">
-          <p className="mb-5 text-[12px] font-semibold tracking-wider text-zinc-500 uppercase">
-            Brand links
-          </p>
+          <SectionHeader label="Brand links" />
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Website and app links
             </label>
             <p className="text-xs text-zinc-400">
@@ -370,11 +365,9 @@ export function BrandForm({
 
         {/* Example URLs section */}
         <div className="p-6">
-          <p className="mb-5 text-[12px] font-semibold tracking-wider text-zinc-500 uppercase">
-            References
-          </p>
+          <SectionHeader label="References" />
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-medium text-zinc-700">
+            <label className="text-[13px] font-semibold text-zinc-700">
               Example video URLs
             </label>
             <p className="text-xs text-zinc-400">
@@ -428,7 +421,7 @@ export function BrandForm({
         <button
           type="submit"
           disabled={saving || !name.trim() || !description.trim()}
-          className="rounded-[6px] bg-orange-500 px-5 py-2 text-[13px] font-medium text-white hover:bg-orange-600 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-[7px] bg-orange-500 px-[18px] py-[9px] text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save brand'}
         </button>

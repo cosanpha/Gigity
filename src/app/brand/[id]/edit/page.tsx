@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { apiFetch } from '@/lib/api-fetch'
 import { LucideTrash2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
@@ -77,7 +78,7 @@ export default function BrandEditPage() {
     return (
       <>
         <Navbar />
-        <main className="mx-auto min-h-screen max-w-[640px] bg-zinc-50 px-6 py-10">
+        <main className="mx-auto max-w-[640px] px-6 py-10 pb-20">
           <p className="text-sm text-zinc-500">Loading...</p>
         </main>
       </>
@@ -90,10 +91,10 @@ export default function BrandEditPage() {
         brandName={initialData.name}
         brandId={id}
       />
-      <main className="mx-auto min-h-screen max-w-[640px] bg-zinc-50 px-6 py-10">
+      <main className="mx-auto max-w-[640px] px-6 py-10 pb-20">
         <div className="mb-8 flex items-center gap-3">
           <div>
-            <h1 className="mb-1 text-xl font-semibold tracking-tight">
+            <h1 className="mb-1 text-[20px] font-bold tracking-tight text-zinc-950">
               Edit brand
             </h1>
             <p className="text-[13px] text-zinc-500">
@@ -113,9 +114,7 @@ export default function BrandEditPage() {
         />
 
         <div className="mt-10 border-t border-zinc-200 pt-8">
-          <h2 className="mb-1 text-[13px] font-semibold tracking-wide text-zinc-500 uppercase">
-            Danger zone
-          </h2>
+          <SectionHeader label="Danger zone" />
           <p className="mb-4 max-w-[520px] text-[13px] leading-relaxed text-zinc-500">
             Permanently delete this brand. You can only delete a brand that has
             no video projects yet.
@@ -191,4 +190,3 @@ export default function BrandEditPage() {
     </>
   )
 }
-

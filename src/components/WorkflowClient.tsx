@@ -16,6 +16,7 @@ import {
   StepState,
   WORKFLOW_TOTAL_STEPS,
 } from '@/lib/workflow-templates'
+import { AnimatePresence, motion } from 'framer-motion'
 import { LucideAlertCircle, LucideArrowLeft, LucideCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -655,7 +656,16 @@ export function WorkflowClient({
           activeStep={activeStep}
           onSelect={setActiveStep}
         />
-        <main className="min-h-0 flex-1 overflow-y-auto">
+        <main className="relative min-h-0 flex-1 overflow-y-auto">
+          <AnimatePresence mode="sync" initial={false}>
+          <motion.div
+            key={activeStep}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.13, ease: 'easeOut' }}
+            className="h-full"
+          >
           {activeStep === 1 ? (
             <EditableTextStepPanel
               key={`brief-${steps[0].status}`}
@@ -880,6 +890,8 @@ export function WorkflowClient({
               }
             />
           )}
+          </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

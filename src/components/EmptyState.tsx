@@ -8,7 +8,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ brandProfileId }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center rounded-[8px] border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
+    <div className="flex flex-col items-center rounded-[10px] border border-dashed border-zinc-300 bg-zinc-50/60 py-16 text-center">
       <div className="mx-auto mb-4 flex h-[40px] w-[40px] items-center justify-center rounded-[6px] border border-orange-200 bg-orange-50 text-orange-600">
         <LucideClapperboard className="h-5 w-5" aria-hidden />
       </div>

@@ -23,7 +23,7 @@ export interface IVideoProject extends Document {
   brandProfileId: mongoose.Types.ObjectId
   userId: null
   title: string
-  status: 'in_progress' | 'completed'
+  status: 'in_progress' | 'completed' | 'canceled'
   steps: IWorkflowStep[]
   createdAt: Date
   updatedAt: Date
@@ -68,7 +68,7 @@ const VideoProjectSchema = new Schema<IVideoProject>(
     title: { type: String, required: true },
     status: {
       type: String,
-      enum: ['in_progress', 'completed'],
+      enum: ['in_progress', 'completed', 'canceled'],
       default: 'in_progress',
     },
     steps: { type: [WorkflowStepSchema], default: [] },

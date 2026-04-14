@@ -1,6 +1,7 @@
 'use client'
 
 import { apiFetch } from '@/lib/api-fetch'
+import { AnimatePresence, motion } from 'framer-motion'
 import { LucideArrowRight, LucidePlus, LucideX } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -79,18 +80,29 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
     <>
       <button
         onClick={openModal}
-        className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-[18px] py-[9px] text-[14px] font-medium text-white transition-colors hover:bg-orange-600"
+        className="inline-flex items-center gap-2 rounded-[7px] bg-orange-500 px-[18px] py-[9px] text-[13.5px] font-semibold text-white transition-colors hover:bg-orange-600 shadow-sm"
       >
         <LucidePlus className="h-4 w-4" aria-hidden />
         New video
       </button>
 
+      <AnimatePresence>
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
           onClick={e => e.target === e.currentTarget && closeModal()}
         >
-          <div className="w-full max-w-md rounded-[8px] border border-zinc-200 bg-white p-6 shadow-lg">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="w-full max-w-md rounded-[12px] border border-zinc-200 bg-white p-6 shadow-xl"
+          >
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[15px] font-semibold text-zinc-950">
                 New video
@@ -194,9 +206,10 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
                 Cancel
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </>
   )
 }

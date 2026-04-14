@@ -1,5 +1,8 @@
+'use client'
+
 import { workflowStepLlmModelLabel } from '@/constants/workflow-llm-models'
 import { StepDefinition } from '@/lib/workflow-templates'
+import { motion } from 'framer-motion'
 import { LucideArrowUpRight, LucideCheck } from 'lucide-react'
 
 type StepState = {
@@ -32,7 +35,7 @@ export function StepSidebar({
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto py-2">
-        {stepDefs.map(def => {
+        {stepDefs.map((def, i) => {
           const state = steps[def.stepNumber - 1]
           const isActive = def.stepNumber === activeStep
           const isLocked =
@@ -42,8 +45,11 @@ export function StepSidebar({
           const llmModel = workflowStepLlmModelLabel(def.stepNumber)
 
           return (
-            <button
+            <motion.button
               key={def.stepNumber}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.18, delay: i * 0.03, ease: 'easeOut' }}
               onClick={() => !isLocked && onSelect(def.stepNumber)}
               disabled={isLocked}
               className={`flex w-full cursor-pointer items-center gap-3 border-l-2 px-[14px] py-[9px] text-left text-[13px] transition-colors disabled:cursor-not-allowed ${
@@ -100,7 +106,7 @@ export function StepSidebar({
                   </span>
                 )}
               </span>
-            </button>
+            </motion.button>
           )
         })}
       </div>

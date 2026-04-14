@@ -1,14 +1,16 @@
 'use client'
 
 import { isWorkflowFullyComplete } from '@/lib/workflow-templates'
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { EmptyState } from './EmptyState'
+import { SectionHeader } from './ui/SectionHeader'
 import { VideoCard } from './VideoCard'
 
 type DashboardProject = {
   _id: string
   title: string
-  status: 'in_progress' | 'completed'
+  status: 'in_progress' | 'completed' | 'canceled'
   steps: Array<{
     stepNumber: number
     status: 'pending' | 'generating' | 'done'
@@ -16,11 +18,12 @@ type DashboardProject = {
   createdAt: string
 }
 
-type FilterTab = 'all' | 'in_progress' | 'completed'
+type FilterTab = 'all' | 'in_progress' | 'completed' | 'canceled'
 
 function listStatusForProject(
   p: DashboardProject
-): 'in_progress' | 'completed' {
+): 'in_progress' | 'completed' | 'canceled' {
+  if (p.status === 'canceled') return 'canceled'
   return isWorkflowFullyComplete(p.steps) ? 'completed' : 'in_progress'
 }
 
@@ -40,6 +43,7 @@ export function DashboardProjectList({
     const listStatus = listStatusForProject(p)
     if (filter === 'in_progress' && listStatus !== 'in_progress') return false
     if (filter === 'completed' && listStatus !== 'completed') return false
+    if (filter === 'canceled' && listStatus !== 'canceled') return false
     if (
       search.trim() &&
       !p.title.toLowerCase().includes(search.trim().toLowerCase())
@@ -54,35 +58,44 @@ export function DashboardProjectList({
   const completed = filtered.filter(
     p => listStatusForProject(p) === 'completed'
   )
+  const canceled = filtered.filter(p => listStatusForProject(p) === 'canceled')
 
   return (
     <>
       {/* Filter bar */}
       <div className="mb-4 flex items-center gap-2">
-        {(['all', 'in_progress', 'completed'] as FilterTab[]).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`rounded-full border px-3 py-1 text-[13px] transition-all ${
-              filter === tab
-                ? 'border-zinc-200 bg-zinc-100 font-medium text-zinc-950'
-                : 'border-transparent text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950'
-            }`}
-          >
-            {tab === 'all'
-              ? 'All'
-              : tab === 'in_progress'
-                ? 'In progress'
-                : 'Completed'}
-          </button>
-        ))}
+        <div className="flex items-center rounded-full border border-zinc-200 bg-zinc-50 p-[3px]">
+          {(['all', 'in_progress', 'completed', 'canceled'] as FilterTab[]).map(
+            tab => (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={`rounded-full px-3 py-[3px] text-[12.5px] font-medium transition-all ${
+                  filter === tab
+                    ? tab === 'all'
+                      ? 'bg-zinc-900 text-white shadow-sm'
+                      : 'bg-orange-500 text-white shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-800'
+                }`}
+              >
+                {tab === 'all'
+                  ? 'All'
+                  : tab === 'in_progress'
+                    ? 'In progress'
+                    : tab === 'completed'
+                      ? 'Completed'
+                      : 'Canceled'}
+              </button>
+            )
+          )}
+        </div>
         <div className="flex-1" />
         <input
           type="text"
           placeholder="Search videos…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-[200px] rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 transition-colors outline-none placeholder:text-zinc-400 focus:border-zinc-300"
+          className="w-[200px] rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 transition-colors outline-none placeholder:text-zinc-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100"
         />
       </div>
 
@@ -96,36 +109,72 @@ export function DashboardProjectList({
         <>
           {inProgress.length > 0 && (
             <div className="mb-6">
-              <div className="mb-2 flex items-center gap-3">
-                <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
-                  In progress
-                </span>
-                <span className="flex-1 border-t border-zinc-200" />
-              </div>
-              <div className="flex flex-col gap-[6px]">
-                {inProgress.map(p => (
-                  <VideoCard
+              <SectionHeader
+                label="In progress"
+                count={inProgress.length}
+              />
+              <div className="flex flex-col gap-[5px]">
+                {inProgress.map((p, i) => (
+                  <motion.div
                     key={String(p._id)}
-                    project={p}
-                  />
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.18,
+                      delay: i * 0.04,
+                      ease: 'easeOut',
+                    }}
+                  >
+                    <VideoCard project={p} />
+                  </motion.div>
                 ))}
               </div>
             </div>
           )}
           {completed.length > 0 && (
             <div>
-              <div className="mb-2 flex items-center gap-3">
-                <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
-                  Completed
-                </span>
-                <span className="flex-1 border-t border-zinc-200" />
-              </div>
-              <div className="flex flex-col gap-[6px]">
-                {completed.map(p => (
-                  <VideoCard
+              <SectionHeader
+                label="Completed"
+                count={completed.length}
+              />
+              <div className="flex flex-col gap-[5px]">
+                {completed.map((p, i) => (
+                  <motion.div
                     key={String(p._id)}
-                    project={p}
-                  />
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.18,
+                      delay: i * 0.04,
+                      ease: 'easeOut',
+                    }}
+                  >
+                    <VideoCard project={p} />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+          {canceled.length > 0 && (
+            <div className="mt-6">
+              <SectionHeader
+                label="Canceled"
+                count={canceled.length}
+              />
+              <div className="flex flex-col gap-[5px]">
+                {canceled.map((p, i) => (
+                  <motion.div
+                    key={String(p._id)}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.18,
+                      delay: i * 0.04,
+                      ease: 'easeOut',
+                    }}
+                  >
+                    <VideoCard project={p} />
+                  </motion.div>
                 ))}
               </div>
             </div>

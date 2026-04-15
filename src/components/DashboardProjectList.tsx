@@ -63,14 +63,14 @@ export function DashboardProjectList({
   return (
     <>
       {/* Filter bar */}
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex items-center rounded-full border border-zinc-200 bg-zinc-50 p-[3px]">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center overflow-x-auto rounded-full border border-zinc-200 bg-zinc-50 p-[3px]">
           {(['all', 'in_progress', 'completed', 'canceled'] as FilterTab[]).map(
             tab => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
-                className={`rounded-full px-3 py-[3px] text-[12.5px] font-medium transition-all ${
+                className={`shrink-0 rounded-full px-3 py-[3px] text-[12.5px] font-medium transition-all ${
                   filter === tab
                     ? tab === 'all'
                       ? 'bg-zinc-900 text-white shadow-sm'
@@ -89,13 +89,13 @@ export function DashboardProjectList({
             )
           )}
         </div>
-        <div className="flex-1" />
+        <div className="hidden flex-1 sm:block" />
         <input
           type="text"
           placeholder="Search videos…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-[200px] rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 transition-colors outline-none placeholder:text-zinc-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100"
+          className="w-full rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 sm:w-[200px]"
         />
       </div>
 

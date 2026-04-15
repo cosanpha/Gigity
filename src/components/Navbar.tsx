@@ -1,4 +1,4 @@
-import { LucidePlus } from 'lucide-react'
+import { LucidePencil, LucidePlus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BrandSwitcher } from './BrandSwitcher'
@@ -51,9 +51,9 @@ export function Navbar({
           />
         ) : (
           brandName && (
-            <span className="inline-flex items-center gap-[5px] rounded-full border border-zinc-200 bg-zinc-100 px-[10px] py-[3px] text-[12px] font-semibold text-zinc-600">
+            <span className="inline-flex max-w-[140px] items-center gap-[5px] rounded-full border border-zinc-200 bg-zinc-100 px-[10px] py-[3px] text-[12px] font-semibold text-zinc-600 sm:max-w-none">
               <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-orange-400" />
-              {brandName}
+              <span className="truncate">{brandName}</span>
             </span>
           )
         )}
@@ -63,21 +63,27 @@ export function Navbar({
         {brandId && (
           <Link
             href={`/brand/${brandId}/edit`}
-            className="rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] font-medium text-zinc-500 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
+            className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] font-medium text-zinc-500 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
+            aria-label="Edit brand"
           >
-            Edit brand
+            <LucidePencil
+              className="h-3.5 w-3.5 shrink-0"
+              aria-hidden
+            />
+            <span className="hidden sm:inline">Edit brand</span>
           </Link>
         )}
         {!showSwitcher && (
           <Link
             href="/brand/new"
             className="inline-flex items-center gap-1.5 rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] font-medium text-zinc-500 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950"
+            aria-label="New brand"
           >
             <LucidePlus
-              className="h-3.5 w-3.5"
+              className="h-3.5 w-3.5 shrink-0"
               aria-hidden
             />
-            New brand
+            <span className="hidden sm:inline">New brand</span>
           </Link>
         )}
       </div>

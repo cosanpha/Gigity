@@ -41,6 +41,14 @@ Implement in order. Don't skip ahead — later plans depend on earlier ones.
 
 > **06 chunks implement order:** `06a` → `06e` → `06b`, `06c`, `06d` (any order) → `06f`, `06g`, `06h` (any order)
 
+| 07a | [07a-mobile-navbar.md](07a-mobile-navbar.md)               | Navbar icon-only buttons, brand truncation | Mobile  |
+| 07b | [07b-mobile-dashboard.md](07b-mobile-dashboard.md)         | Filter bar stack, VideoCard mobile layout  | Mobile  |
+| 07c | [07c-mobile-workflow-drawer.md](07c-mobile-workflow-drawer.md) | Sidebar → slide-in drawer on mobile    | Mobile  |
+| 07d | [07d-mobile-brand-forms.md](07d-mobile-brand-forms.md)     | BrandForm full-width, save button stretch  | Mobile  |
+| 07e | [07e-mobile-modal-empty.md](07e-mobile-modal-empty.md)     | NewVideoModal max-height scroll            | Mobile  |
+
+> **07 chunks implement order:** `07a`, `07b`, `07d`, `07e` (any order, independent) → `07c` last (depends on StepSidebar prop changes)
+
 ## Design reference
 
 See `docs/designs/` for HTML mockups:

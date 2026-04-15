@@ -14,6 +14,7 @@ interface StepSidebarProps {
   stepDefs: StepDefinition[]
   activeStep: number
   onSelect: (n: number) => void
+  hideHeader?: boolean
 }
 
 export function StepSidebar({
@@ -21,19 +22,21 @@ export function StepSidebar({
   stepDefs,
   activeStep,
   onSelect,
+  hideHeader = false,
 }: StepSidebarProps) {
   const doneCount = steps.filter(s => s.status === 'done').length
   const totalSteps = stepDefs.length
   const progressPct = Math.round((doneCount / totalSteps) * 100)
 
   return (
-    <aside className="flex min-h-0 w-[228px] shrink-0 flex-col overflow-hidden border-r border-zinc-200">
-      {/* Sidebar header */}
-      <div className="border-b border-zinc-200 px-4 py-3">
-        <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
-          Steps
-        </span>
-      </div>
+    <aside className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-r border-zinc-200 md:w-[228px]">
+      {!hideHeader && (
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
+            Steps
+          </span>
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-y-auto py-2">
         {stepDefs.map((def, i) => {
           const state = steps[def.stepNumber - 1]

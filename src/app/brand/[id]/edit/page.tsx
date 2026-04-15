@@ -131,7 +131,7 @@ export default function BrandEditPage() {
               setDeleteDialogOpen(true)
             }}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-[6px] border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:justify-start"
           >
             <LucideTrash2
               className="h-4 w-4"

@@ -148,7 +148,7 @@ export function BrandForm({
         {/* Identity section */}
         <div className="border-b border-zinc-200 p-6">
           <SectionHeader label="Identity" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-semibold text-zinc-700">
                 Brand name *
@@ -421,7 +421,7 @@ export function BrandForm({
         <button
           type="submit"
           disabled={saving || !name.trim() || !description.trim()}
-          className="inline-flex items-center gap-2 rounded-[7px] bg-orange-500 px-[18px] py-[9px] text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-[7px] bg-orange-500 px-[18px] py-[9px] text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:justify-start"
         >
           {saving ? 'Saving…' : 'Save brand'}
         </button>

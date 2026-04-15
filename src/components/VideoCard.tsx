@@ -7,7 +7,7 @@ import {
   isWorkflowFullyComplete,
   WORKFLOW_TOTAL_STEPS,
 } from '@/lib/workflow-templates'
-import { LucideLoader2, LucideX } from 'lucide-react'
+import { LucideLoader2, LucideMoreVertical, LucideX } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -34,6 +34,7 @@ export function VideoCard({ project }: VideoCardProps) {
   const [deleting, setDeleting] = useState(false)
   const [canceling, setCanceling] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const steps = project.steps
   const doneCount = steps.filter(s => s.status === 'done').length
   const currentStepNumber = doneCount + 1
@@ -120,13 +121,101 @@ export function VideoCard({ project }: VideoCardProps) {
         </span>
       </Link>
 
-      <div className="ml-4 flex shrink-0 items-center gap-3">
-        <StepProgressBar steps={steps} />
+      <div className="ml-3 flex shrink-0 items-center gap-2">
+        <span className="hidden sm:block">
+          <StepProgressBar steps={steps} />
+        </span>
         <StatusBadge status={listStatus} />
 
-        {/* Cancel + delete actions - visible on hover */}
+        {/* Mobile: ⋮ menu button */}
+        <div className="relative sm:hidden">
+          <button
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              setMenuOpen(o => !o)
+            }}
+            className="rounded p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+            aria-label="Project actions"
+          >
+            <LucideMoreVertical
+              className="h-4 w-4"
+              aria-hidden
+            />
+          </button>
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  setConfirmDelete(false)
+                }}
+              />
+              <div className="absolute right-0 top-full z-20 mt-1 min-w-[148px] overflow-hidden rounded-[8px] border border-zinc-200 bg-white shadow-lg">
+                {confirmDelete ? (
+                  <>
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deleting && (
+                        <LucideLoader2
+                          className="h-3.5 w-3.5 animate-spin"
+                          aria-hidden
+                        />
+                      )}
+                      Confirm delete
+                    </button>
+                    <button
+                      onClick={e => {
+                        cancelDelete(e)
+                        setMenuOpen(false)
+                      }}
+                      className="flex w-full items-center px-3 py-2.5 text-[13px] text-zinc-500 hover:bg-zinc-50"
+                    >
+                      Never mind
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={e => {
+                        listStatus === 'canceled'
+                          ? handleReopenProject(e)
+                          : handleCancelProject(e)
+                        setMenuOpen(false)
+                      }}
+                      disabled={canceling}
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-violet-600 hover:bg-violet-50 disabled:opacity-50"
+                    >
+                      {canceling && (
+                        <LucideLoader2
+                          className="h-3.5 w-3.5 animate-spin"
+                          aria-hidden
+                        />
+                      )}
+                      {listStatus === 'canceled' ? 'Re-open' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex w-full items-center px-3 py-2.5 text-[13px] text-red-500 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop: hover reveal */}
         {confirmDelete ? (
-          <span className="flex items-center gap-1">
+          <span className="hidden items-center gap-1 sm:flex">
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -149,7 +238,7 @@ export function VideoCard({ project }: VideoCardProps) {
             </button>
           </span>
         ) : (
-          <span className="hidden items-center gap-1 group-hover:inline-flex">
+          <span className="hidden items-center gap-1 sm:group-hover:inline-flex">
             <button
               onClick={
                 listStatus === 'canceled'

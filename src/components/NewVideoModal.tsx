@@ -93,7 +93,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-end pb-4 px-4 pt-4 sm:items-center bg-black/30 backdrop-blur-sm"
           onClick={e => e.target === e.currentTarget && closeModal()}
         >
           <motion.div
@@ -101,7 +101,7 @@ export function NewVideoModal({ brandProfileId }: NewVideoModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="w-full max-w-md rounded-[12px] border border-zinc-200 bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-[12px] border border-zinc-200 bg-white p-6 shadow-xl max-h-[90dvh] overflow-y-auto"
           >
             <div className="mb-5 flex items-center justify-between">
               <span className="text-[15px] font-semibold text-zinc-950">

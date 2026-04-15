@@ -17,7 +17,14 @@ import {
   WORKFLOW_TOTAL_STEPS,
 } from '@/lib/workflow-templates'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LucideAlertCircle, LucideArrowLeft, LucideCheck } from 'lucide-react'
+import {
+  LucideAlertCircle,
+  LucideArrowLeft,
+  LucideCheck,
+  LucideMenu,
+  LucidePencil,
+  LucideX,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CharacterStepPanel } from './CharacterStepPanel'
@@ -71,6 +78,7 @@ export function WorkflowClient({
 }: WorkflowClientProps) {
   const activeStepStorageKey = `gigity:activeWorkflowStep:${project._id}`
   const [activeStep, setActiveStep] = useState<number>(1)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useLayoutEffect(() => {
     try {
@@ -554,94 +562,159 @@ export function WorkflowClient({
   return (
     <div className="flex h-[calc(100vh-52px)] flex-col">
       {/* Project title bar */}
-      <div className="flex h-[44px] items-center gap-2 border-b border-zinc-200 px-5">
-        {/* Back link */}
-        <Link
-          href={`/?brand=${encodeURIComponent(brandProfileId)}`}
-          className="inline-flex shrink-0 items-center gap-1 rounded-[4px] px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
-        >
-          <LucideArrowLeft
-            className="h-3.5 w-3.5"
-            aria-hidden
-          />
-          Videos
-        </Link>
-        <span className="h-4 w-px shrink-0 bg-zinc-200" />
-
-        {editingTitle ? (
-          <>
-            <input
-              value={titleInput}
-              onChange={e => setTitleInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') saveTitle()
-                if (e.key === 'Escape') setEditingTitle(false)
-              }}
-              autoFocus
-              className="flex-1 rounded-[4px] border border-orange-400 px-2 py-1 text-[13px] ring-2 ring-orange-100 outline-none"
+      <div className="flex flex-col border-b border-zinc-200">
+        {/* Row 1: nav + save */}
+        <div className="flex h-[44px] items-center gap-2 px-5">
+          {/* Mobile sidebar toggle — hidden on md+ */}
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open steps"
+            className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 md:hidden"
+          >
+            <LucideMenu
+              className="h-4 w-4"
+              aria-hidden
             />
-            <button
-              onClick={saveTitle}
-              className="shrink-0 text-[13px] text-orange-500 hover:text-orange-600"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setEditingTitle(false)}
-              className="shrink-0 text-[13px] text-zinc-400 hover:text-zinc-600"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="min-w-0 truncate text-[14px] font-medium text-zinc-950">
-              {title}
-            </span>
+          </button>
+          {/* Back link */}
+          <Link
+            href={`/?brand=${encodeURIComponent(brandProfileId)}`}
+            className="inline-flex shrink-0 items-center gap-1 rounded-[4px] px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+          >
+            <LucideArrowLeft
+              className="h-3.5 w-3.5"
+              aria-hidden
+            />
+            Videos
+          </Link>
+
+          {/* Title */}
+          <span className="hidden h-4 w-px shrink-0 bg-zinc-200 md:block" />
+          {editingTitle ? (
+            <>
+              <input
+                value={titleInput}
+                onChange={e => setTitleInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') saveTitle()
+                  if (e.key === 'Escape') setEditingTitle(false)
+                }}
+                autoFocus
+                className="hidden flex-1 rounded-[4px] border border-orange-400 px-2 py-1 text-[13px] ring-2 ring-orange-100 outline-none md:block"
+              />
+              <button
+                onClick={saveTitle}
+                className="hidden shrink-0 text-[13px] text-orange-500 hover:text-orange-600 md:block"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingTitle(false)}
+                className="hidden shrink-0 text-[13px] text-zinc-400 hover:text-zinc-600 md:block"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
             <button
               onClick={() => {
                 setTitleInput(title)
                 setEditingTitle(true)
               }}
-              className="shrink-0 rounded-[4px] px-2 py-1 text-[12px] text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+              className="group hidden min-w-0 items-center gap-1.5 rounded-[4px] px-1 py-0.5 text-left transition-colors hover:bg-zinc-100 md:flex"
+              title="Edit title"
             >
-              Edit
+              <span className="min-w-0 truncate text-[14px] font-medium text-zinc-950">
+                {title}
+              </span>
+              <LucidePencil
+                className="h-4 w-4 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500"
+                aria-hidden
+              />
             </button>
-          </>
-        )}
+          )}
 
-        {/* Save progress button */}
-        <div className="ml-auto shrink-0">
-          <button
-            onClick={() => saveProgress(steps)}
-            disabled={saveStatus === 'saving'}
-            className="flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-3 py-1 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saveStatus === 'saving' && (
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-500" />
-            )}
-            {saveStatus === 'saved' && (
-              <LucideCheck
-                className="h-3.5 w-3.5 text-green-500"
+          {/* Save progress button */}
+          <div className="ml-auto shrink-0">
+            <button
+              onClick={() => saveProgress(steps)}
+              disabled={saveStatus === 'saving'}
+              className="flex items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-3 py-1 text-[13px] text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saveStatus === 'saving' && (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-500" />
+              )}
+              {saveStatus === 'saved' && (
+                <LucideCheck
+                  className="h-3.5 w-3.5 text-green-500"
+                  aria-hidden
+                />
+              )}
+              {saveStatus === 'error' && (
+                <LucideAlertCircle
+                  className="h-3.5 w-3.5 text-red-500"
+                  aria-hidden
+                />
+              )}
+              <span>
+                {saveStatus === 'saving'
+                  ? 'Saving…'
+                  : saveStatus === 'saved'
+                    ? 'Saved'
+                    : saveStatus === 'error'
+                      ? 'Save failed'
+                      : 'Save'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: title — mobile only */}
+        <div className="px-5 pb-2 md:hidden">
+          {editingTitle ? (
+            <div className="flex items-center gap-2">
+              <input
+                value={titleInput}
+                onChange={e => setTitleInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') saveTitle()
+                  if (e.key === 'Escape') setEditingTitle(false)
+                }}
+                autoFocus
+                className="flex-1 rounded-[4px] border border-orange-400 px-2 py-1 text-[13px] ring-2 ring-orange-100 outline-none"
+              />
+              <button
+                onClick={saveTitle}
+                className="shrink-0 text-[13px] text-orange-500 hover:text-orange-600"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingTitle(false)}
+                className="shrink-0 text-[13px] text-zinc-400 hover:text-zinc-600"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setTitleInput(title)
+                setEditingTitle(true)
+              }}
+              className="group flex h-8 w-full min-w-0 items-center gap-1.5 rounded-[6px] px-1.5 py-0.5 text-left transition-colors hover:bg-zinc-100"
+              title="Edit title"
+            >
+              <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-zinc-950">
+                {title}
+              </span>
+              <LucidePencil
+                className="h-3 w-3 shrink-0 text-zinc-300 transition-colors group-hover:text-zinc-500"
                 aria-hidden
               />
-            )}
-            {saveStatus === 'error' && (
-              <LucideAlertCircle
-                className="h-3.5 w-3.5 text-red-500"
-                aria-hidden
-              />
-            )}
-            <span>
-              {saveStatus === 'saving'
-                ? 'Saving…'
-                : saveStatus === 'saved'
-                  ? 'Saved'
-                  : saveStatus === 'error'
-                    ? 'Save failed'
-                    : 'Save'}
-            </span>
-          </button>
+            </button>
+          )}
         </div>
       </div>
       {approveError && (
@@ -650,251 +723,326 @@ export function WorkflowClient({
         </div>
       )}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <StepSidebar
-          steps={steps}
-          stepDefs={stepDefs}
-          activeStep={activeStep}
-          onSelect={setActiveStep}
-        />
-        <main className="relative min-h-0 flex-1 overflow-y-auto">
-          <AnimatePresence mode="sync" initial={false}>
-          <motion.div
-            key={activeStep}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.13, ease: 'easeOut' }}
-            className="h-full"
-          >
-          {activeStep === 1 ? (
-            <EditableTextStepPanel
-              key={`brief-${steps[0].status}`}
-              stepNumber={1}
-              title="Campaign Brief"
-              llmModel={workflowStepLlmModelLabel(1)}
-              tool="Gigity"
-              textareaRows={18}
-              generateLabel="campaign brief"
-              generatingLabel="campaign brief…"
-              approvedLabel="brief"
-              followUpPlaceholder="Refine the brief… e.g. stronger hook, clearer CTA, different tone"
-              state={steps[0]}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(1)}
-              onRetry={() => generate(1, { retry: true })}
-              onSendFollowUp={() => generate(1, { followUpMessage: followUp })}
-              onApprove={() => approve(1)}
-              onReopen={() => reopen(1)}
-              onContentChange={content => updateStepContent(1, content)}
-            />
-          ) : activeStep === 2 ? (
-            <EditableTextStepPanel
-              key={`story-${steps[1].status}`}
-              stepNumber={2}
-              title="Story Script"
-              llmModel={workflowStepLlmModelLabel(2)}
-              tool="Gigity"
-              textareaRows={24}
-              generateLabel="story script"
-              generatingLabel="story script…"
-              approvedLabel="script"
-              followUpPlaceholder="Refine the script… e.g. make it more emotional, shorter, change the ending"
-              state={steps[1]}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(2)}
-              onRetry={() => generate(2, { retry: true })}
-              onSendFollowUp={() => generate(2, { followUpMessage: followUp })}
-              onApprove={() => approve(2)}
-              onReopen={() => reopen(2)}
-              onContentChange={content => updateStepContent(2, content)}
-            />
-          ) : activeStep === 3 ? (
-            <EditableTextStepPanel
-              key={`lyrics-${steps[2].status}`}
-              stepNumber={3}
-              title="Song Lyrics"
-              llmModel={workflowStepLlmModelLabel(3)}
-              tool="SunoAI"
-              textareaRows={24}
-              generateLabel="song lyrics"
-              generatingLabel="song lyrics…"
-              approvedLabel="lyrics"
-              followUpPlaceholder="Refine the lyrics… e.g. shorter chorus, different rhyme, clearer hook"
-              state={steps[2]}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(3)}
-              onRetry={() => generate(3, { retry: true })}
-              onSendFollowUp={() => generate(3, { followUpMessage: followUp })}
-              onApprove={() => approve(3)}
-              onReopen={() => reopen(3)}
-              onContentChange={content => updateStepContent(3, content)}
-            />
-          ) : activeStep === 4 ? (
-            <MusicPromptStepPanel
-              key={`music-${steps[3].status}`}
-              state={steps[3]}
-              llmModel={workflowStepLlmModelLabel(4)}
-              trackTitle={title}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(4)}
-              onRetry={() => generate(4, { retry: true })}
-              onSendFollowUp={() => generate(4, { followUpMessage: followUp })}
-              onApprove={opts => approve(4, opts ?? {})}
-              onReopen={() => reopen(4)}
-              onContentChange={c => updateStepContent(4, c)}
-              onPersistSuno={updates =>
-                setSteps(prev => {
-                  const next = patch(prev, 4, updates)
-                  saveProgress(next)
-                  return next
-                })
-              }
-              sunoBaseUrlConfigured={sunoBaseUrlConfigured}
-              sunoEnvKeyConfigured={sunoEnvKeyConfigured}
-            />
-          ) : activeStep === 5 ? (
-            <CharacterStepPanel
-              key={`char-${project._id}-${steps[4].status}`}
-              stepState={steps[4]}
-              llmModel={workflowStepLlmModelLabel(5)}
-              characterStyle={characterImageStyle}
-              onCharacterStyleChange={setCharacterImageStyle}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() =>
-                generate(5, { characterStyle: characterImageStyle })
-              }
-              onRetry={() =>
-                generate(5, {
-                  retry: true,
-                  characterStyle: characterImageStyle,
-                })
-              }
-              onSendFollowUp={() => generate(5, { followUpMessage: followUp })}
-              onApprove={approveCharacterStep}
-              onReopen={reopenCharacterStep}
-              onContentChange={c => updateStepContent(5, c)}
-              onPersistOutput={v => persistStepOutput(5, v)}
-            />
-          ) : activeStep === 6 ? (
-            <SceneStepPanel
-              key={`scene-${project._id}-${steps[5].status}`}
-              stepState={steps[5]}
-              llmModel={workflowStepLlmModelLabel(6)}
-              characterImageUrls={collectAssets(steps).characterImages}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(6)}
-              onRetry={() => generate(6, { retry: true })}
-              onSendFollowUp={() => generate(6, { followUpMessage: followUp })}
-              onApprove={approveSceneStep}
-              onReopen={reopenSceneStep}
-              onContentChange={c => updateStepContent(6, c)}
-              onPersistOutput={v => persistStepOutput(6, v)}
-            />
-          ) : activeStep === 7 ? (
-            <KlingStepPanel
-              key={`kling-${project._id}-${steps[6].status}`}
-              stepDef={currentStepDef}
-              state={steps[6]}
-              llmModel={workflowStepLlmModelLabel(7)}
-              sceneImageUrls={collectAssets(steps).sceneImages}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(7)}
-              onRetry={() => generate(7, { retry: true })}
-              onSendFollowUp={() => generate(7, { followUpMessage: followUp })}
-              onApprove={approveKlingStep}
-              onReopen={() => reopen(7)}
-              onContentChange={c => updateStepContent(7, c)}
-              onPersistOutput={v => persistStepOutput(7, v)}
-            />
-          ) : currentStepDef.type === 'llm' ? (
-            <LLMStepPanel
-              stepDef={currentStepDef}
-              state={currentStepState}
-              llmModel={workflowStepLlmModelLabel(activeStep)}
-              followUp={followUp}
-              onFollowUpChange={setFollowUp}
-              onGenerate={() => generate(activeStep)}
-              onRetry={() => generate(activeStep, { retry: true })}
-              onSendFollowUp={() =>
-                generate(activeStep, { followUpMessage: followUp })
-              }
-              onApprove={opts => approve(activeStep, opts)}
-              onReopen={() => reopen(activeStep)}
-            />
-          ) : (
-            <ExternalStepPanel
-              key={activeStep}
-              stepNumber={activeStep}
-              stepDef={currentStepDef}
-              state={currentStepState}
-              llmModel={workflowStepLlmModelLabel(activeStep)}
-              priorStepOutput={getPriorOutput()}
-              brandCtx={{ platform: brand.platforms.join(', ') }}
-              publishPlatformOrder={normalizePublishPlatforms(brand.platforms)}
-              onApprove={() => approve(activeStep, {})}
-              onReopen={() => reopen(activeStep)}
-              projectTitle={title}
-              projectAssets={
-                activeStep === 8 ? collectAssets(steps) : undefined
-              }
-              publishStep={
-                activeStep === 9
-                  ? {
-                      onPublishPlatformsChange: updatePublishPlatforms,
-                      onGenerate: async () => {
-                        const res = await apiFetch(
-                          `/api/v1/projects/${project._id}/steps/9/generate-publish-description`,
-                          { method: 'POST' }
-                        )
-                        const data = await res.json().catch(() => ({}))
-                        if (!res.ok) {
-                          throw new Error(
-                            typeof data.error === 'string'
-                              ? data.error
-                              : 'Generation failed'
-                          )
-                        }
-                        const pp =
-                          data.publishPlatforms &&
-                          typeof data.publishPlatforms === 'object' &&
-                          !Array.isArray(data.publishPlatforms)
-                            ? { ...data.publishPlatforms }
-                            : null
-                        setSteps(prev => {
-                          const next = patch(prev, 9, {
-                            llmResponse:
-                              typeof data.llmResponse === 'string'
-                                ? data.llmResponse
-                                : null,
-                            publishPlatforms: pp,
-                          })
-                          saveProgress(next)
-                          return next
-                        })
-                      },
-                      onSaveLinks: (tiktok, youtube) => {
-                        persistStepOutput(
-                          9,
-                          encodePublishLinks(tiktok, youtube)
-                        )
-                      },
-                    }
-                  : undefined
-              }
-            />
+        {/* Desktop sidebar — hidden on mobile */}
+        <div className="hidden h-full md:block">
+          <StepSidebar
+            steps={steps}
+            stepDefs={stepDefs}
+            activeStep={activeStep}
+            onSelect={setActiveStep}
+          />
+        </div>
+
+        {/* Mobile drawer overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 flex md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <motion.div
+                initial={{ x: -260 }}
+                animate={{ x: 0 }}
+                exit={{ x: -260 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative flex h-full w-[260px] flex-col bg-white shadow-xl"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Drawer header */}
+                <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+                  <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
+                    Steps
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    aria-label="Close steps"
+                    className="rounded-[4px] p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  >
+                    <LucideX
+                      className="h-4 w-4"
+                      aria-hidden
+                    />
+                  </button>
+                </div>
+                <StepSidebar
+                  steps={steps}
+                  stepDefs={stepDefs}
+                  activeStep={activeStep}
+                  onSelect={n => {
+                    setActiveStep(n)
+                    setSidebarOpen(false)
+                  }}
+                  hideHeader
+                />
+              </motion.div>
+              {/* Backdrop */}
+              <div className="flex-1 bg-black/40" />
+            </motion.div>
           )}
-          </motion.div>
+        </AnimatePresence>
+
+        <main className="relative min-h-0 flex-1 overflow-y-auto">
+          <AnimatePresence
+            mode="sync"
+            initial={false}
+          >
+            <motion.div
+              key={activeStep}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.13, ease: 'easeOut' }}
+              className="h-full"
+            >
+              {activeStep === 1 ? (
+                <EditableTextStepPanel
+                  key={`brief-${steps[0].status}`}
+                  stepNumber={1}
+                  title="Campaign Brief"
+                  llmModel={workflowStepLlmModelLabel(1)}
+                  tool="Gigity"
+                  textareaRows={18}
+                  generateLabel="campaign brief"
+                  generatingLabel="campaign brief…"
+                  approvedLabel="brief"
+                  followUpPlaceholder="Refine the brief… e.g. stronger hook, clearer CTA, different tone"
+                  state={steps[0]}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(1)}
+                  onRetry={() => generate(1, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(1, { followUpMessage: followUp })
+                  }
+                  onApprove={() => approve(1)}
+                  onReopen={() => reopen(1)}
+                  onContentChange={content => updateStepContent(1, content)}
+                />
+              ) : activeStep === 2 ? (
+                <EditableTextStepPanel
+                  key={`story-${steps[1].status}`}
+                  stepNumber={2}
+                  title="Story Script"
+                  llmModel={workflowStepLlmModelLabel(2)}
+                  tool="Gigity"
+                  textareaRows={24}
+                  generateLabel="story script"
+                  generatingLabel="story script…"
+                  approvedLabel="script"
+                  followUpPlaceholder="Refine the script… e.g. make it more emotional, shorter, change the ending"
+                  state={steps[1]}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(2)}
+                  onRetry={() => generate(2, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(2, { followUpMessage: followUp })
+                  }
+                  onApprove={() => approve(2)}
+                  onReopen={() => reopen(2)}
+                  onContentChange={content => updateStepContent(2, content)}
+                />
+              ) : activeStep === 3 ? (
+                <EditableTextStepPanel
+                  key={`lyrics-${steps[2].status}`}
+                  stepNumber={3}
+                  title="Song Lyrics"
+                  llmModel={workflowStepLlmModelLabel(3)}
+                  tool="SunoAI"
+                  textareaRows={24}
+                  generateLabel="song lyrics"
+                  generatingLabel="song lyrics…"
+                  approvedLabel="lyrics"
+                  followUpPlaceholder="Refine the lyrics… e.g. shorter chorus, different rhyme, clearer hook"
+                  state={steps[2]}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(3)}
+                  onRetry={() => generate(3, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(3, { followUpMessage: followUp })
+                  }
+                  onApprove={() => approve(3)}
+                  onReopen={() => reopen(3)}
+                  onContentChange={content => updateStepContent(3, content)}
+                />
+              ) : activeStep === 4 ? (
+                <MusicPromptStepPanel
+                  key={`music-${steps[3].status}`}
+                  state={steps[3]}
+                  llmModel={workflowStepLlmModelLabel(4)}
+                  trackTitle={title}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(4)}
+                  onRetry={() => generate(4, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(4, { followUpMessage: followUp })
+                  }
+                  onApprove={opts => approve(4, opts ?? {})}
+                  onReopen={() => reopen(4)}
+                  onContentChange={c => updateStepContent(4, c)}
+                  onPersistSuno={updates =>
+                    setSteps(prev => {
+                      const next = patch(prev, 4, updates)
+                      saveProgress(next)
+                      return next
+                    })
+                  }
+                  sunoBaseUrlConfigured={sunoBaseUrlConfigured}
+                  sunoEnvKeyConfigured={sunoEnvKeyConfigured}
+                />
+              ) : activeStep === 5 ? (
+                <CharacterStepPanel
+                  key={`char-${project._id}-${steps[4].status}`}
+                  stepState={steps[4]}
+                  llmModel={workflowStepLlmModelLabel(5)}
+                  characterStyle={characterImageStyle}
+                  onCharacterStyleChange={setCharacterImageStyle}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() =>
+                    generate(5, { characterStyle: characterImageStyle })
+                  }
+                  onRetry={() =>
+                    generate(5, {
+                      retry: true,
+                      characterStyle: characterImageStyle,
+                    })
+                  }
+                  onSendFollowUp={() =>
+                    generate(5, { followUpMessage: followUp })
+                  }
+                  onApprove={approveCharacterStep}
+                  onReopen={reopenCharacterStep}
+                  onContentChange={c => updateStepContent(5, c)}
+                  onPersistOutput={v => persistStepOutput(5, v)}
+                />
+              ) : activeStep === 6 ? (
+                <SceneStepPanel
+                  key={`scene-${project._id}-${steps[5].status}`}
+                  stepState={steps[5]}
+                  llmModel={workflowStepLlmModelLabel(6)}
+                  characterImageUrls={collectAssets(steps).characterImages}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(6)}
+                  onRetry={() => generate(6, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(6, { followUpMessage: followUp })
+                  }
+                  onApprove={approveSceneStep}
+                  onReopen={reopenSceneStep}
+                  onContentChange={c => updateStepContent(6, c)}
+                  onPersistOutput={v => persistStepOutput(6, v)}
+                />
+              ) : activeStep === 7 ? (
+                <KlingStepPanel
+                  key={`kling-${project._id}-${steps[6].status}`}
+                  stepDef={currentStepDef}
+                  state={steps[6]}
+                  llmModel={workflowStepLlmModelLabel(7)}
+                  sceneImageUrls={collectAssets(steps).sceneImages}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(7)}
+                  onRetry={() => generate(7, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(7, { followUpMessage: followUp })
+                  }
+                  onApprove={approveKlingStep}
+                  onReopen={() => reopen(7)}
+                  onContentChange={c => updateStepContent(7, c)}
+                  onPersistOutput={v => persistStepOutput(7, v)}
+                />
+              ) : currentStepDef.type === 'llm' ? (
+                <LLMStepPanel
+                  stepDef={currentStepDef}
+                  state={currentStepState}
+                  llmModel={workflowStepLlmModelLabel(activeStep)}
+                  followUp={followUp}
+                  onFollowUpChange={setFollowUp}
+                  onGenerate={() => generate(activeStep)}
+                  onRetry={() => generate(activeStep, { retry: true })}
+                  onSendFollowUp={() =>
+                    generate(activeStep, { followUpMessage: followUp })
+                  }
+                  onApprove={opts => approve(activeStep, opts)}
+                  onReopen={() => reopen(activeStep)}
+                />
+              ) : (
+                <ExternalStepPanel
+                  key={activeStep}
+                  stepNumber={activeStep}
+                  stepDef={currentStepDef}
+                  state={currentStepState}
+                  llmModel={workflowStepLlmModelLabel(activeStep)}
+                  priorStepOutput={getPriorOutput()}
+                  brandCtx={{ platform: brand.platforms.join(', ') }}
+                  publishPlatformOrder={normalizePublishPlatforms(
+                    brand.platforms
+                  )}
+                  onApprove={() => approve(activeStep, {})}
+                  onReopen={() => reopen(activeStep)}
+                  projectTitle={title}
+                  projectAssets={
+                    activeStep === 8 ? collectAssets(steps) : undefined
+                  }
+                  publishStep={
+                    activeStep === 9
+                      ? {
+                          onPublishPlatformsChange: updatePublishPlatforms,
+                          onGenerate: async () => {
+                            const res = await apiFetch(
+                              `/api/v1/projects/${project._id}/steps/9/generate-publish-description`,
+                              { method: 'POST' }
+                            )
+                            const data = await res.json().catch(() => ({}))
+                            if (!res.ok) {
+                              throw new Error(
+                                typeof data.error === 'string'
+                                  ? data.error
+                                  : 'Generation failed'
+                              )
+                            }
+                            const pp =
+                              data.publishPlatforms &&
+                              typeof data.publishPlatforms === 'object' &&
+                              !Array.isArray(data.publishPlatforms)
+                                ? { ...data.publishPlatforms }
+                                : null
+                            setSteps(prev => {
+                              const next = patch(prev, 9, {
+                                llmResponse:
+                                  typeof data.llmResponse === 'string'
+                                    ? data.llmResponse
+                                    : null,
+                                publishPlatforms: pp,
+                              })
+                              saveProgress(next)
+                              return next
+                            })
+                          },
+                          onSaveLinks: (tiktok, youtube) => {
+                            persistStepOutput(
+                              9,
+                              encodePublishLinks(tiktok, youtube)
+                            )
+                          },
+                        }
+                      : undefined
+                  }
+                />
+              )}
+            </motion.div>
           </AnimatePresence>
         </main>
       </div>
     </div>
   )
 }
-

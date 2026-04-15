@@ -29,7 +29,7 @@ export function StepSidebar({
   const progressPct = Math.round((doneCount / totalSteps) * 100)
 
   return (
-    <aside className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border-r border-zinc-200 md:w-[228px]">
+    <aside className="flex h-full min-h-0 w-full flex-col overflow-hidden border-r border-zinc-200 md:w-[228px]">
       {!hideHeader && (
         <div className="border-b border-zinc-200 px-4 py-3">
           <span className="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">
@@ -115,7 +115,7 @@ export function StepSidebar({
       </div>
 
       {/* Progress footer */}
-      <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-3">
+      <div className="mt-auto border-t border-zinc-200 bg-zinc-50 px-4 py-3">
         <p className="mb-1.5 text-[11px] text-zinc-500">
           {doneCount} of {totalSteps} steps done
         </p>

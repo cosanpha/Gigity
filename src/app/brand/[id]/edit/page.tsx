@@ -90,6 +90,7 @@ export default function BrandEditPage() {
       <Navbar
         brandName={initialData.name}
         brandId={id}
+        brandLogoUrl={initialData.logoUrl}
       />
       <main className="mx-auto max-w-[640px] px-6 py-10 pb-20">
         <div className="mb-8 flex items-center gap-3">

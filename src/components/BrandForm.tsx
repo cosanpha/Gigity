@@ -1,7 +1,7 @@
 'use client'
 
-import { SectionHeader } from '@/components/ui/SectionHeader'
 import { CloudinaryImageUploadButton } from '@/components/CloudinaryImageUploadButton'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { LucideCheck, LucidePlus, LucideX } from 'lucide-react'
 import Image from 'next/image'
@@ -76,8 +76,7 @@ export function BrandForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [logoPreviewFailed, setLogoPreviewFailed] = useState(false)
   const trimmedLogoUrl = logoUrl.trim()
-  const showLogoPreview =
-    isHttpOrHttpsUrl(trimmedLogoUrl) && !logoPreviewFailed
+  const showLogoPreview = isHttpOrHttpsUrl(trimmedLogoUrl) && !logoPreviewFailed
 
   function toggleTone(t: string) {
     setSelectedTones(prev => {
@@ -186,13 +185,13 @@ export function BrandForm({
               {isHttpOrHttpsUrl(trimmedLogoUrl) && (
                 <div className="mt-1">
                   {showLogoPreview ? (
-                    <div className="relative h-[88px] w-[88px] overflow-hidden rounded-[6px] border border-zinc-200 bg-zinc-50">
+                    <div className="relative h-[88px] w-[88px] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
                       <Image
                         src={trimmedLogoUrl}
                         alt="Logo preview"
                         fill
                         sizes="88px"
-                        className="object-contain p-1"
+                        className="rounded-lg object-contain p-1"
                         onError={() => setLogoPreviewFailed(true)}
                       />
                     </div>
@@ -324,7 +323,7 @@ export function BrandForm({
               {brandLinkRows.map((linkUrl, i) => (
                 <div
                   key={i}
-                  className="flex gap-2"
+                  className="flex h-9 gap-2"
                 >
                   <PasteOnlyUrlInput
                     type="url"
@@ -377,7 +376,7 @@ export function BrandForm({
               {urls.map((url, i) => (
                 <div
                   key={i}
-                  className="flex gap-2"
+                  className="flex h-8 gap-2"
                 >
                   <PasteOnlyUrlInput
                     type="url"

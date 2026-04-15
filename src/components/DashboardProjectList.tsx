@@ -2,6 +2,12 @@
 
 import { isWorkflowFullyComplete } from '@/lib/workflow-templates'
 import { motion } from 'framer-motion'
+import {
+  LucideBan,
+  LucideCheckCircle2,
+  LucideClock3,
+  LucideList,
+} from 'lucide-react'
 import { useState } from 'react'
 import { EmptyState } from './EmptyState'
 import { SectionHeader } from './ui/SectionHeader'
@@ -19,6 +25,17 @@ type DashboardProject = {
 }
 
 type FilterTab = 'all' | 'in_progress' | 'completed' | 'canceled'
+
+const FILTER_TABS: Array<{
+  value: FilterTab
+  label: string
+  icon: typeof LucideList
+}> = [
+  { value: 'all', label: 'All', icon: LucideList },
+  { value: 'in_progress', label: 'In progress', icon: LucideClock3 },
+  { value: 'completed', label: 'Completed', icon: LucideCheckCircle2 },
+  { value: 'canceled', label: 'Canceled', icon: LucideBan },
+]
 
 function listStatusForProject(
   p: DashboardProject
@@ -64,30 +81,31 @@ export function DashboardProjectList({
     <>
       {/* Filter bar */}
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="flex min-w-0 items-center overflow-x-auto rounded-full border border-zinc-200 bg-zinc-50 p-[3px]">
-          {(['all', 'in_progress', 'completed', 'canceled'] as FilterTab[]).map(
-            tab => (
+        <div className="flex w-full min-w-0 items-center justify-between gap-1 rounded-full border border-zinc-200 bg-zinc-50 p-[3px] sm:w-auto">
+          {FILTER_TABS.map(tab => {
+            const Icon = tab.icon
+            return (
               <button
-                key={tab}
-                onClick={() => setFilter(tab)}
-                className={`shrink-0 rounded-full px-3 py-[3px] text-[12.5px] font-medium transition-all ${
-                  filter === tab
-                    ? tab === 'all'
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-2 py-[3px] text-[12.5px] font-medium transition-all sm:flex-none sm:px-3 ${
+                  filter === tab.value
+                    ? tab.value === 'all'
                       ? 'bg-zinc-900 text-white shadow-sm'
                       : 'bg-orange-500 text-white shadow-sm'
                     : 'text-zinc-500 hover:text-zinc-800'
                 }`}
               >
-                {tab === 'all'
-                  ? 'All'
-                  : tab === 'in_progress'
-                    ? 'In progress'
-                    : tab === 'completed'
-                      ? 'Completed'
-                      : 'Canceled'}
+                <Icon
+                  className="h-3.5 w-3.5 min-[380px]:hidden"
+                  aria-hidden
+                />
+                <span className="line-clamp-1 hidden min-[380px]:block">
+                  {tab.label}
+                </span>
               </button>
             )
-          )}
+          })}
         </div>
         <div className="hidden flex-1 sm:block" />
         <input
@@ -95,7 +113,7 @@ export function DashboardProjectList({
           placeholder="Search videos…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 sm:w-[200px]"
+          className="w-full rounded-[6px] border border-zinc-200 px-3 py-[5px] text-[13px] text-zinc-950 transition-colors outline-none placeholder:text-zinc-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 sm:w-[200px]"
         />
       </div>
 

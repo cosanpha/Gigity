@@ -51,6 +51,7 @@ export default async function ProjectPage({ params }: Props) {
       <Navbar
         brandName={brand.name}
         brandId={String(brand._id)}
+        brandLogoUrl={brand.logoUrl}
       />
       <WorkflowClient
         project={serializedProject}

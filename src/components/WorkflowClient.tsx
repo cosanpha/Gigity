@@ -4,6 +4,7 @@
 import { DEFAULT_CHARACTER_IMAGE_STYLE } from '@/constants/character-image-styles'
 import { workflowStepLlmModelLabel } from '@/constants/workflow-llm-models'
 import { apiFetch } from '@/lib/api-fetch'
+import { normalizeNoEmDash } from '@/lib/no-em-dash'
 import {
   joinPublishMarkdown,
   mergeParsedIntoPlatformOrder,
@@ -41,6 +42,8 @@ interface ProjectAssets {
   sceneImages: string[]
   videoClips: string[]
   musicTrack: string[]
+  lyrics: string
+  selectedMusicTrackIndex: number | null
 }
 
 function parseUrls(raw: string | null): string[] {
@@ -56,7 +59,19 @@ function collectAssets(steps: StepState[]): ProjectAssets {
   const sceneImages = parseUrls(steps[5]?.outputAssetUrl)
   const videoClips = parseUrls(steps[6]?.outputAssetUrl)
   const musicTrack = parseUrls(steps[3]?.outputAssetUrl)
-  return { characterImages, sceneImages, videoClips, musicTrack }
+  const lyrics = steps[2]?.llmResponse?.trim() ?? ''
+  const selectedMusicTrackIndex =
+    typeof steps[3]?.sunoSelectedTrackIndex === 'number'
+      ? steps[3].sunoSelectedTrackIndex
+      : null
+  return {
+    characterImages,
+    sceneImages,
+    videoClips,
+    musicTrack,
+    lyrics,
+    selectedMusicTrackIndex,
+  }
 }
 
 interface WorkflowClientProps {
@@ -112,7 +127,12 @@ export function WorkflowClient({
         typeof s.publishPlatforms === 'object' &&
         !Array.isArray(s.publishPlatforms)
       ) {
-        publishPlatforms = { ...s.publishPlatforms }
+        publishPlatforms = Object.fromEntries(
+          Object.entries(s.publishPlatforms).map(([k, v]) => [
+            k,
+            typeof v === 'string' ? normalizeNoEmDash(v) : '',
+          ])
+        )
       } else if (
         idx === 8 &&
         typeof s.llmResponse === 'string' &&
@@ -125,7 +145,10 @@ export function WorkflowClient({
       }
       return {
         status: s.status,
-        llmResponse: s.llmResponse ?? null,
+        llmResponse:
+          typeof s.llmResponse === 'string'
+            ? normalizeNoEmDash(s.llmResponse)
+            : null,
         publishPlatforms,
         outputAssetUrl: s.outputAssetUrl ?? null,
         sunoTaskId: s.sunoTaskId ?? null,
@@ -138,7 +161,15 @@ export function WorkflowClient({
           s.sunoApiKeyOverride.trim()
             ? s.sunoApiKeyOverride.trim()
             : null,
-        conversation: s.conversation ?? [],
+        conversation: Array.isArray(s.conversation)
+          ? s.conversation.map((m: { role: string; content: string }) => ({
+              role: m.role,
+              content:
+                typeof m.content === 'string'
+                  ? normalizeNoEmDash(m.content)
+                  : '',
+            }))
+          : [],
         error: null,
       }
     })
@@ -156,14 +187,20 @@ export function WorkflowClient({
   stepsRef.current = steps
 
   function updateStepContent(n: number, content: string) {
-    setSteps(prev => patch(prev, n, { llmResponse: content }))
+    setSteps(prev =>
+      patch(prev, n, { llmResponse: normalizeNoEmDash(content) })
+    )
   }
 
   function updatePublishPlatforms(next: Record<string, string>) {
+    const normalized: Record<string, string> = {}
+    for (const [k, v] of Object.entries(next)) {
+      normalized[k] = normalizeNoEmDash(v)
+    }
     const order = normalizePublishPlatforms(brand.platforms)
-    const joined = joinPublishMarkdown(order, next)
+    const joined = joinPublishMarkdown(order, normalized)
     setSteps(prev =>
-      patch(prev, 9, { llmResponse: joined, publishPlatforms: next })
+      patch(prev, 9, { llmResponse: joined, publishPlatforms: normalized })
     )
   }
 
@@ -304,18 +341,34 @@ export function WorkflowClient({
         setSteps(prev => {
           const current = prev[n - 1]
           const newConversation = opts.retry
-            ? [{ role: 'assistant', content: data.llmResponse }]
+            ? [
+                {
+                  role: 'assistant',
+                  content: normalizeNoEmDash(data.llmResponse),
+                },
+              ]
             : opts.followUpMessage
               ? [
                   ...current.conversation,
-                  { role: 'user', content: opts.followUpMessage },
-                  { role: 'assistant', content: data.llmResponse },
+                  {
+                    role: 'user',
+                    content: normalizeNoEmDash(opts.followUpMessage),
+                  },
+                  {
+                    role: 'assistant',
+                    content: normalizeNoEmDash(data.llmResponse),
+                  },
                 ]
-              : [{ role: 'assistant', content: data.llmResponse }]
+              : [
+                  {
+                    role: 'assistant',
+                    content: normalizeNoEmDash(data.llmResponse),
+                  },
+                ]
 
           const next = patch(prev, n, {
             status: 'pending',
-            llmResponse: data.llmResponse,
+            llmResponse: normalizeNoEmDash(data.llmResponse),
             conversation: newConversation,
             error: null,
             ...(n === 5 || n === 6 || n === 7 ? { outputAssetUrl: null } : {}),
@@ -359,17 +412,22 @@ export function WorkflowClient({
             ? {
                 ...s,
                 status: serverRow.status,
-                llmResponse: serverRow.llmResponse ?? null,
+                llmResponse:
+                  typeof serverRow.llmResponse === 'string'
+                    ? normalizeNoEmDash(serverRow.llmResponse)
+                    : null,
                 publishPlatforms:
                   serverRow.publishPlatforms &&
                   typeof serverRow.publishPlatforms === 'object' &&
                   !Array.isArray(serverRow.publishPlatforms)
-                    ? {
-                        ...(serverRow.publishPlatforms as Record<
-                          string,
-                          string
-                        >),
-                      }
+                    ? Object.fromEntries(
+                        Object.entries(
+                          serverRow.publishPlatforms as Record<string, string>
+                        ).map(([k, v]) => [
+                          k,
+                          typeof v === 'string' ? normalizeNoEmDash(v) : '',
+                        ])
+                      )
                     : null,
                 outputAssetUrl: serverRow.outputAssetUrl ?? null,
                 sunoTaskId: serverRow.sunoTaskId ?? null,
@@ -398,34 +456,11 @@ export function WorkflowClient({
       { method: 'POST' }
     )
     if (!res.ok) return
-    if (
-      n === 1 ||
-      n === 2 ||
-      n === 3 ||
-      n === 4 ||
-      n === 5 ||
-      n === 6 ||
-      n === 7
-    ) {
-      setSteps(prev =>
-        patch(prev, n, {
-          status: 'pending',
-          ...(n === 4 ? { sunoTaskId: null } : {}),
-          ...(n === 7 ? { outputAssetUrl: null } : {}),
-        })
-      )
-    } else {
-      setSteps(prev =>
-        patch(prev, n, {
-          status: 'pending',
-          llmResponse: null,
-          publishPlatforms: null,
-          outputAssetUrl: null,
-          conversation: [],
-          error: null,
-        })
-      )
-    }
+    setSteps(prev =>
+      patch(prev, n, {
+        status: 'pending',
+      })
+    )
     setActiveStep(n)
   }
 
@@ -565,7 +600,7 @@ export function WorkflowClient({
       <div className="flex flex-col border-b border-zinc-200">
         {/* Row 1: nav + save */}
         <div className="flex h-[44px] items-center gap-2 px-5">
-          {/* Mobile sidebar toggle — hidden on md+ */}
+          {/* Mobile sidebar toggle - hidden on md+ */}
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -670,7 +705,7 @@ export function WorkflowClient({
           </div>
         </div>
 
-        {/* Row 2: title — mobile only */}
+        {/* Row 2: title - mobile only */}
         <div className="px-5 pb-2 md:hidden">
           {editingTitle ? (
             <div className="flex items-center gap-2">
@@ -723,8 +758,8 @@ export function WorkflowClient({
         </div>
       )}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Desktop sidebar — hidden on mobile */}
-        <div className="hidden h-full md:block">
+        {/* Desktop sidebar - hidden on mobile */}
+        <div className="hidden h-full md:flex md:w-[228px] md:shrink-0">
           <StepSidebar
             steps={steps}
             stepDefs={stepDefs}
@@ -900,6 +935,7 @@ export function WorkflowClient({
               ) : activeStep === 5 ? (
                 <CharacterStepPanel
                   key={`char-${project._id}-${steps[4].status}`}
+                  projectId={project._id}
                   stepState={steps[4]}
                   llmModel={workflowStepLlmModelLabel(5)}
                   characterStyle={characterImageStyle}
@@ -926,6 +962,7 @@ export function WorkflowClient({
               ) : activeStep === 6 ? (
                 <SceneStepPanel
                   key={`scene-${project._id}-${steps[5].status}`}
+                  projectId={project._id}
                   stepState={steps[5]}
                   llmModel={workflowStepLlmModelLabel(6)}
                   characterImageUrls={collectAssets(steps).characterImages}
@@ -944,6 +981,7 @@ export function WorkflowClient({
               ) : activeStep === 7 ? (
                 <KlingStepPanel
                   key={`kling-${project._id}-${steps[6].status}`}
+                  projectId={project._id}
                   stepDef={currentStepDef}
                   state={steps[6]}
                   llmModel={workflowStepLlmModelLabel(7)}
@@ -1014,13 +1052,22 @@ export function WorkflowClient({
                               data.publishPlatforms &&
                               typeof data.publishPlatforms === 'object' &&
                               !Array.isArray(data.publishPlatforms)
-                                ? { ...data.publishPlatforms }
+                                ? Object.fromEntries(
+                                    Object.entries(data.publishPlatforms).map(
+                                      ([k, v]) => [
+                                        k,
+                                        typeof v === 'string'
+                                          ? normalizeNoEmDash(v)
+                                          : '',
+                                      ]
+                                    )
+                                  )
                                 : null
                             setSteps(prev => {
                               const next = patch(prev, 9, {
                                 llmResponse:
                                   typeof data.llmResponse === 'string'
-                                    ? data.llmResponse
+                                    ? normalizeNoEmDash(data.llmResponse)
                                     : null,
                                 publishPlatforms: pp,
                               })
@@ -1028,11 +1075,8 @@ export function WorkflowClient({
                               return next
                             })
                           },
-                          onSaveLinks: (tiktok, youtube) => {
-                            persistStepOutput(
-                              9,
-                              encodePublishLinks(tiktok, youtube)
-                            )
+                          onSaveLinks: links => {
+                            persistStepOutput(9, encodePublishLinks(links))
                           },
                         }
                       : undefined
@@ -1046,3 +1090,4 @@ export function WorkflowClient({
     </div>
   )
 }
+

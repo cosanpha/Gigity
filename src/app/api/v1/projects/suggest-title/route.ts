@@ -15,7 +15,7 @@ function sanitizeTitle(raw: string): string {
 
 export const POST = apiHandler(
   async (req: Request) => {
-    const body = await req.json()
+    const body = await req.json().catch(() => ({}))
     const brandProfileId = body.brandProfileId
     const hint =
       typeof body.hint === 'string' ? body.hint.trim().slice(0, 500) : ''

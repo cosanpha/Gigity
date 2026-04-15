@@ -197,12 +197,12 @@ The descriptors must still reflect:
     type: 'llm',
     promptTemplate: `Based on this story script, identify every on-screen character and produce image-ready DALL-E prompts for each.
 
-Purpose: these images are REFERENCE STILLS for later scenes and video — the character must read unmistakably (silhouette, face, outfit, proportions). Prioritize clarity over storytelling or action.
+Purpose: these images are REFERENCE STILLS for later scenes and video - the character must read unmistakably (silhouette, face, outfit, proportions). Prioritize clarity over storytelling or action.
 
 Story script:
 {{step_2_output}}
 
-Visual style (use for every character — repeat this look in each DALL-E line, not a mix of styles):
+Visual style (use for every character - repeat this look in each DALL-E line, not a mix of styles):
 {{character_visual_style_instruction}}
 
 For each character, write:
@@ -210,17 +210,17 @@ For each character, write:
 **Character - [Name] ([role])**
 Description: 2-4 sentences (who they are in the story, age range, ethnicity if relevant, wardrobe, expression, posture, personality in one phrase).
 
-Output (planning checklist — do not paste as separate lines into DALL-E; fold all of this into the single DALL-E line below):
+Output (planning checklist - do not paste as separate lines into DALL-E; fold all of this into the single DALL-E line below):
 - Ratio: vertical 9:16 portrait framing (full character visible head to toe, feet on ground or full figure in frame)
-- Reference clarity: single subject only, no other people or creatures; sharp readable face and outfit; neutral or slight personality pose — not mid-action
-- No interaction: character does not touch, hold, lean on, or use props, furniture, vehicles, or scene objects (wardrobe/accessories worn on the body are fine). No interacting with the environment — standing or simple stance as if on a shoot, not "in a scene"
-- Background: always describe a real, simple backdrop (solid color, soft gradient, white/light studio, or minimal seamless environment). Never empty void, transparent, or "no background" — the frame needs separation and depth so the subject reads as a reference, not a cutout
-- Style: pick one clear look (e.g. Pixar-style 3D cartoon, soft illustrated mascot, photoreal lifestyle, sleek 3D product render) that fits the brand story — state it explicitly
+- Reference clarity: single subject only, no other people or creatures; sharp readable face and outfit; neutral or slight personality pose - not mid-action
+- No interaction: character does not touch, hold, lean on, or use props, furniture, vehicles, or scene objects (wardrobe/accessories worn on the body are fine). No interacting with the environment - standing or simple stance as if on a shoot, not "in a scene"
+- Background: always describe a real, simple backdrop (solid color, soft gradient, white/light studio, or minimal seamless environment). Never empty void, transparent, or "no background" - the frame needs separation and depth so the subject reads as a reference, not a cutout
+- Style: pick one clear look (e.g. Pixar-style 3D cartoon, soft illustrated mascot, photoreal lifestyle, sleek 3D product render) that fits the brand story - state it explicitly
 - Shot: full body, centered, balanced composition, readable silhouette, even lighting on the figure
-- Lighting: soft key + gentle fill, subtle rim, or soft gradient light — even enough that facial features and clothing detail stay clear for reuse
+- Lighting: soft key + gentle fill, subtle rim, or soft gradient light - even enough that facial features and clothing detail stay clear for reuse
 
 DALL-E prompt (CRITICAL):
-- Must be exactly ONE LINE after "DALL-E prompt:" — no line breaks, no bullet list on this line. The app only reads this single line for generation.
+- Must be exactly ONE LINE after "DALL-E prompt:" - no line breaks, no bullet list on this line. The app only reads this single line for generation.
 - Write one dense comma-separated prompt: lead with the character and outfit, then a simple neutral full-body stance, then explicit simple background, style, lighting, and end with "vertical 9:16 portrait" or equivalent so composition is unambiguous. Include phrases like "solo full body reference", "no props", "not touching anything", "simple studio background" as needed so the model does not add scene clutter.
 
 Example shape (one line only):
@@ -281,11 +281,11 @@ Character images (Cloudinary URLs):
 For every scene from Step 6, treat the **matching lyric line** and the **Step 6 image prompt** as one beat: motion, mood, and timing should reflect what the line *means* and what the still already shows (subject, pose, props). Do not write generic animation that could apply to any frame.
 
 Each KlingAI line must stay one tight sentence (or two short clauses max) and include, in this order:
-1. **Subject action** — what the main subject does or how expression shifts (simple, one clear motion)
-2. **Camera** — pan, zoom, static, dolly, pull back, etc., chosen to support the lyric's emotional beat
-3. **Background / environment** — a few words on setting behind the subject (interior vs exterior, depth, key props or architecture, sky/wall/furniture, crowd vs empty) so the clip feels anchored in the same world as the scene image — not a full paragraph, just enough to keep continuity with Step 6
-4. **Mood & light** — tie to lyric + story (e.g. warm hopeful, cold tense, neon night)
-5. **Duration** — 2-5s
+1. **Subject action** - what the main subject does or how expression shifts (simple, one clear motion)
+2. **Camera** - pan, zoom, static, dolly, pull back, etc., chosen to support the lyric's emotional beat
+3. **Background / environment** - a few words on setting behind the subject (interior vs exterior, depth, key props or architecture, sky/wall/furniture, crowd vs empty) so the clip feels anchored in the same world as the scene image - not a full paragraph, just enough to keep continuity with Step 6
+4. **Mood & light** - tie to lyric + story (e.g. warm hopeful, cold tense, neon night)
+5. **Duration** - 2-5s
 
 Format:
 
@@ -301,16 +301,16 @@ Image: Scene 3 image (from Step 6)
 KlingAI prompt: Woman slowly lifts her gaze toward the doorway, gentle pull back, cozy apartment hallway with soft lamp glow behind her, warm light spilling from open door ahead, hopeful quiet mood, 3s
 
 Rules:
-- Keep each KlingAI prompt short and concrete — clear simple motions beat long prose
+- Keep each KlingAI prompt short and concrete - clear simple motions beat long prose
 - Lyrics and scene prompts must stay in sync: if the lyric is intimate and slow, motion stays small; if the lyric is explosive, favor punchy camera or energy (still one primary subject when possible)
-- Avoid complex multi-character interactions — KlingAI handles single-subject motion better
+- Avoid complex multi-character interactions - KlingAI handles single-subject motion better
 - Camera choice should land the lyric's emotional peak in those 2-5 seconds
 - Match clip energy to song feel: sparse or sad lines → slower, held frames; chorus or hype → snappier motion or stronger camera move
 - Total sequence length when clips are assembled: aim for 30-60 seconds across all scenes`,
   },
   {
     stepNumber: 8,
-    title: 'Assemble in CapCut',
+    title: 'Video Editing',
     tool: 'CapCut',
     type: 'external_instruction',
     instruction: `Assemble your video in CapCut.

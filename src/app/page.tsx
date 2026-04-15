@@ -10,7 +10,7 @@ import { redirect } from 'next/navigation'
 
 type Props = { searchParams: Promise<{ brand?: string }> }
 
-type DashboardBrand = { _id: string; name: string }
+type DashboardBrand = { _id: string; name: string; logoUrl?: string }
 
 type DashboardProject = {
   _id: string
@@ -53,9 +53,11 @@ export default async function DashboardPage({ searchParams }: Props) {
     <PageLayout
       brandName={activeBrand.name}
       brandId={activeBrandId}
+      brandLogoUrl={activeBrand.logoUrl}
       brandSwitcherBrands={brands.map(b => ({
         id: String(b._id),
         name: b.name,
+        logoUrl: b.logoUrl,
       }))}
     >
       {/* Page header */}

@@ -17,7 +17,7 @@ type StepPayload = {
 
 type ProjectStatus = 'in_progress' | 'completed' | 'canceled'
 
-// GET /api/v1/projects/:id — latest project (for client resync after generate)
+// GET /api/v1/projects/:id - latest project (for client resync after generate)
 export const GET = apiHandler(
   async (_req, ctx) => {
     const { id } = await ctx!.params
@@ -76,9 +76,10 @@ export const PATCH = apiHandler(
     }
 
     if (Array.isArray(body.steps)) {
+      const allowedPatchStatuses: StepPayload['status'][] = ['pending', 'generating']
       ;(body.steps as StepPayload[]).forEach((s, i) => {
         if (!project.steps[i]) return
-        if (s.status === 'generating') {
+        if (!allowedPatchStatuses.includes(s.status)) {
           return
         }
         project.steps[i].status = s.status
@@ -86,10 +87,19 @@ export const PATCH = apiHandler(
         if (s.publishPlatforms !== undefined) {
           const step = project.steps[i] as IWorkflowStep
           const pp = s.publishPlatforms
-          step.publishPlatforms =
-            pp && typeof pp === 'object' && !Array.isArray(pp)
-              ? { ...(pp as Record<string, string>) }
+          if (pp && typeof pp === 'object' && !Array.isArray(pp)) {
+            const entries = Object.entries(pp as Record<string, unknown>)
+            const isValid = entries.every(
+              ([key, value]) => key.trim().length > 0 && typeof value === 'string'
+            )
+            step.publishPlatforms = isValid
+              ? Object.fromEntries(
+                  entries.map(([key, value]) => [key, value as string])
+                )
               : null
+          } else {
+            step.publishPlatforms = null
+          }
         }
         project.steps[i].outputAssetUrl = s.outputAssetUrl ?? null
         project.steps[i].sunoTaskId = s.sunoTaskId ?? null

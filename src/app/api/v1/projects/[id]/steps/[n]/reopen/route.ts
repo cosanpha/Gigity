@@ -1,5 +1,4 @@
 import { apiHandler } from '@/lib/api-handler'
-import type { IWorkflowStep } from '@/models/VideoProject'
 import VideoProject from '@/models/VideoProject'
 import mongoose from 'mongoose'
 import { NextResponse } from 'next/server'
@@ -26,34 +25,11 @@ export const POST = apiHandler(
 
     const step = project.steps[stepNumber - 1]
 
-    if (
-      stepNumber === 1 ||
-      stepNumber === 2 ||
-      stepNumber === 3 ||
-      stepNumber === 4 ||
-      stepNumber === 5 ||
-      stepNumber === 6 ||
-      stepNumber === 7
-    ) {
-      step.status = 'pending'
-      step.completedAt = null
-      step.llmResponse = null
-      step.conversation = []
-      if (stepNumber === 4) {
-        step.sunoTaskId = null
-      }
-      if (stepNumber === 7) {
-        step.outputAssetUrl = null
-      }
-    } else {
-      step.status = 'pending'
-      step.llmResponse = null
-      step.outputAssetUrl = null
-      step.conversation = []
-      step.completedAt = null
-      if (stepNumber === 9) {
-        ;(step as IWorkflowStep).publishPlatforms = null
-      }
+    // Re-open should only unlock the step for edits without deleting data.
+    step.status = 'pending'
+    step.completedAt = null
+    if (stepNumber === 4) {
+      step.sunoTaskId = null
     }
 
     project.status = 'in_progress'

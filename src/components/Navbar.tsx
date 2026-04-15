@@ -1,3 +1,4 @@
+import { VERSION } from '@/constants/env.client'
 import { LucidePencil, LucidePlus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -6,11 +7,13 @@ import { BrandSwitcher } from './BrandSwitcher'
 export interface NavbarBrandOption {
   id: string
   name: string
+  logoUrl?: string
 }
 
 interface NavbarProps {
   brandName?: string
   brandId?: string
+  brandLogoUrl?: string
   /** Dashboard: pass all brands to show a nav dropdown when there are 2+. */
   brandSwitcherBrands?: NavbarBrandOption[]
 }
@@ -18,10 +21,18 @@ interface NavbarProps {
 export function Navbar({
   brandName,
   brandId,
+  brandLogoUrl,
   brandSwitcherBrands,
 }: NavbarProps) {
   const showSwitcher =
     brandSwitcherBrands && brandSwitcherBrands.length > 1 && brandId
+  const selectedBrandFromSwitcher = brandId
+    ? brandSwitcherBrands?.find(brand => brand.id === brandId)
+    : undefined
+  const activeBrandLogoUrl =
+    brandLogoUrl?.trim() ||
+    selectedBrandFromSwitcher?.logoUrl?.trim() ||
+    '/logo.png'
 
   return (
     <nav className="sticky top-0 z-40 flex h-[52px] items-center justify-between border-b border-zinc-200 bg-white/92 px-5 backdrop-blur-md">
@@ -31,7 +42,7 @@ export function Navbar({
           className="flex shrink-0 items-center gap-2.5 text-[15px] font-bold tracking-tight text-zinc-950"
         >
           <Image
-            src="/logo.png"
+            src={activeBrandLogoUrl}
             width={28}
             height={28}
             alt="Gigity Logo"
@@ -60,6 +71,9 @@ export function Navbar({
       </div>
 
       <div className="flex items-center gap-1.5">
+        <span className="hidden rounded-[6px] border border-zinc-200 bg-zinc-100 px-2 py-[3px] text-[11px] font-medium text-zinc-500 sm:inline-flex">
+          v{VERSION}
+        </span>
         {brandId && (
           <Link
             href={`/brand/${brandId}/edit`}

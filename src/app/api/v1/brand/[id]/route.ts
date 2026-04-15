@@ -10,7 +10,7 @@ export const GET = apiHandler(async (_req, ctx) => {
   if (!profile)
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(profile, { status: 200 })
-})
+}, { auth: true })
 
 export const PUT = apiHandler(
   async (req, ctx) => {

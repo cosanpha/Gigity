@@ -15,6 +15,7 @@ import { extractBlock } from './LLMStepPanel'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 function splitStoredAudioUrls(raw: string | null | undefined): string[] {
   if (!raw?.trim()) return []
@@ -868,7 +869,7 @@ export function MusicPromptStepPanel({
                   value={isLocked ? stylePromptFromDoc : editedStyle}
                   onChange={e => handleStyleEdit(e.target.value)}
                   readOnly={isLocked}
-                  rows={7}
+                  rows={3}
                   spellCheck={false}
                   className={`w-full resize-y rounded-[6px] border bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-orange-400 ${
                     !isLocked && styleExceedsSunoLimit
@@ -935,22 +936,24 @@ export function MusicPromptStepPanel({
             </button>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={onRetry}
-              className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-            >
-              Re-generate
-            </button>
-            {isLocked ? (
+          <StepActionFooter
+            leftActions={
               <button
-                onClick={onReopen}
-                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                onClick={onRetry}
+                className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
               >
-                Re-open
+                Re-generate
               </button>
-            ) : (
-              <div className="flex flex-col items-start gap-1.5">
+            }
+            rightActions={
+              isLocked ? (
+                <button
+                  onClick={onReopen}
+                  className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                >
+                  Re-open
+                </button>
+              ) : (
                 <button
                   onClick={() =>
                     onApprove({
@@ -966,24 +969,26 @@ export function MusicPromptStepPanel({
                   />
                   Approve
                 </button>
-                {approveRequiresSong && !hasPreviewOrFinalAudioUrl ? (
-                  <p className="text-[12px] text-zinc-500">
-                    Generate a song above, then approve when you are happy with
-                    the preview.
-                  </p>
-                ) : null}
-                {approveRequiresSong &&
+              )
+            }
+            helperText={
+              !isLocked && approveRequiresSong && !hasPreviewOrFinalAudioUrl ? (
+                <p className="text-[12px] text-zinc-500">
+                  Generate a song above, then approve when you are happy with
+                  the preview.
+                </p>
+              ) : !isLocked &&
+                approveRequiresSong &&
                 hasPreviewOrFinalAudioUrl &&
                 !hasFinalSongUrl ? (
-                  <p className="text-[12px] text-zinc-500">
-                    Listen to the preview stream above. Approve unlocks when
-                    each audio URL ends with a file extension (e.g. .mp3) - that
-                    means the final file is ready.
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </div>
+                <p className="text-[12px] text-zinc-500">
+                  Listen to the preview stream above. Approve unlocks when each
+                  audio URL ends with a file extension (e.g. .mp3) - that means
+                  the final file is ready.
+                </p>
+              ) : null
+            }
+          />
         </div>
       )}
     </div>

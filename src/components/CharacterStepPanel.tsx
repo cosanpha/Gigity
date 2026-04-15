@@ -5,15 +5,17 @@ import { CHARACTER_IMAGE_STYLES } from '@/constants/character-image-styles'
 import { apiFetch } from '@/lib/api-fetch'
 import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
-import { LucideCheck } from 'lucide-react'
+import { LucideCheck, LucideRefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
 import { CopyButton } from './LLMStepPanel'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { GenerateSpinner } from './ui/GenerateSpinner'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 interface CharacterStepPanelProps {
+  projectId: string
   stepState: StepState
   characterStyle: string
   onCharacterStyleChange: (value: string) => void
@@ -162,6 +164,7 @@ function DalleGenerateButton({
 }
 
 export function CharacterStepPanel({
+  projectId,
   stepState,
   characterStyle,
   onCharacterStyleChange,
@@ -203,6 +206,50 @@ export function CharacterStepPanel({
     characters.length > 0 &&
     characters.every((_, i) => !!characterUrls[i]?.trim())
 
+  const [regenBusyByIndex, setRegenBusyByIndex] = useState<
+    Record<number, boolean>
+  >({})
+  const [regenErrByIndex, setRegenErrByIndex] = useState<
+    Record<number, string>
+  >({})
+
+  async function regeneratePromptForCharacter(
+    i: number,
+    name: string,
+    prompt: string
+  ) {
+    setRegenErrByIndex(prev => ({ ...prev, [i]: '' }))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: true }))
+    const res = await apiFetch(
+      `/api/v1/projects/${projectId}/steps/5/regenerate-character-prompt`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterName: name,
+          currentPrompt: prompt,
+          characterStyle,
+        }),
+      }
+    )
+    const data = await res.json().catch(() => ({}))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: false }))
+    if (!res.ok || typeof data.prompt !== 'string') {
+      setRegenErrByIndex(prev => ({
+        ...prev,
+        [i]:
+          typeof data.error === 'string' ? data.error : 'Regeneration failed',
+      }))
+      return
+    }
+    const next = replaceCharacterDallePrompt(
+      stepState.llmResponse ?? '',
+      i,
+      data.prompt
+    )
+    onContentChange(next)
+  }
+
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
       {/* Step header */}
@@ -218,26 +265,23 @@ export function CharacterStepPanel({
         <StepLlmModelCaption model={llmModel} />
       </div>
 
+      {!isFullyDone && (
+        <div className="mb-4">
+          <CharacterStyleSelect
+            id="character-style-top"
+            value={characterStyle}
+            onChange={onCharacterStyleChange}
+          />
+        </div>
+      )}
+
       {/* Done state */}
       {isFullyDone && (
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck
-                className="h-3 w-3"
-                strokeWidth={3}
-                aria-hidden
-              />
-            </span>
-            <span className="text-[13px] font-medium text-green-600">
-              Approved
-            </span>
-            <button
-              onClick={onReopen}
-              className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              Re-open
-            </button>
+          <div className="mb-4">
+            <p className="text-[13px] text-green-600">
+              Approved - Re-open to edit the character prompts and image links.
+            </p>
           </div>
 
           {/* Read-only character cards */}
@@ -309,6 +353,16 @@ export function CharacterStepPanel({
               ))
             })()}
           </div>
+          <StepActionFooter
+            rightActions={
+              <button
+                onClick={onReopen}
+                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+              >
+                Re-open
+              </button>
+            }
+          />
         </div>
       )}
 
@@ -321,11 +375,6 @@ export function CharacterStepPanel({
             <p className="text-[13px] text-zinc-500">
               Choose a look, then generate character prompts.
             </p>
-            <CharacterStyleSelect
-              id="character-style-initial"
-              value={characterStyle}
-              onChange={onCharacterStyleChange}
-            />
             <button
               onClick={onGenerate}
               className="rounded-[6px] bg-orange-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
@@ -364,7 +413,28 @@ export function CharacterStepPanel({
                   <p className="text-[12px] font-medium text-zinc-600">
                     {char.name}
                   </p>
-                  <CopyButton text={char.prompt} />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        regeneratePromptForCharacter(i, char.name, char.prompt)
+                      }
+                      disabled={Boolean(regenBusyByIndex[i])}
+                      className="inline-flex items-center gap-1 rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[12px] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      title="Re-generate prompt"
+                    >
+                      <LucideRefreshCw
+                        className={`h-3.5 w-3.5 ${regenBusyByIndex[i] ? 'animate-spin' : ''}`}
+                        aria-hidden
+                      />
+                      <span className="hidden sm:inline">
+                        {regenBusyByIndex[i]
+                          ? 'Regenerating…'
+                          : 'Re-generate prompt'}
+                      </span>
+                    </button>
+                    <CopyButton text={char.prompt} />
+                  </div>
                 </div>
                 <textarea
                   value={char.prompt}
@@ -380,6 +450,11 @@ export function CharacterStepPanel({
                   spellCheck={false}
                   className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-800 outline-none focus:border-orange-400"
                 />
+                {regenErrByIndex[i] ? (
+                  <p className="mb-2 text-[12px] text-red-500">
+                    {regenErrByIndex[i]}
+                  </p>
+                ) : null}
 
                 {characterUrls[i]?.trim() &&
                   !isHttpOrHttpsUrl(characterUrls[i]) && (
@@ -478,12 +553,13 @@ export function CharacterStepPanel({
                   Send
                 </button>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-                <CharacterStyleSelect
-                  id="character-style-retry"
-                  value={characterStyle}
-                  onChange={onCharacterStyleChange}
-                />
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end" />
+            </>
+          )}
+
+          <StepActionFooter
+            leftActions={
+              stepState.status === 'pending' ? (
                 <button
                   type="button"
                   onClick={onRetry}
@@ -491,29 +567,29 @@ export function CharacterStepPanel({
                 >
                   Start fresh
                 </button>
-              </div>
-            </>
-          )}
-
-          {/* Approve button */}
-          <button
-            onClick={() =>
-              onApprove(
-                characterUrls
-                  .map(u => u.trim())
-                  .filter(Boolean)
-                  .join('\n')
-              )
+              ) : null
             }
-            disabled={!allReady}
-            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <LucideCheck
-              className="h-4 w-4"
-              aria-hidden
-            />
-            Approve all images
-          </button>
+            rightActions={
+              <button
+                onClick={() =>
+                  onApprove(
+                    characterUrls
+                      .map(u => u.trim())
+                      .filter(Boolean)
+                      .join('\n')
+                  )
+                }
+                disabled={!allReady}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <LucideCheck
+                  className="h-4 w-4"
+                  aria-hidden
+                />
+                Approve all images
+              </button>
+            }
+          />
         </div>
       )}
     </div>

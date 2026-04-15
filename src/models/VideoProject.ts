@@ -42,7 +42,7 @@ const WorkflowStepSchema = new Schema<IWorkflowStep>(
     stepNumber: { type: Number, required: true },
     conversation: { type: [MessageSchema], default: [] },
     llmResponse: { type: String, default: null },
-    publishPlatforms: { type: Schema.Types.Mixed, default: null },
+    publishPlatforms: { type: Map, of: String, default: null },
     outputAssetUrl: { type: String, default: null },
     sunoTaskId: { type: String, default: null },
     sunoSelectedTrackIndex: { type: Number, default: null },
@@ -81,4 +81,3 @@ const VideoProject: Model<IVideoProject> =
   mongoose.model<IVideoProject>('VideoProject', VideoProjectSchema)
 
 export default VideoProject
-

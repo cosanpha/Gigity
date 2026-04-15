@@ -22,7 +22,14 @@ const BrandProfileSchema = new Schema<IBrandProfile>(
     tone: { type: String, default: '' },
     platforms: { type: [String], default: [] },
     exampleVideoUrls: { type: [String], default: [] },
-    brandLinks: { type: [String], default: [] },
+    brandLinks: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (links: string[]) => links.length <= 10,
+        message: 'brandLinks supports up to 10 URLs',
+      },
+    },
     logoUrl: { type: String, default: '' },
     userId: { type: Schema.Types.Mixed, default: null },
   },

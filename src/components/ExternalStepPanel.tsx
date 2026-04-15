@@ -26,12 +26,16 @@ import Image from 'next/image'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
+import { CopyButton } from './ui/CopyButton'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 interface ProjectAssets {
   characterImages: string[]
   sceneImages: string[]
   videoClips: string[]
   musicTrack: string[]
+  lyrics: string
+  selectedMusicTrackIndex: number | null
 }
 
 interface ExternalStepPanelProps {
@@ -51,7 +55,7 @@ interface ExternalStepPanelProps {
   publishStep?: {
     onPublishPlatformsChange: (next: Record<string, string>) => void
     onGenerate: () => Promise<void>
-    onSaveLinks: (tiktok: string, youtube: string) => void
+    onSaveLinks: (next: Record<string, string>) => void
   }
   llmModel?: string | null
 }
@@ -60,12 +64,123 @@ function AssetGroup({
   title,
   urls,
   icon,
+  selectedIndex,
 }: {
   title: string
   urls: string[]
   icon: ReactNode
+  selectedIndex?: number | null
 }) {
   if (urls.length === 0) return null
+
+  function isImageUrl(url: string): boolean {
+    return /\.(jpg|jpeg|png|webp|gif|avif)(\?|$)/i.test(url)
+  }
+
+  function isVideoUrl(url: string): boolean {
+    return (
+      /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) ||
+      /\/video\/upload\//i.test(url)
+    )
+  }
+
+  function isAudioUrl(url: string): boolean {
+    return /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(url)
+  }
+
+  const allImages = urls.every(u => isImageUrl(u) && isHttpOrHttpsUrl(u))
+  const allVideos = urls.every(isVideoUrl)
+  const allAudios = urls.every(isAudioUrl)
+
+  if (allImages) {
+    return (
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+          <span className="inline-flex shrink-0 text-zinc-400">{icon}</span>
+          {title} ({urls.length})
+        </p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+          {urls.map((url, i) => (
+            <a
+              key={`${url}-${i}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group overflow-hidden rounded-[8px] border border-zinc-200 bg-white"
+            >
+              <Image
+                src={url}
+                alt={`${title} ${i + 1}`}
+                width={360}
+                height={640}
+                className="h-auto w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              />
+            </a>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (allVideos) {
+    return (
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+          <span className="inline-flex shrink-0 text-zinc-400">{icon}</span>
+          {title} ({urls.length})
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {urls.map((url, i) => (
+            <div
+              key={`${url}-${i}`}
+              className="overflow-hidden rounded-[8px] border border-zinc-200 bg-black"
+            >
+              <video
+                src={url}
+                controls
+                className="h-52 w-full object-contain"
+                playsInline
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (allAudios) {
+    return (
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+          <span className="inline-flex shrink-0 text-zinc-400">{icon}</span>
+          {title} ({urls.length})
+        </p>
+        <div className="flex flex-col gap-2">
+          {urls.map((url, i) => (
+            <div
+              key={`${url}-${i}`}
+              className={`rounded-[8px] border px-3 py-2 ${
+                selectedIndex === i
+                  ? 'border-orange-400 bg-orange-50'
+                  : 'border-zinc-200 bg-white'
+              }`}
+            >
+              {selectedIndex === i ? (
+                <div className="mb-1 text-[11px] font-medium text-orange-600">
+                  Selected track
+                </div>
+              ) : null}
+              <audio
+                src={url}
+                controls
+                className="w-full"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -168,12 +283,25 @@ function buildZipTasks(assets: ProjectAssets): ZipTask[] {
       url,
     })
   })
-  assets.musicTrack.forEach((url, i) => {
+  const selectedMusicIndex = assets.selectedMusicTrackIndex
+  if (
+    typeof selectedMusicIndex === 'number' &&
+    selectedMusicIndex >= 0 &&
+    selectedMusicIndex < assets.musicTrack.length
+  ) {
+    const selectedUrl = assets.musicTrack[selectedMusicIndex]
     tasks.push({
-      path: `music/${padIndex(i)}${extFromUrl(url)}`,
-      url,
+      path: `music/${padIndex(selectedMusicIndex)}${extFromUrl(selectedUrl)}`,
+      url: selectedUrl,
     })
-  })
+  } else {
+    assets.musicTrack.forEach((url, i) => {
+      tasks.push({
+        path: `music/${padIndex(i)}${extFromUrl(url)}`,
+        url,
+      })
+    })
+  }
   return tasks
 }
 
@@ -191,7 +319,11 @@ function DownloadAllButton({
     assets.characterImages.length +
     assets.sceneImages.length +
     assets.videoClips.length +
-    assets.musicTrack.length
+    (typeof assets.selectedMusicTrackIndex === 'number' &&
+    assets.selectedMusicTrackIndex >= 0 &&
+    assets.selectedMusicTrackIndex < assets.musicTrack.length
+      ? 1
+      : assets.musicTrack.length)
 
   if (total === 0) return null
 
@@ -307,18 +439,15 @@ function PublishStepSection({
   outputAssetUrl: string | null
   onPublishPlatformsChange: (next: Record<string, string>) => void
   onGenerate: () => Promise<void>
-  onSaveLinks: (tiktok: string, youtube: string) => void
+  onSaveLinks: (next: Record<string, string>) => void
 }) {
   const [genBusy, setGenBusy] = useState(false)
   const [genErr, setGenErr] = useState<string | null>(null)
-  const [tiktok, setTiktok] = useState('')
-  const [youtube, setYoutube] = useState('')
+  const [publishLinks, setPublishLinks] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    const d = decodePublishLinks(outputAssetUrl)
-    setTiktok(d.tiktok)
-    setYoutube(d.youtube)
-  }, [outputAssetUrl])
+    setPublishLinks(decodePublishLinks(outputAssetUrl, platformOrder))
+  }, [outputAssetUrl, platformOrder])
 
   async function handleGenerate() {
     setGenErr(null)
@@ -333,7 +462,7 @@ function PublishStepSection({
   }
 
   function persistLinksFromBlur() {
-    onSaveLinks(tiktok, youtube)
+    onSaveLinks(publishLinks)
   }
 
   function setPlatformText(platform: string, text: string) {
@@ -356,9 +485,12 @@ function PublishStepSection({
         <div className="flex flex-col gap-4">
           {platformOrder.map(platform => (
             <div key={platform}>
-              <label className="mb-1.5 block text-[12px] font-medium text-zinc-600">
-                {platform}
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-[12px] font-medium text-zinc-600">
+                  {platform}
+                </label>
+                <CopyButton text={publishPlatforms?.[platform] ?? ''} />
+              </div>
               <textarea
                 value={publishPlatforms?.[platform] ?? ''}
                 onChange={e => setPlatformText(platform, e.target.value)}
@@ -400,38 +532,30 @@ function PublishStepSection({
           After your video is live, paste URLs here - they save on paste/drop or
           when you leave a field.
         </p>
-        <label className="mb-2 block">
-          <span className="mb-1 block text-[11px] font-medium text-zinc-600">
-            TikTok URL
-          </span>
-          <PasteOnlyUrlInput
-            type="url"
-            value={tiktok}
-            onValueChange={v => {
-              setTiktok(v)
-              onSaveLinks(v, youtube)
-            }}
-            onBlur={persistLinksFromBlur}
-            placeholder="Paste TikTok URL (typing disabled)…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-[11px] font-medium text-zinc-600">
-            YouTube URL
-          </span>
-          <PasteOnlyUrlInput
-            type="url"
-            value={youtube}
-            onValueChange={v => {
-              setYoutube(v)
-              onSaveLinks(tiktok, v)
-            }}
-            onBlur={persistLinksFromBlur}
-            placeholder="Paste YouTube URL (typing disabled)…"
-            className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
-          />
-        </label>
+        <div className="flex flex-col gap-2">
+          {platformOrder.map(platform => (
+            <label
+              key={platform}
+              className="block"
+            >
+              <span className="mb-1 block text-[11px] font-medium text-zinc-600">
+                {platform} URL
+              </span>
+              <PasteOnlyUrlInput
+                type="url"
+                value={publishLinks[platform] ?? ''}
+                onValueChange={v => {
+                  const next = { ...publishLinks, [platform]: v }
+                  setPublishLinks(next)
+                  onSaveLinks(next)
+                }}
+                onBlur={persistLinksFromBlur}
+                placeholder={`Paste ${platform} URL (typing disabled)…`}
+                className="w-full rounded-[6px] border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-orange-400"
+              />
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -448,11 +572,15 @@ function PublishStepDoneView({
   llmResponse: string | null
   outputAssetUrl: string | null
 }) {
-  const { tiktok, youtube } = decodePublishLinks(outputAssetUrl)
+  const links = decodePublishLinks(outputAssetUrl, platformOrder)
+  const linkEntries = platformOrder
+    .map(platform => [platform, (links[platform] ?? '').trim()] as const)
+    .filter(([, url]) => Boolean(url))
   const hasPerPlatform =
     publishPlatforms &&
     platformOrder.some(p => (publishPlatforms[p] ?? '').trim())
-  const hasContent = hasPerPlatform || llmResponse?.trim() || tiktok || youtube
+  const hasContent =
+    hasPerPlatform || llmResponse?.trim() || linkEntries.length > 0
 
   return (
     <div className="flex flex-col gap-4">
@@ -471,9 +599,12 @@ function PublishStepDoneView({
                 key={platform}
                 className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3"
               >
-                <p className="mb-2 text-[12px] font-medium text-zinc-500">
-                  {platform}
-                </p>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[12px] font-medium text-zinc-500">
+                    {platform}
+                  </p>
+                  <CopyButton text={text} />
+                </div>
                 <pre className="max-h-64 overflow-y-auto font-sans text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800">
                   {text}
                 </pre>
@@ -483,40 +614,34 @@ function PublishStepDoneView({
         </div>
       ) : llmResponse?.trim() ? (
         <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
-          <p className="mb-2 text-[12px] font-medium text-zinc-500">
-            Video description
-          </p>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[12px] font-medium text-zinc-500">
+              Video description
+            </p>
+            <CopyButton text={llmResponse ?? ''} />
+          </div>
           <pre className="max-h-64 overflow-y-auto font-sans text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800">
             {llmResponse}
           </pre>
         </div>
       ) : null}
-      {(tiktok || youtube) && (
+      {linkEntries.length > 0 && (
         <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
           <p className="mb-2 text-[12px] font-medium text-zinc-500">
             Published links
           </p>
           <div className="flex flex-col gap-2">
-            {tiktok ? (
+            {linkEntries.map(([platform, url]) => (
               <a
-                href={tiktok}
+                key={platform}
+                href={url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[13px] break-all text-orange-600 hover:underline"
               >
-                TikTok - {tiktok}
+                {platform} - {url}
               </a>
-            ) : null}
-            {youtube ? (
-              <a
-                href={youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13px] break-all text-orange-600 hover:underline"
-              >
-                YouTube - {youtube}
-              </a>
-            ) : null}
+            ))}
           </div>
         </div>
       )}
@@ -539,6 +664,7 @@ export function ExternalStepPanel({
   llmModel,
 }: ExternalStepPanelProps) {
   const [contextOpen, setContextOpen] = useState(true)
+  const isCapCutStep = stepNumber === 8
   const instruction = interpolate(stepDef.instruction ?? '', {
     platform: brandCtx.platform,
   })
@@ -571,25 +697,10 @@ export function ExternalStepPanel({
       {/* Approved state */}
       {state.status === 'done' && (
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck
-                className="h-3 w-3"
-                strokeWidth={3}
-                aria-hidden
-              />
-            </span>
-            <span className="text-[13px] font-medium text-green-600">
-              Completed
-            </span>
-            {onReopen && (
-              <button
-                onClick={onReopen}
-                className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
-              >
-                Re-open
-              </button>
-            )}
+          <div className="mb-4">
+            <p className="text-[13px] text-green-600">
+              Approved - Re-open to edit this step.
+            </p>
           </div>
 
           {stepNumber === WORKFLOW_TOTAL_STEPS ? (
@@ -599,7 +710,7 @@ export function ExternalStepPanel({
               llmResponse={state.llmResponse}
               outputAssetUrl={state.outputAssetUrl}
             />
-          ) : state.outputAssetUrl ? (
+          ) : state.outputAssetUrl && !isCapCutStep ? (
             <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 px-4 py-3">
               <p className="mb-1 text-[12px] tracking-wide text-zinc-400 uppercase">
                 Asset URL
@@ -614,11 +725,25 @@ export function ExternalStepPanel({
               </a>
             </div>
           ) : null}
+
+          {onReopen ? (
+            <StepActionFooter
+              rightActions={
+                <button
+                  type="button"
+                  onClick={onReopen}
+                  className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                >
+                  Re-open
+                </button>
+              }
+            />
+          ) : null}
         </div>
       )}
 
       {/* Active state */}
-      {state.status !== 'done' && (
+      {(state.status !== 'done' || isCapCutStep) && (
         <div className="flex flex-col gap-5">
           {/* CapCut: project asset panel */}
           {projectAssets && (
@@ -667,6 +792,7 @@ export function ExternalStepPanel({
                 <AssetGroup
                   title="Music track"
                   urls={projectAssets.musicTrack}
+                  selectedIndex={projectAssets.selectedMusicTrackIndex}
                   icon={
                     <LucideMusic
                       className="h-3.5 w-3.5"
@@ -674,6 +800,19 @@ export function ExternalStepPanel({
                     />
                   }
                 />
+                {projectAssets.lyrics.trim() ? (
+                  <div className="rounded-[8px] border border-zinc-200 bg-white px-4 py-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-[12px] font-medium text-zinc-500">
+                        Lyrics
+                      </p>
+                      <CopyButton text={projectAssets.lyrics} />
+                    </div>
+                    <pre className="max-h-64 overflow-y-auto font-sans text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800">
+                      {projectAssets.lyrics}
+                    </pre>
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
@@ -753,19 +892,24 @@ export function ExternalStepPanel({
             </div>
           )}
 
-          {/* Approve button */}
-          <button
-            onClick={onApprove}
-            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <LucideCheck
-              className="h-4 w-4"
-              aria-hidden
+          {state.status !== 'done' ? (
+            <StepActionFooter
+              rightActions={
+                <button
+                  onClick={onApprove}
+                  className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <LucideCheck
+                    className="h-4 w-4"
+                    aria-hidden
+                  />
+                  {stepNumber === WORKFLOW_TOTAL_STEPS
+                    ? 'Mark as published'
+                    : 'Mark as done'}
+                </button>
+              }
             />
-            {stepNumber === WORKFLOW_TOTAL_STEPS
-              ? 'Mark as published'
-              : 'Mark as done'}
-          </button>
+          ) : null}
         </div>
       )}
     </div>

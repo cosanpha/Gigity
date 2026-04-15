@@ -7,15 +7,18 @@ import {
 } from '@/lib/cloudinary-client'
 import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
-import { LucideCheck } from 'lucide-react'
+import { LucideCheck, LucideRefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { CloudinaryImageUploadButton } from './CloudinaryImageUploadButton'
+import { CopyButton } from './ui/CopyButton'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { GenerateSpinner } from './ui/GenerateSpinner'
 import { PasteOnlyUrlInput } from './ui/PasteOnlyUrlInput'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 interface SceneStepPanelProps {
+  projectId: string
   stepState: StepState
   /** Approved character image URLs from step 6 - shown as reliable refs (avoids broken LLM-parsed links). */
   characterImageUrls?: string[]
@@ -174,6 +177,7 @@ function ReferenceThumb({ url, label }: { url: string; label: string }) {
 }
 
 export function SceneStepPanel({
+  projectId,
   stepState,
   characterImageUrls = [],
   followUp,
@@ -215,6 +219,41 @@ export function SceneStepPanel({
   const allReady =
     scenes.length > 0 && scenes.every((_, i) => !!sceneUrls[i]?.trim())
 
+  const [regenBusyByIndex, setRegenBusyByIndex] = useState<Record<number, boolean>>({})
+  const [regenErrByIndex, setRegenErrByIndex] = useState<Record<number, string>>({})
+
+  async function regeneratePromptForScene(
+    i: number,
+    sceneTitle: string,
+    sceneLyric: string,
+    currentPrompt: string
+  ) {
+    setRegenErrByIndex(prev => ({ ...prev, [i]: '' }))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: true }))
+    const res = await apiFetch(
+      `/api/v1/projects/${projectId}/steps/6/regenerate-scene-prompt`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneTitle,
+          sceneLyric,
+          currentPrompt,
+        }),
+      }
+    )
+    const data = await res.json().catch(() => ({}))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: false }))
+    if (!res.ok || typeof data.prompt !== 'string') {
+      setRegenErrByIndex(prev => ({
+        ...prev,
+        [i]: typeof data.error === 'string' ? data.error : 'Regeneration failed',
+      }))
+      return
+    }
+    updateScenePrompt(i, data.prompt)
+  }
+
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
       {/* Step header */}
@@ -233,23 +272,10 @@ export function SceneStepPanel({
       {/* Done state */}
       {isDone && (
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-green-500 text-white">
-              <LucideCheck
-                className="h-3 w-3"
-                strokeWidth={3}
-                aria-hidden
-              />
-            </span>
-            <span className="text-[13px] font-medium text-green-600">
-              Approved
-            </span>
-            <button
-              onClick={onReopen}
-              className="bg-secondary cursor-pointer rounded-lg px-2 py-1 text-[13px] text-zinc-400 transition-colors hover:text-zinc-600"
-            >
-              Re-open
-            </button>
+          <div className="mb-4">
+            <p className="text-[13px] text-green-600">
+              Approved - Re-open to edit the scene prompts and image links.
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">
@@ -272,6 +298,10 @@ export function SceneStepPanel({
                       &ldquo;{scene.lyric}&rdquo;
                     </p>
                   )}
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-zinc-500">DALL-E prompt</span>
+                    <CopyButton text={scene.prompt} />
+                  </div>
                   <pre className="mb-2 font-sans text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-500">
                     {scene.prompt}
                   </pre>
@@ -339,6 +369,16 @@ export function SceneStepPanel({
               ))
             })()}
           </div>
+          <StepActionFooter
+            rightActions={
+              <button
+                onClick={onReopen}
+                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+              >
+                Re-open
+              </button>
+            }
+          />
         </div>
       )}
 
@@ -432,6 +472,34 @@ export function SceneStepPanel({
                   )}
 
                   {/* Editable prompt */}
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-zinc-500">DALL-E prompt</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          regeneratePromptForScene(
+                            i,
+                            scene.title,
+                            scene.lyric,
+                            livePrompt
+                          )
+                        }
+                        disabled={Boolean(regenBusyByIndex[i])}
+                        className="inline-flex items-center gap-1 rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[12px] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        title="Re-generate prompt"
+                      >
+                        <LucideRefreshCw
+                          className={`h-3.5 w-3.5 ${regenBusyByIndex[i] ? 'animate-spin' : ''}`}
+                          aria-hidden
+                        />
+                        <span className="hidden sm:inline">
+                          {regenBusyByIndex[i] ? 'Regenerating…' : 'Re-generate prompt'}
+                        </span>
+                      </button>
+                      <CopyButton text={livePrompt} />
+                    </div>
+                  </div>
                   <textarea
                     value={livePrompt}
                     onChange={e => updateScenePrompt(i, e.target.value)}
@@ -439,6 +507,11 @@ export function SceneStepPanel({
                     placeholder="Scene prompt - paste a Cloudinary image URL (…/image/upload/…) to preview it below."
                     className="mb-2 w-full resize-none rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none placeholder:text-zinc-400 focus:border-orange-400"
                   />
+                  {regenErrByIndex[i] ? (
+                    <p className="mb-2 text-[12px] text-red-500">
+                      {regenErrByIndex[i]}
+                    </p>
+                  ) : null}
 
                   {validCloudinaryImageRefs.length > 0 && (
                     <div className="mb-2 flex flex-wrap items-end gap-1.5">
@@ -551,36 +624,41 @@ export function SceneStepPanel({
                   Send
                 </button>
               </div>
-              <div>
+            </>
+          )}
+
+          <StepActionFooter
+            leftActions={
+              stepState.status === 'pending' ? (
                 <button
                   onClick={onRetry}
                   className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
                 >
                   Start fresh
                 </button>
-              </div>
-            </>
-          )}
-
-          {/* Approve button */}
-          <button
-            onClick={() =>
-              onApprove(
-                sceneUrls
-                  .map(u => u.trim())
-                  .filter(Boolean)
-                  .join('\n')
-              )
+              ) : null
             }
-            disabled={!allReady}
-            className="inline-flex items-center gap-2 self-start rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <LucideCheck
-              className="h-4 w-4"
-              aria-hidden
-            />
-            Approve all scenes
-          </button>
+            rightActions={
+              <button
+                onClick={() =>
+                  onApprove(
+                    sceneUrls
+                      .map(u => u.trim())
+                      .filter(Boolean)
+                      .join('\n')
+                  )
+                }
+                disabled={!allReady}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <LucideCheck
+                  className="h-4 w-4"
+                  aria-hidden
+                />
+                Approve all scenes
+              </button>
+            }
+          />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { LLM_BASE_URL, LLM_MODEL, OPENAI_API_KEY } from '@/constants/env.server'
 import type { IBrandProfile } from '@/models/BrandProfile'
 import type { IMessage, IWorkflowStep } from '@/models/VideoProject'
+import { normalizeNoEmDash } from './no-em-dash'
 import { getStepDefinition } from './workflow-templates'
 
 export type ChatMessage = {
@@ -48,14 +49,14 @@ export function buildSystemMessage(
     lines.push(`Brand links (site, app stores, etc.): ${links.join(', ')}`)
   }
 
-  // Include all prior approved LLM step outputs (steps 1–7 only)
+  // Include all prior approved LLM step outputs (steps 1-7 only)
   const doneSteps = steps.filter(
     s => s.status === 'done' && s.stepNumber <= 7 && s.llmResponse
   )
 
   if (doneSteps.length > 0) {
     lines.push(``)
-    lines.push(`--- Prior approved outputs ---`)
+    lines.push(`Prior approved outputs:`)
     for (const step of doneSteps) {
       const def = getStepDefinition(step.stepNumber)
       const label = def?.title ?? `Step ${step.stepNumber}`
@@ -63,6 +64,9 @@ export function buildSystemMessage(
       lines.push(step.llmResponse!)
     }
   }
+
+  lines.push('')
+  lines.push('Hard rule: never use the em dash character. Use "-" instead.')
 
   return lines.join('\n')
 }
@@ -123,5 +127,23 @@ export async function callLLM(
   const data = await res.json()
   const content = data.choices?.[0]?.message?.content
   if (!content) throw new Error('LLM returned empty response')
-  return content as string
+  return sanitizeLlmOutput(content as string)
+}
+
+function sanitizeLlmOutput(text: string): string {
+  const normalized = normalizeNoEmDash(text)
+  const lines = normalized.split('\n')
+  while (lines.length > 0) {
+    const last = lines[lines.length - 1].trim()
+    if (!last) {
+      lines.pop()
+      continue
+    }
+    if (/^[-*_]{3,}$/.test(last)) {
+      lines.pop()
+      continue
+    }
+    break
+  }
+  return lines.join('\n')
 }

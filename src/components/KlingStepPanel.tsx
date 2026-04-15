@@ -14,11 +14,12 @@ import {
   StepState,
   WORKFLOW_TOTAL_STEPS,
 } from '@/lib/workflow-templates'
-import { LucideCheck } from 'lucide-react'
+import { LucideCheck, LucideRefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 function splitLines(raw: string | null): string[] {
   if (!raw?.trim()) return []
@@ -205,6 +206,7 @@ function SceneVideoSlot({
 }
 
 interface KlingStepPanelProps {
+  projectId: string
   stepDef: StepDefinition
   state: StepState
   /** Approved scene stills from step 7 - same order as scenes (line 1 = scene 1, …). */
@@ -222,6 +224,7 @@ interface KlingStepPanelProps {
 }
 
 export function KlingStepPanel({
+  projectId,
   stepDef,
   state,
   sceneImageUrls = [],
@@ -275,6 +278,50 @@ export function KlingStepPanel({
   const doneScenes = state.llmResponse
     ? extractKlingScenesForEdit(state.llmResponse)
     : []
+  const [regenBusyByIndex, setRegenBusyByIndex] = useState<
+    Record<number, boolean>
+  >({})
+  const [regenErrByIndex, setRegenErrByIndex] = useState<
+    Record<number, string>
+  >({})
+
+  async function regeneratePromptForScene(
+    i: number,
+    sceneTitle: string,
+    sceneLyric: string,
+    currentPrompt: string
+  ) {
+    setRegenErrByIndex(prev => ({ ...prev, [i]: '' }))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: true }))
+    const res = await apiFetch(
+      `/api/v1/projects/${projectId}/steps/7/regenerate-kling-prompt`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sceneTitle,
+          sceneLyric,
+          currentPrompt,
+        }),
+      }
+    )
+    const data = await res.json().catch(() => ({}))
+    setRegenBusyByIndex(prev => ({ ...prev, [i]: false }))
+    if (!res.ok || typeof data.prompt !== 'string') {
+      setRegenErrByIndex(prev => ({
+        ...prev,
+        [i]:
+          typeof data.error === 'string' ? data.error : 'Regeneration failed',
+      }))
+      return
+    }
+    const next = replaceKlingScenePrompt(
+      state.llmResponse ?? '',
+      i,
+      data.prompt
+    )
+    onContentChange(next)
+  }
 
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
@@ -319,7 +366,6 @@ export function KlingStepPanel({
             <p className="text-[13px] text-green-600">
               Approved - Re-open to edit prompts or video links.
             </p>
-            {state.llmResponse ? <CopyButton text={state.llmResponse} /> : null}
           </div>
           {doneScenes.length > 0 ? (
             <div className="flex flex-col gap-3">
@@ -328,10 +374,13 @@ export function KlingStepPanel({
                   key={scene.sceneNumber}
                   className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-3"
                 >
-                  <p className="mb-0.5 text-[12px] font-semibold text-zinc-700">
-                    Scene {scene.sceneNumber}
-                    {scene.title ? ` - ${scene.title}` : ''}
-                  </p>
+                  <div className="mb-0.5 flex items-start justify-between gap-2">
+                    <p className="text-[12px] font-semibold text-zinc-700">
+                      Scene {scene.sceneNumber}
+                      {scene.title ? ` - ${scene.title}` : ''}
+                    </p>
+                    <CopyButton text={scene.prompt} />
+                  </div>
                   {scene.lyric && (
                     <p className="mb-2 text-[11px] text-zinc-400 italic">
                       &ldquo;{scene.lyric}&rdquo;
@@ -403,13 +452,17 @@ export function KlingStepPanel({
               )}
             </>
           )}
-          <button
-            type="button"
-            onClick={onReopen}
-            className="w-fit rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
-          >
-            Re-open
-          </button>
+          <StepActionFooter
+            rightActions={
+              <button
+                type="button"
+                onClick={onReopen}
+                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+              >
+                Re-open
+              </button>
+            }
+          />
         </div>
       )}
 
@@ -506,7 +559,33 @@ export function KlingStepPanel({
                         <span className="text-[11px] text-zinc-500">
                           KlingAI prompt
                         </span>
-                        <CopyButton text={livePrompt} />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              regeneratePromptForScene(
+                                i,
+                                scene.title,
+                                scene.lyric,
+                                livePrompt
+                              )
+                            }
+                            disabled={Boolean(regenBusyByIndex[i])}
+                            className="inline-flex items-center gap-1 rounded-[6px] border border-zinc-200 bg-white px-2 py-1 text-[11px] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Re-generate prompt"
+                          >
+                            <LucideRefreshCw
+                              className={`h-3.5 w-3.5 ${regenBusyByIndex[i] ? 'animate-spin' : ''}`}
+                              aria-hidden
+                            />
+                            <span className="hidden sm:inline">
+                              {regenBusyByIndex[i]
+                                ? 'Regenerating...'
+                                : 'Re-generate prompt'}
+                            </span>
+                          </button>
+                          <CopyButton text={livePrompt} />
+                        </div>
                       </div>
                       <textarea
                         value={livePrompt}
@@ -522,6 +601,11 @@ export function KlingStepPanel({
                         spellCheck={false}
                         className="mb-3 w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-3 py-2 font-sans text-[12px] leading-relaxed text-zinc-700 outline-none focus:border-orange-400"
                       />
+                      {regenErrByIndex[i] ? (
+                        <p className="mb-3 text-[11px] text-red-600">
+                          {regenErrByIndex[i]}
+                        </p>
+                      ) : null}
                       <p className="mb-1.5 text-[12px] font-medium text-zinc-600">
                         Video clip URL
                       </p>
@@ -560,33 +644,37 @@ export function KlingStepPanel({
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onRetry}
-              className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-            >
-              Re-generate
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onApprove(
-                  Array.from({ length: slotCount }, (_, i) =>
-                    (sceneVideoUrls[i] ?? '').trim()
-                  ).join('\n')
-                )
-              }
-              disabled={!allVideosReady}
-              className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <LucideCheck
-                className="h-4 w-4"
-                aria-hidden
-              />
-              Approve
-            </button>
-          </div>
+          <StepActionFooter
+            leftActions={
+              <button
+                type="button"
+                onClick={onRetry}
+                className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+              >
+                Re-generate
+              </button>
+            }
+            rightActions={
+              <button
+                type="button"
+                onClick={() =>
+                  onApprove(
+                    Array.from({ length: slotCount }, (_, i) =>
+                      (sceneVideoUrls[i] ?? '').trim()
+                    ).join('\n')
+                  )
+                }
+                disabled={!allVideosReady}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <LucideCheck
+                  className="h-4 w-4"
+                  aria-hidden
+                />
+                Approve
+              </button>
+            }
+          />
         </div>
       )}
     </div>

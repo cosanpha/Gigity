@@ -5,6 +5,7 @@ interface PageLayoutProps {
   children: ReactNode
   brandName?: string
   brandId?: string
+  brandLogoUrl?: string
   brandSwitcherBrands?: NavbarBrandOption[]
   variant?: 'centered' | 'full'
   className?: string
@@ -14,6 +15,7 @@ export function PageLayout({
   children,
   brandName,
   brandId,
+  brandLogoUrl,
   brandSwitcherBrands,
   variant = 'centered',
   className,
@@ -23,6 +25,7 @@ export function PageLayout({
       <Navbar
         brandName={brandName}
         brandId={brandId}
+        brandLogoUrl={brandLogoUrl}
         brandSwitcherBrands={brandSwitcherBrands}
       />
       {variant === 'centered' ? (

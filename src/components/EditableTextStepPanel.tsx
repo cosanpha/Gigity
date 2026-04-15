@@ -5,7 +5,9 @@ import { WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck } from 'lucide-react'
 import { startTransition, useEffect, useRef, useState } from 'react'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
+import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 interface EditableTextStepPanelProps {
   stepNumber: number
@@ -26,33 +28,6 @@ interface EditableTextStepPanelProps {
   onReopen: () => void
   onContentChange: (content: string) => void
   llmModel?: string | null
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      }}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-[6px] border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-    >
-      {copied ? (
-        <>
-          <LucideCheck
-            className="h-3.5 w-3.5 text-green-600"
-            aria-hidden
-          />
-          Copied
-        </>
-      ) : (
-        'Copy'
-      )}
-    </button>
-  )
 }
 
 export function EditableTextStepPanel({
@@ -142,9 +117,6 @@ export function EditableTextStepPanel({
               <p className="text-[13px] text-green-600">
                 Approved - Re-open to edit the {aLabel}.
               </p>
-              {state.llmResponse ? (
-                <CopyButton text={state.llmResponse} />
-              ) : null}
             </div>
           )}
 
@@ -155,17 +127,27 @@ export function EditableTextStepPanel({
           )}
 
           {state.llmResponse && (
-            <textarea
-              value={isLocked ? (state.llmResponse ?? '') : editedContent}
-              onChange={e => {
-                setEditedContent(e.target.value)
-                onContentChange(e.target.value)
-              }}
-              readOnly={isLocked}
-              rows={textareaRows}
-              spellCheck={false}
-              className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-orange-400"
-            />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-zinc-700">
+                  {title}
+                </span>
+                <CopyButton
+                  text={isLocked ? (state.llmResponse ?? '') : editedContent}
+                />
+              </div>
+              <textarea
+                value={isLocked ? (state.llmResponse ?? '') : editedContent}
+                onChange={e => {
+                  setEditedContent(e.target.value)
+                  onContentChange(e.target.value)
+                }}
+                readOnly={isLocked}
+                rows={textareaRows}
+                spellCheck={false}
+                className="w-full resize-y rounded-[6px] border border-zinc-200 bg-white px-4 py-3 font-mono text-[13px] leading-relaxed text-zinc-800 outline-none placeholder:text-zinc-400 read-only:bg-zinc-50 read-only:text-zinc-700 focus:border-orange-400"
+              />
+            </div>
           )}
 
           <div className="flex gap-2">
@@ -185,33 +167,37 @@ export function EditableTextStepPanel({
             </button>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={onRetry}
-              className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-            >
-              Re-generate
-            </button>
-            {isLocked ? (
+          <StepActionFooter
+            leftActions={
               <button
-                onClick={onReopen}
-                className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                onClick={onRetry}
+                className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
               >
-                Re-open
+                Re-generate
               </button>
-            ) : (
-              <button
-                onClick={onApprove}
-                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
-              >
-                <LucideCheck
-                  className="h-4 w-4"
-                  aria-hidden
-                />
-                Approve
-              </button>
-            )}
-          </div>
+            }
+            rightActions={
+              isLocked ? (
+                <button
+                  onClick={onReopen}
+                  className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                >
+                  Re-open
+                </button>
+              ) : (
+                <button
+                  onClick={onApprove}
+                  className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+                >
+                  <LucideCheck
+                    className="h-4 w-4"
+                    aria-hidden
+                  />
+                  Approve
+                </button>
+              )
+            }
+          />
         </div>
       )}
     </div>

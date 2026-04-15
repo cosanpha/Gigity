@@ -9,6 +9,7 @@ import { LucideCheck, LucideSparkles } from 'lucide-react'
 import { StepLlmModelCaption } from './StepLlmModelCaption'
 import { CopyButton } from './ui/CopyButton'
 import { GenerateSpinner } from './ui/GenerateSpinner'
+import { StepActionFooter } from './ui/StepActionFooter'
 
 export { CopyButton } from './ui/CopyButton'
 
@@ -84,7 +85,8 @@ function ResponseBlocks({ content }: { content: string }) {
             {block.content.trim()}
           </pre>
           {!block.label && (
-            <div className="flex justify-end border-t border-zinc-200 px-3 py-1.5">
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-2">
+              <span className="text-[13px] font-medium text-zinc-700">Output</span>
               <CopyButton text={block.content.trim()} />
             </div>
           )}
@@ -177,6 +179,18 @@ export function LLMStepPanel({
             AI Output
           </div>
           <ResponseBlocks content={state.llmResponse!} />
+          {onReopen ? (
+            <StepActionFooter
+              rightActions={
+                <button
+                  onClick={onReopen}
+                  className="rounded-[6px] border border-zinc-300 bg-white px-5 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                >
+                  Re-open
+                </button>
+              }
+            />
+          ) : null}
         </div>
       )}
 
@@ -235,24 +249,28 @@ export function LLMStepPanel({
           </div>
 
           {/* Primary actions */}
-          <div className="flex gap-3">
-            <button
-              onClick={onRetry}
-              className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
-            >
-              Start fresh
-            </button>
-            <button
-              onClick={() => onApprove()}
-              className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
-            >
-              <LucideCheck
-                className="h-4 w-4"
-                aria-hidden
-              />
-              Approve
-            </button>
-          </div>
+          <StepActionFooter
+            leftActions={
+              <button
+                onClick={onRetry}
+                className="rounded-[6px] border border-zinc-200 px-4 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50"
+              >
+                Start fresh
+              </button>
+            }
+            rightActions={
+              <button
+                onClick={() => onApprove()}
+                className="inline-flex items-center gap-2 rounded-[6px] bg-orange-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+              >
+                <LucideCheck
+                  className="h-4 w-4"
+                  aria-hidden
+                />
+                Approve
+              </button>
+            }
+          />
         </div>
       )}
     </div>
@@ -261,8 +279,12 @@ export function LLMStepPanel({
 
 function ResponseCard({ content }: { content: string }) {
   return (
-    <div className="rounded-[6px] border border-zinc-200 bg-zinc-50 p-5">
-      <pre className="font-sans text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
+    <div className="overflow-hidden rounded-[6px] border border-zinc-200 bg-zinc-50">
+      <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-2">
+        <span className="text-[13px] font-medium text-zinc-700">Output</span>
+        <CopyButton text={content.trim()} />
+      </div>
+      <pre className="px-4 py-3 font-sans text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
         {content}
       </pre>
     </div>

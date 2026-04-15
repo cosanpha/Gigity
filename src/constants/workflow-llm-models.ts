@@ -13,10 +13,7 @@ const WORKFLOW_GENERATE_STEP_MODEL: Record<number, ModelKey> = {
 }
 
 export function llmModelForWorkflowGenerateStep(stepNumber: number): string {
-  const key = WORKFLOW_GENERATE_STEP_MODEL[stepNumber]
-  if (!key) {
-    throw new Error(`No LLM model configured for workflow step ${stepNumber}`)
-  }
+  const key = WORKFLOW_GENERATE_STEP_MODEL[stepNumber] ?? 'gpt-4.1-mini'
   return AI_MODELS[key].name
 }
 

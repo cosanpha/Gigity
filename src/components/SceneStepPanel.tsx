@@ -5,7 +5,7 @@ import {
   CLOUDINARY_CLOUD_NAME_PUBLIC,
   partitionPromptUrlsForCloudinaryRefs,
 } from '@/lib/cloudinary-client'
-import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
+import { isHttpOrHttpsUrl } from '@/lib/url-utils'
 import { StepState, WORKFLOW_TOTAL_STEPS } from '@/lib/workflow-templates'
 import { LucideCheck, LucideRefreshCw } from 'lucide-react'
 import Image from 'next/image'
@@ -231,7 +231,7 @@ export function SceneStepPanel({
     setRegenErrByIndex(prev => ({ ...prev, [i]: '' }))
     setRegenBusyByIndex(prev => ({ ...prev, [i]: true }))
     const res = await apiFetch(
-      `/api/v1/projects/${projectId}/steps/6/regenerate-scene-prompt`,
+      `/api/v1/projects/${projectId}/steps/6/regenerate-prompt`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,6 @@
 'use client'
 
-import { pastedTextHasOnlyHttpUrls } from '@/lib/is-http-url'
+import { pastedTextHasOnlyHttpUrls } from '@/lib/url-utils'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
 

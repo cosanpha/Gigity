@@ -1,4 +1,4 @@
-import { extractHttpUrlsFromPromptText } from '@/lib/prompt-http-urls'
+import { extractHttpUrlsFromPromptText } from '@/lib/url-utils'
 
 /** Same value as CLOUDINARY_CLOUD_NAME - set in .env for step 7 reference validation in the browser. */
 export const CLOUDINARY_CLOUD_NAME_PUBLIC =

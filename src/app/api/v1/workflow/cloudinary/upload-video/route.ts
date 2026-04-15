@@ -1,7 +1,7 @@
 import { CLOUDINARY_CLOUD_NAME } from '@/constants/env.server'
 import { apiHandler } from '@/lib/api-handler'
 import { isCloudinaryUrl, uploadVideoFromUrl } from '@/lib/cloudinary'
-import { isProbablyVideoHttpUrl } from '@/lib/video-url'
+import { isProbablyVideoHttpUrl } from '@/lib/url-utils'
 import { NextResponse } from 'next/server'
 
 export const POST = apiHandler(async (req: Request) => {

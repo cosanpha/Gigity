@@ -3,12 +3,12 @@
 import { PasteOnlyUrlInput } from '@/components/ui/PasteOnlyUrlInput'
 import { apiFetch } from '@/lib/api-fetch'
 import { isLikelyCloudinaryVideoDeliveryUrl } from '@/lib/cloudinary-client'
-import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
+import { isHttpOrHttpsUrl } from '@/lib/url-utils'
 import {
   extractKlingScenesForEdit,
   replaceKlingScenePrompt,
 } from '@/lib/kling-scenes'
-import { isProbablyVideoHttpUrl } from '@/lib/video-url'
+import { isProbablyVideoHttpUrl } from '@/lib/url-utils'
 import {
   StepDefinition,
   StepState,
@@ -294,7 +294,7 @@ export function KlingStepPanel({
     setRegenErrByIndex(prev => ({ ...prev, [i]: '' }))
     setRegenBusyByIndex(prev => ({ ...prev, [i]: true }))
     const res = await apiFetch(
-      `/api/v1/projects/${projectId}/steps/7/regenerate-kling-prompt`,
+      `/api/v1/projects/${projectId}/steps/7/regenerate-prompt`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

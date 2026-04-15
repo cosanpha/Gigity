@@ -1,6 +1,6 @@
 'use client'
 
-import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
+import { isHttpOrHttpsUrl } from '@/lib/url-utils'
 import { cn } from '@/lib/utils'
 import * as React from 'react'
 

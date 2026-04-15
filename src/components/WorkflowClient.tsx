@@ -10,8 +10,8 @@ import {
   mergeParsedIntoPlatformOrder,
   normalizePublishPlatforms,
   splitPublishMarkdownByHeading,
-} from '@/lib/publish-copy'
-import { encodePublishLinks } from '@/lib/publish-links'
+  encodePublishLinks,
+} from '@/lib/publish'
 import {
   StepDefinition,
   StepState,
@@ -464,97 +464,8 @@ export function WorkflowClient({
     setActiveStep(n)
   }
 
-  async function approveCharacterStep(imageUrls: string) {
-    setApproveError(null)
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/5/approve`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputAssetUrl: imageUrls }),
-      }
-    )
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
-      setApproveError(err.error ?? 'Approve failed')
-      return
-    }
-    setSteps(prev =>
-      patch(prev, 5, {
-        status: 'done',
-        outputAssetUrl: imageUrls,
-      })
-    )
-    setActiveStep(6)
-  }
-
-  async function reopenCharacterStep() {
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/5/reopen`,
-      {
-        method: 'POST',
-      }
-    )
-    if (!res.ok) return
-    setSteps(prev => patch(prev, 5, { status: 'pending' }))
-    setActiveStep(5)
-  }
-
-  async function approveSceneStep(imageUrls: string) {
-    setApproveError(null)
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/6/approve`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputAssetUrl: imageUrls }),
-      }
-    )
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
-      setApproveError(err.error ?? 'Approve failed')
-      return
-    }
-    setSteps(prev =>
-      patch(prev, 6, { status: 'done', outputAssetUrl: imageUrls })
-    )
-    setActiveStep(7)
-  }
-
-  async function approveKlingStep(videoUrls: string) {
-    setApproveError(null)
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/7/approve`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputAssetUrl: videoUrls }),
-      }
-    )
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
-      setApproveError(err.error ?? 'Approve failed')
-      return
-    }
-    setSteps(prev =>
-      patch(prev, 7, { status: 'done', outputAssetUrl: videoUrls })
-    )
-    setActiveStep(8)
-  }
-
-  async function reopenSceneStep() {
-    const res = await apiFetch(
-      `/api/v1/projects/${project._id}/steps/6/reopen`,
-      {
-        method: 'POST',
-      }
-    )
-    if (!res.ok) return
-    setSteps(prev => patch(prev, 6, { status: 'pending' }))
-    setActiveStep(6)
-  }
-
   async function approve(n: number, opts: { outputAssetUrl?: string } = {}) {
+    setApproveError(null)
     const res = await apiFetch(
       `/api/v1/projects/${project._id}/steps/${n}/approve`,
       {
@@ -564,16 +475,20 @@ export function WorkflowClient({
       }
     )
 
-    if (res.ok) {
-      const url = opts.outputAssetUrl?.trim()
-      setSteps(prev =>
-        patch(prev, n, {
-          status: 'done',
-          ...(url ? { outputAssetUrl: url } : {}),
-        })
-      )
-      if (n < WORKFLOW_TOTAL_STEPS) setActiveStep(n + 1)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Approve failed' }))
+      setApproveError(err.error ?? 'Approve failed')
+      return
     }
+
+    const url = opts.outputAssetUrl?.trim()
+    setSteps(prev =>
+      patch(prev, n, {
+        status: 'done',
+        ...(url ? { outputAssetUrl: url } : {}),
+      })
+    )
+    if (n < WORKFLOW_TOTAL_STEPS) setActiveStep(n + 1)
   }
 
   function patch(
@@ -954,8 +869,10 @@ export function WorkflowClient({
                   onSendFollowUp={() =>
                     generate(5, { followUpMessage: followUp })
                   }
-                  onApprove={approveCharacterStep}
-                  onReopen={reopenCharacterStep}
+                  onApprove={imageUrls =>
+                    approve(5, { outputAssetUrl: imageUrls })
+                  }
+                  onReopen={() => reopen(5)}
                   onContentChange={c => updateStepContent(5, c)}
                   onPersistOutput={v => persistStepOutput(5, v)}
                 />
@@ -973,8 +890,10 @@ export function WorkflowClient({
                   onSendFollowUp={() =>
                     generate(6, { followUpMessage: followUp })
                   }
-                  onApprove={approveSceneStep}
-                  onReopen={reopenSceneStep}
+                  onApprove={imageUrls =>
+                    approve(6, { outputAssetUrl: imageUrls })
+                  }
+                  onReopen={() => reopen(6)}
                   onContentChange={c => updateStepContent(6, c)}
                   onPersistOutput={v => persistStepOutput(6, v)}
                 />
@@ -993,7 +912,9 @@ export function WorkflowClient({
                   onSendFollowUp={() =>
                     generate(7, { followUpMessage: followUp })
                   }
-                  onApprove={approveKlingStep}
+                  onApprove={videoUrls =>
+                    approve(7, { outputAssetUrl: videoUrls })
+                  }
                   onReopen={() => reopen(7)}
                   onContentChange={c => updateStepContent(7, c)}
                   onPersistOutput={v => persistStepOutput(7, v)}

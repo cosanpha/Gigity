@@ -6,7 +6,7 @@ import {
   mergeParsedIntoPlatformOrder,
   normalizePublishPlatforms,
   splitPublishMarkdownByHeading,
-} from '@/lib/publish-copy'
+} from '@/lib/publish'
 import { IBrandProfile } from '@/models/BrandProfile'
 import type { IWorkflowStep } from '@/models/VideoProject'
 import VideoProject from '@/models/VideoProject'

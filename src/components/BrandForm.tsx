@@ -2,7 +2,7 @@
 
 import { CloudinaryImageUploadButton } from '@/components/CloudinaryImageUploadButton'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { isHttpOrHttpsUrl } from '@/lib/is-http-url'
+import { isHttpOrHttpsUrl } from '@/lib/url-utils'
 import { LucideCheck, LucidePlus, LucideX } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'

@@ -1,4 +1,4 @@
-import { normalizePublishPlatforms } from '@/lib/publish-copy'
+import { normalizePublishPlatforms } from '@/lib/publish'
 
 const BRAND_LINKS_SHORT_FORM = `If the context includes a line starting with "Brand links (site, app stores, etc.):" with one or more URLs, add a short call-to-action block that includes those same URLs in full (paste-ready), with emoji labels where helpful. Infer labels from each URL when obvious (e.g. apps.apple.com to iOS / App Store, play.google.com to Android / Google Play, otherwise "Learn more" or the hostname). Place that block before any hashtag line at the end. If there are no brand links in the context, do not invent URLs.`
 
